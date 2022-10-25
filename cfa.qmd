@@ -1,0 +1,52 @@
+---
+title: "CFA"
+format:
+  html:
+    theme: default
+---
+
+## Getting started
+
+Let's load the packages we'll need for what is to come in this chapter:
+
+```{r message=FALSE, results=FALSE}
+
+library(tidyverse)
+library(lavaan)
+
+```
+
+## Example 1: 
+
+The first example we'll look at is from @Finch2015. chapter 13. 
+
+```{r message=FALSE, warning=FALSE}
+
+dat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')
+
+# Seems like I need to only use the first 12 columns I think?
+dat_ff <- dat_ff %>% 
+  
+  as_tibble() %>% 
+  
+  select(1:12)
+
+```
+
+## Example 2: 
+
+Now we'll look at an example from @Kline2011, chapter 13. 
+
+Load the data:
+
+```{r}
+
+dat_kline <- read_csv('data/kline/kabc-amos.csv')
+
+
+```
+
+
+## Example 3:
+
+Lastly, let's walk through [an example from the lavaan documentation](https://www.lavaan.ugent.be/tutorial/cfa.html)
