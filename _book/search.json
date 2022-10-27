@@ -11,14 +11,14 @@
     "href": "index.html#what-is-this",
     "title": "Latent Variable Modelling Workflow Reference",
     "section": "What is this?",
-    "text": "What is this?\nThis is a book full of code to use when you want to do latent variable modelling. It gives suggested workflowswhich I’ve cobbled together from a few different textbooks, and has worked examples with data from those textbooks or from open datasets I found online. When you need to do latent variable modelling for your research, you can use these workflows as a place to start.\nSpecifically, it seems like these are the sub-areas of latent variable modelling to know how to do:\n\nExploratory Factor Analysis;\nConfirmatory Factor Analysis;\nItem Response Theory;\nFull SEM;\nLongitudinal SEM\n\nMaybe I’ll discover some other types of things along the way. It’s a lifelong journey haha."
+    "text": "What is this?\nThis is a book full of code to use when you want to do latent variable modelling. It gives suggested workflows I’ve cobbled together from a few different textbooks, and has worked examples with data from those textbooks or from open datasets I found online. When you need to do latent variable modelling for your research, you can use these workflows as a place to start.\nSpecifically, it seems like these are the sub-areas of latent variable modelling to know how to do:\n\nExploratory Factor Analysis;\nConfirmatory Factor Analysis;\nItem Response Theory;\nFull SEM;\nLongitudinal SEM\n\nMaybe I’ll discover some other types of things along the way. It’s a lifelong journey haha."
   },
   {
     "objectID": "index.html#what-am-i-referencing",
     "href": "index.html#what-am-i-referencing",
     "title": "Latent Variable Modelling Workflow Reference",
     "section": "What am I referencing?",
-    "text": "What am I referencing?\nThe first book on latent variable modelling I read was Gorsuch (1983). This was a nice conceptual introduction, but the applied examples were pretty whack. I’ve since found a few sources with data and R code to work with:\n\nLatent Variable Modelling with R, by Finch (2015). They helpfully provide all of the datasets here\nPrinciples and Practice of Structural Equation Modeling, by Kline (2011). The publisher provides data and code here\nThe lavaan documentation has some nice worked examples too.\n\nI’ll mostly be using lavaan and tidyverse, but maybe also some brms at some point.\n\n1 + 1\n\n[1] 2\n\n\n\n\n\n\nFinch, French, W. Holmes. 2015. Latent Variable Modeling with r.\n\n\nGorsuch, Richard L. 1983. Factor Analysis, 2nd Edition.\n\n\nKline, Rex B. 2011. Principles and Practice of Structural Equation Modeling."
+    "text": "What am I referencing?\nThe first book on latent variable modelling I read was Gorsuch (1983). This was a nice conceptual introduction, but the applied examples were pretty whack. I’ve since found a few sources with data and R code to work with:\n\nLatent Variable Modelling with R, by Finch (2015). They helpfully provide all of the datasets here.\nPrinciples and Practice of Structural Equation Modeling, by Kline (2011). The publisher provides data and code here.\nThe lavaan documentation has some nice worked examples too.\n\nI’ll mostly be using lavaan and tidyverse, but maybe also some brms at some point.\n\n\n\n\nFinch, French, W. Holmes. 2015. Latent Variable Modeling with r.\n\n\nGorsuch, Richard L. 1983. Factor Analysis, 2nd Edition.\n\n\nKline, Rex B. 2011. Principles and Practice of Structural Equation Modeling."
   },
   {
     "objectID": "intro.html",
@@ -35,32 +35,32 @@
     "text": "2.1 Getting started\nLet’s load the packages we’ll need for what is to come in this chapter:\n\nlibrary(tidyverse)\nlibrary(lavaan)"
   },
   {
-    "objectID": "cfa.html#example-1",
-    "href": "cfa.html#example-1",
+    "objectID": "cfa.html#example-1-toxic-striving-energy",
+    "href": "cfa.html#example-1-toxic-striving-energy",
     "title": "2  CFA",
-    "section": "2.2 Example 1:",
-    "text": "2.2 Example 1:\nThe first example we’ll look at is from Finch (2015). chapter 13.\n\ndat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')\n\nre-encoding from CP1252\n\n# Seems like I need to only use the first 12 columns I think?\ndat_ff <- dat_ff %>% \n  \n  as_tibble() %>% \n  \n  select(1:12)"
+    "section": "2.2 Example 1: Toxic Striving Energy",
+    "text": "2.2 Example 1: Toxic Striving Energy\nThe first example we’ll look at is from Finch (2015). chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the ‘Achievement Goal Scale’ (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we’re probably good to just keep the columns that mention AGS in the name:\n\n### Load the data\ndat_raw <- foreign::read.spss('data/finch-and-french/edps744.sav') \n  \n### Clean the data\ndat_ags <- dat_raw %>% \n\n  # Convert to a data frame for ease of use\n  as.data.frame() %>% \n  \n  # Keep only columns that start with the prefix 'ags' followed by a question number\n  select(matches(\"ags\\\\d\")) \n\nWe don’t want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don’t mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf. But just for fun, we can explore the distributions of the answers to each of the 12 questions:\n\ndat_ags %>% \n\n  # Pivot to prepare the data for visualization\n  pivot_longer(\n    cols      = everything(),\n    names_to  = \"question\",\n    values_to = \"response\",\n    names_transform = list(question = fct_inorder)  \n  ) %>% \n\n  # Plot\n  ggplot() +\n  geom_histogram(aes(x = response)) + \n  facet_wrap(~question)\n\n`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.\n\n\nWarning: Removed 29 rows containing non-finite values (stat_bin).\n\n\n\n\n\nSeems like some questions have different means and variances from each other. For example, the answers to ags11 and ags12 are relatively flat, while the answers to ags4 and ags5 are more bunched up around the highest values.\nWe can also do some healthy exploration of missingness in the dataset. For starters: what proportion of values are missing in each row?\n\ndat_ags %>% \n  \n  summarise_all(~ sum(is.na(.)) / (sum(is.na(.) + sum(!is.na(.))))) %>% \n  \n  mutate(across(everything(), round, 6)) %>% \n  \n  knitr::kable() \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nags1\nags2\nags3\nags4\nags5\nags6\nags7\nags8\nags9\nags10\nags11\nags12\n\n\n\n\n1.1e-05\n5e-06\n5e-06\n1.6e-05\n1.6e-05\n1.1e-05\n1.6e-05\n1.6e-05\n1.1e-05\n2.2e-05\n1.1e-05\n1.6e-05\n\n\n\n\n\nThat’s very little missingness. Probably no need to do multiple imputation here.\nThe researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them.\nOne of the candidate hypotheses is that theory that a person’s toxic strivy energy (‘achievement goal orientedness’?) is secretly driven by four platonic unobservable things, namely:\n\nMastery Approach ‘MAP’ (eg. “I want to learn as much as possible”);\nMastery Avoidant ‘MAV’ (eg. “I want to avoid learning less than I possibly could”);\nPerformance Approach ‘PAP’ (eg. “I want to do well compared to other students”);\nPerformance Avoidant ‘PAV’ (eg. “It is important for me to avoid doing poorly compared to other students”)\n\nBut another theory says that actually the ‘Mastery’ variables are just one monolithic thing, so really there are only 3 factors, namely ‘Mastery’, ‘PAP’, and ‘PAV’.\nThese will be the two candidate hypotheses we’re gonna test via factor analysis.\n\ndat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')\n\n# Seems like I need to only use the first 12 columns I think?\ndat_ff <- dat_ff %>% \n  \n  as_tibble() %>% \n  \n  select(1:12)"
   },
   {
     "objectID": "cfa.html#example-2",
     "href": "cfa.html#example-2",
     "title": "2  CFA",
     "section": "2.3 Example 2:",
-    "text": "2.3 Example 2:\nNow we’ll look at an example from Kline (2011), chapter 13.\nLoad the data:\n\ndat_kline <- read_csv('data/kline/kabc-amos.csv')\n\nWarning: One or more parsing issues, call `problems()` on your data frame for details,\ne.g.:\n  dat <- vroom(...)\n  problems(dat)\n\n\nRows: 11 Columns: 10\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (2): rowtype_, varname_\ndbl (8): HM, NR, WO, GC, Tr, SM, MA, PS\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message."
+    "text": "2.3 Example 2:\n\ndat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')\n\n# Seems like I need to only use the first 12 columns I think?\ndat_ff <- dat_ff %>% \n  \n  as_tibble() %>% \n  \n  select(1:12)\n\nNext we’ll do another example from Finch (2015), from the SEM chapter on page 62. They say it is important to CFA first before testing the relationships between the latent variables a la SEM, because we first want to make sure those latent variables actually seem good. This example uses a different dataset than the previous one.\n\n[W]e must ascertain whether the proposed model structure is supported by our data, which we will do by fitting a CFA to each of the latent variables…\n\nThe authors fit a CFA for each of the latent variables in isolation, namely Mastery, Self-Oriented Perfectionism, and ‘ATTC’, which seems to mean ‘Attention Control’"
   },
   {
     "objectID": "cfa.html#example-3",
     "href": "cfa.html#example-3",
     "title": "2  CFA",
     "section": "2.4 Example 3:",
-    "text": "2.4 Example 3:\nLastly, let’s walk through an example from the lavaan documentation\n\n\n\n\nFinch, French, W. Holmes. 2015. Latent Variable Modeling with r.\n\n\nKline, Rex B. 2011. Principles and Practice of Structural Equation Modeling."
+    "text": "2.4 Example 3:\nNow we’ll look at an example from Kline (2011), chapter 13.\nLoad the data:\n\ndat_kline <- read_csv('data/kline/kabc-amos.csv')\n\nWarning: One or more parsing issues, call `problems()` on your data frame for details,\ne.g.:\n  dat <- vroom(...)\n  problems(dat)\n\n\nRows: 11 Columns: 10\n── Column specification ────────────────────────────────────────────────────────\nDelimiter: \",\"\nchr (2): rowtype_, varname_\ndbl (8): HM, NR, WO, GC, Tr, SM, MA, PS\n\nℹ Use `spec()` to retrieve the full column specification for this data.\nℹ Specify the column types or set `show_col_types = FALSE` to quiet this message."
   },
   {
-    "objectID": "summary.html",
-    "href": "summary.html",
-    "title": "3  Summary",
-    "section": "",
-    "text": "In summary, this book has no content whatsoever.\n\n1 + 1\n\n[1] 2"
+    "objectID": "cfa.html#example-4",
+    "href": "cfa.html#example-4",
+    "title": "2  CFA",
+    "section": "2.5 Example 4:",
+    "text": "2.5 Example 4:\nLastly, let’s walk through an example from the lavaan documentation\n\n\n\n\nFinch, French, W. Holmes. 2015. Latent Variable Modeling with r.\n\n\nKline, Rex B. 2011. Principles and Practice of Structural Equation Modeling."
   },
   {
     "objectID": "references.html",

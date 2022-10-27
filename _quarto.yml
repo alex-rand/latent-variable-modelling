@@ -9,7 +9,6 @@ book:
     - index.qmd
     - intro.qmd
     - cfa.qmd
-    - summary.qmd
     - references.qmd
 
 bibliography: references.bib

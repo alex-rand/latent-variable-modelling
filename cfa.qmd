@@ -16,9 +16,83 @@ library(lavaan)
 
 ```
 
-## Example 1: 
+## Example 1: Toxic Striving Energy
 
-The first example we'll look at is from @Finch2015. chapter 13. 
+The first example we'll look at is from @Finch2015. chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns that mention AGS in the name:
+
+```{r message=FALSE, warning=FALSE}
+
+### Load the data
+dat_raw <- foreign::read.spss('data/finch-and-french/edps744.sav') 
+  
+### Clean the data
+dat_ags <- dat_raw %>% 
+
+  # Convert to a data frame for ease of use
+  as.data.frame() %>% 
+  
+  # Keep only columns that start with the prefix 'ags' followed by a question number
+  select(matches("ags\\d")) 
+
+```
+
+We don't want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don't mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf. But just for fun, we can explore the distributions of the answers to each of the 12 questions: 
+
+```{r warning = FALSE, message = FALSE}
+
+dat_ags %>% 
+
+  # Pivot to prepare the data for visualization
+  pivot_longer(
+    cols      = everything(),
+    names_to  = "question",
+    values_to = "response",
+    names_transform = list(question = fct_inorder)  
+  ) %>% 
+
+  # Plot
+  ggplot() +
+  geom_histogram(aes(x = response)) + 
+  theme_bw() + 
+  facet_wrap(~question)
+
+```
+
+Seems like some questions have different means and variances from each other. For example, the answers to `ags11` and `ags12` are relatively flat, while the answers to `ags4` and `ags5` are more bunched up around the highest values. 
+
+We can also do some healthy exploration of missingness in the dataset. For starters: what proportion of values are missing in each row?
+
+```{r}
+
+dat_ags %>% 
+  
+  summarise_all(~ sum(is.na(.)) / (sum(is.na(.) + sum(!is.na(.))))) %>% 
+  
+  mutate(across(everything(), round, 6)) %>% 
+  
+  knitr::kable(title = "Proportion of Missing Responses in Each Column") 
+
+```
+
+That's very little missingness. Probably no need to do multiple imputation here. 
+
+The authors also do a preliminary test of whether the responses are normally distributed, since this is one of the fundamental assumptions of maximum likelihood estimation. 
+
+The researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them. 
+
+One of the candidate hypotheses is that a person's toxic striving energy ('achievement goal orientedness'?) is secretly driven by four platonic unobservable things, namely:
+
+1.  Mastery Approach 'MAP' (eg. *"I want to learn as much as possible")*;
+
+2.  Mastery Avoidant 'MAV' (eg. *"I want to avoid learning less than I possibly could"*);
+
+3.  Performance Approach 'PAP' (eg. *"I want to do well compared to other students");*
+
+4.  Performance Avoidant 'PAV' (eg. *"It is important for me to avoid doing poorly compared to other students"*)
+
+But another theory says that actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'. 
+
+These will be the two candidate hypotheses we're gonna test via factor analysis. 
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -33,9 +107,34 @@ dat_ff <- dat_ff %>%
 
 ```
 
-## Example 2: 
+## Example 2:
 
-Now we'll look at an example from @Kline2011, chapter 13. 
+```{r message=FALSE, warning=FALSE}
+
+dat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')
+
+# Seems like I need to only use the first 12 columns I think?
+dat_ff <- dat_ff %>% 
+  
+  as_tibble() %>% 
+  
+  select(1:12)
+
+```
+
+Next we'll do another example from @Finch2015, from the SEM chapter on page 62. They say it is important to CFA first before testing the relationships between the latent variables a la SEM, because we first want to make sure those latent variables actually seem good. This example uses a different dataset than the previous one.
+
+> \[W\]e must ascertain whether the proposed model structure is supported by our data, which we will do by fitting a CFA to each of the latent variables...
+
+The authors fit a CFA for each of the latent variables in isolation, namely Mastery, Self-Oriented Perfectionism, and 'ATTC', [which seems to mean 'Attention Control'](https://arc.psych.wisc.edu/self-report/attention-control-scale-attc/#:~:text=The%20Attention%20Control%20Scale%20(ATTC,)%20to%204%20(always).)
+
+```{r message=FALSE, warning=FALSE}
+
+```
+
+## Example 3:
+
+Now we'll look at an example from @Kline2011, chapter 13.
 
 Load the data:
 
@@ -46,7 +145,6 @@ dat_kline <- read_csv('data/kline/kabc-amos.csv')
 
 ```
 
-
-## Example 3:
+## Example 4:
 
 Lastly, let's walk through [an example from the lavaan documentation](https://www.lavaan.ugent.be/tutorial/cfa.html)

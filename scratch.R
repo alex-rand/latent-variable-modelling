@@ -1,21 +1,47 @@
 library(tidyverse)
 
-dat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')
-
-dat_ff <- psych::char2numeric(dat_ff) 
-
-psych::mardia(what)
-
-psych::fa.parallel(what, fa="fa", fm="ml")
-
-what <- dat_ff %>% 
+dat_raw <- foreign::read.spss('data/finch-and-french/edps744.sav') 
   
-  as_tibble() %>% 
-  
-  select(1:12)
+dat_ags <- dat_raw %>% 
 
-what %>% view()
+  as.data.frame() %>% 
   
-dat %>% view()
+  select(matches("ags\\d"))  
 
-?char2numeric
+get_prop_na <- function(x){
+  
+  res <- sum(is.na(x)) / (sum(is.na(x) + sum(!is.na(x))))
+  
+  res
+  
+}
+  
+  
+
+
+
+dat_ags %>% 
+  
+  summarise_all(~ sum(is.na(.)) / (sum(is.na(.) + sum(!is.na(.))))) %>% 
+  
+  mutate(across(everything(), round, 6)) %>% 
+  
+  knitr::kable(title = "Proportion of Missing Responses in Each Column") 
+  
+  knitr::kable() 
+  
+  
+  
+ 
+  
+  summarise_all(sum(is.na(.)))
+
+mice::md.pattern(dat_ags)
+  
+  view(
+  
+  select(starts_with("ags")) %>% 
+  
+  view()
+
+select(matches("ags\d")) 
