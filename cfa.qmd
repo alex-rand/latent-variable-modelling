@@ -18,7 +18,7 @@ library(lavaan)
 
 ## Example 1: Toxic Striving Energy
 
-The first example we'll look at is from @Finch2015. chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns that mention AGS in the name:
+The first example we'll look at is from @Finch2015. chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns with responses to the AGS questionnaire:
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -36,7 +36,8 @@ dat_ags <- dat_raw %>%
 
 ```
 
-We don't want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don't mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf. But just for fun, we can explore the distributions of the answers to each of the 12 questions: 
+### Data Exploration
+We don't want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don't mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf). But just for fun, we can explore the distributions of the answers to each of the 12 questions:
 
 ```{r warning = FALSE, message = FALSE}
 
@@ -58,7 +59,7 @@ dat_ags %>%
 
 ```
 
-Seems like some questions have different means and variances from each other. For example, the answers to `ags11` and `ags12` are relatively flat, while the answers to `ags4` and `ags5` are more bunched up around the highest values. 
+Seems like some questions have different means and variances from each other. For example, the answers to `ags11` and `ags12` are relatively flat, while the answers to `ags4` and `ags5` are more bunched up around the highest values. The responses clearly skew towards higher values in aggregate.
 
 We can also do some healthy exploration of missingness in the dataset. For starters: what proportion of values are missing in each row?
 
@@ -66,6 +67,7 @@ We can also do some healthy exploration of missingness in the dataset. For start
 
 dat_ags %>% 
   
+  # Calculate the proportion of missing values 
   summarise_all(~ sum(is.na(.)) / (sum(is.na(.) + sum(!is.na(.))))) %>% 
   
   mutate(across(everything(), round, 6)) %>% 
@@ -74,11 +76,41 @@ dat_ags %>%
 
 ```
 
-That's very little missingness. Probably no need to do multiple imputation here. 
+That's very little missingness. Probably no need to do multiple imputation here.
 
-The authors also do a preliminary test of whether the responses are normally distributed, since this is one of the fundamental assumptions of maximum likelihood estimation. 
+The authors also do a preliminary test of whether the responses are normally distributed, since this is one of the fundamental assumptions of maximum likelihood estimation. Kristoffer Magnusson has created [a cool interactive teaching tool that nicely illustrates this point](https://rpsychologist.com/likelihood/). It is worth remembering that we *do not* make this type of assumption for linear regression in general -- only for maximum likelihood estimates. All we need assume for linear regression is that the *residuals* are normally distributed, as opposed to the data themselves. This common misunderstanding leads to what Richard McElreath has called ['histomancy'](https://stats.stackexchange.com/questions/515444/histomancy-what-does-mcelreath-propose-we-do-instead).
 
-The researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them. 
+To evaluate the assumption of normalness underlying maximum likelihood estimation, the authors do what seems to be a multivariate version of a classic 'normal probability plot'. These are explained nicely in [this stack exchange thread.](https://stats.stackexchange.com/questions/218638/understanding-normal-probability-plots) They also produce some of the classic tests of skew and kurtosis, which I don't want to get into here. [This youtuber](https://www.youtube.com/watch?v=TM033GCU-SY&t=26s) has nice introductory videos about these topics.
+
+```{r}
+
+# Run the Mardia tests for normalness
+mardia.object <- psych::mardia(dat_ags)
+
+# Plot the multivariate version of the normal probability plot
+plot(mardia.object)
+
+# Present the outputs we're interested in
+tibble(
+  "Skew" = mardia.object$skew,
+  "Skew p-value" = mardia.object$p.skew,
+  "Kurtosis" = mardia.object$kurtosis,
+  "Kurtosis p-value" = mardia.object$p.kurt
+) %>% 
+  
+  knitr::kable()
+  
+
+```
+
+The plotted points don't seem to fit the straight line super well, which suggests that the normalness assumption may not hold here. Also, the hypothesis tests for skew and kurtosis return some mighty low p-values, suggesting that we've got lots of each of them. So maybe maximum likelihood estimation isn't such a good idea here?
+
+The authors proceed with it anyway for pedogogical reasons, because they want to illustrate how the maximum likelihood estimates differ from estimates arrived at using other methods.
+
+> In actual practice, given the lack of multivariate normality that seems apparent in the previous results, we would likely not use ML and instead rely on the alternative estimation approach.
+
+### Model Fitting
+The researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them.
 
 One of the candidate hypotheses is that a person's toxic striving energy ('achievement goal orientedness'?) is secretly driven by four platonic unobservable things, namely:
 
@@ -90,9 +122,9 @@ One of the candidate hypotheses is that a person's toxic striving energy ('achie
 
 4.  Performance Avoidant 'PAV' (eg. *"It is important for me to avoid doing poorly compared to other students"*)
 
-But another theory says that actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'. 
+But another theory says that actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'.
 
-These will be the two candidate hypotheses we're gonna test via factor analysis. 
+These will be the two candidate hypotheses we're gonna test via factor analysis.
 
 ```{r message=FALSE, warning=FALSE}
 
