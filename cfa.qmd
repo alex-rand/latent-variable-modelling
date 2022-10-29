@@ -37,6 +37,7 @@ dat_ags <- dat_raw %>%
 ```
 
 ### Data Exploration
+
 We don't want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don't mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf). But just for fun, we can explore the distributions of the answers to each of the 12 questions:
 
 ```{r warning = FALSE, message = FALSE}
@@ -70,8 +71,10 @@ dat_ags %>%
   # Calculate the proportion of missing values 
   summarise_all(~ sum(is.na(.)) / (sum(is.na(.) + sum(!is.na(.))))) %>% 
   
+  # Rounding to make the results more presentable
   mutate(across(everything(), round, 6)) %>% 
   
+  # Create the table
   knitr::kable(title = "Proportion of Missing Responses in Each Column") 
 
 ```
@@ -110,6 +113,7 @@ The authors proceed with it anyway for pedogogical reasons, because they want to
 > In actual practice, given the lack of multivariate normality that seems apparent in the previous results, we would likely not use ML and instead rely on the alternative estimation approach.
 
 ### Model Fitting
+
 The researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them.
 
 One of the candidate hypotheses is that a person's toxic striving energy ('achievement goal orientedness'?) is secretly driven by four platonic unobservable things, namely:
@@ -122,22 +126,71 @@ One of the candidate hypotheses is that a person's toxic striving energy ('achie
 
 4.  Performance Avoidant 'PAV' (eg. *"It is important for me to avoid doing poorly compared to other students"*)
 
-But another theory says that actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'.
+We'll call the above hypothesis **H1.** But there's another hypothesis that says actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'. We'll call this one **H2.**
 
 These will be the two candidate hypotheses we're gonna test via factor analysis.
 
+The way **lavaan** works is that you need to separately define the model syntax as a string, and then feed that string to one of the model-fitting functions like `cfa()` . Then we can call the `summary()` function to get a big table of outputs.
+
 ```{r message=FALSE, warning=FALSE}
 
-dat_ff <- foreign::read.spss('data/finch-and-french/performance.data.sav')
+# Define the relationships from my hypothesis
+h1.definition <- 
+'map=~ags1+ags5+ags7
+mav=~ags2+ags6+ags12
+pap=~ags3+ags9+ags11
+pav=~ags4+ags8+ags10'
 
-# Seems like I need to only use the first 12 columns I think?
-dat_ff <- dat_ff %>% 
-  
-  as_tibble() %>% 
-  
-  select(1:12)
+# Fit the model
+h1.fit <- cfa(
+  data  = dat_ags,
+  model = h1.definition
+)
+
+# Look at the results
+summary(h1.fit, fit.measures = TRUE)
+
+semPlot::semPaths(h1.fit)
 
 ```
+
+That's a lot of outputs. Let's talk about what's here.
+
+### Goodness of Fit Statistics
+
+#### Chi-Squared Statistic
+
+The main thing to look at is the chi-squared statistic from the 'User Model', IE the model I, the user, have just fit. I like to think of this as a measure of how different the model's reconstructed correlation matrix looks compared to the actual empirical correlation matrix of the data. So we use this statistic to test the null hypothesis "there is no significant difference between model's reconstructed correlation matrix and the empirical one". So, confusingly, we're actually hoping to *accept* the null hypothesis here. This model returns a value of 328.312 with a vanishingly small p-value, so we reject the null hypothesis, which is bad: it suggests our model isn't doing a good job replicating the empirical correlation matrix.
+
+Here's a quote from @gorsuch1983 that explains this stuff from the slightly different angle:
+
+> "The test of significance \[for a CFA model fit by maximum likelihood\] gives a chi-square statistic with the null hypothesis being that all the population covariance has been extracted by the hypothesized number of factors. If the chi-square is significant at the designated probability level, then the residual matrix still has significant covariance in it."
+
+So this chi-squared statistic provides a first look at goodness-of-fit, but \@Finch2015 say it is actually not very trustworthy in practice because the null hypothesis is sort of crazy: we want a more permissive test than just whether the model is *perfectly* recreating the empirical correlation matrix.
+
+> "this statistic is not particularly useful in practice because it tests the null hypothesis that \[the model-reconstructed correlation matrix is equal to the empirical correlation matrix\], which is very restrictive. The test will almost certainly be rejected when the sample size is sufficiently large... In addition, the chi-square test relies on the assumption of multivariate normality of the indicators, which may not be tenable in many situations."
+
+So we're gonna wanna look at statistics other than just chi-squared for goodness-of-fit.
+
+#### Root Mean Squared Error Approximation (RMSEA)
+
+Another one people like to go with is the Root Mean Squared Error Approximation (RMSEA). This statistic takes some math and background to understand, which I'm not going to go over here. I found [this document](http://www.statpower.net/Content/312/Handout/Measures%20of%20Fit%20in%20Structural%20Equation%20Modeling.pdf) to be the clearest (but also pretty mathy) explanation.
+
+Essentially RMSEA is a weighted sum of the discrepancies between the model's reconstructed correlation matrix and the empirical correlation matrix. But it also does a nice thing where it discounts model complexity and sample size to help us not overfit. Here's the definition:
+
+$\text{RMSEA} = \sqrt{\dfrac{χ^2 - \text{df}}{\text{df}(n-1)}}$
+
+See how it takes the chi-squared statistic and divides it by degrees of freedom (as a proxy for model complexity) and sample size? This makes for a more conservative measure of goodness-of-fit. Apparently the square-root is used *"to return the index to the same metric as the original standardized parameters"*. I don't really understand that part.
+
+As with the raw chi-squared statistic, we want RMSEA to be small because it is intended as a measure of the distance between the empirical correlation matrix and the model-estimated correlation matrix. According to @Finch2015, people like to say:
+
+-    RMSEA \<= 0.05 is a 'good fit';
+
+-   0.05 \< RMSEA \<= 0.08 is an 'ok fit'
+
+-   RMSEA > .08 is a 'bad fit'.
+
+**Comparative Fit Index (CFI)**
 
 ## Example 2:
 

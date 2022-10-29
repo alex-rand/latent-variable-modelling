@@ -1,4 +1,5 @@
 library(tidyverse)
+library(lavaan)
 
 dat_raw <- foreign::read.spss('data/finch-and-french/edps744.sav') 
   
@@ -8,38 +9,34 @@ dat_ags <- dat_raw %>%
   
   select(matches("ags\\d"))  
 
+h1.definition <- 
+'map=~ags1+ags5+ags7
+mav=~ags2+ags6+ags12
+pap=~ags3+ags9+ags11
+pav=~ags4+ags8+ags10'
 
+h1.fit <- cfa(
+  data  = dat_ags,
+  model = h1.definition
+)
 
-mardia.object <- psych::mardia(dat_ags)
+?semp
 
-# Plot the multivariate version of the normal probability plot:
-plot(mardia.object)
+semPlot::semPaths(h1.fit)
+h1.summary <- summary(h1.fit)
 
-# Present the outputs we're interested in.
-tibble(
-  "Skew" = mardia.object$skew,
-  "Skew p-value" = mardia.object$p.skew,
-  "Kurtosis" = mardia.object$kurtosis,
-  "Kurtosis p-value" = mardia.object$p.kurt
-) %>% 
+factor_loadings <- h1.summary 
+
+h1.summary$pe %>% 
   
-  knitr::kable()
-
-mardia.object$p.skew
-mardia.object$p.kurt
-psych::describe(dat_ags)
-
-qqnorm(dat_ags$ags1, 
-       ylab = "Birth Weight (in grams)")
-
-
-qqline(birthwt$bwt)
-
-dat_ags %>% 
+  slice(1:12) %>% 
   
-  # Calculate the proportion of missing values 
-  summarise_all(~ sum(is.na(.)) / nrow(.)) 
   
-  mutate(across(everything(), round, 6)) %>% 
   
-  knitr::kable(title = "Proportion of Missing Responses in Each Column") 
+  
+factor
+
+what$pe
+h1.cfa()
+
+achievement.goal.cfa4.model

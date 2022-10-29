@@ -14,7 +14,7 @@ Specifically, it seems like these are the sub-areas of latent variable modelling
 
 -   Full SEM;
 
--   Longitudinal SEM
+-   Longitudinal SEM.
 
 Maybe I'll discover some other types of things along the way. It's a lifelong journey haha.
 
