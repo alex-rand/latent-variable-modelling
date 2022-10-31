@@ -18,7 +18,7 @@ library(lavaan)
 
 ## Example 1: Toxic Striving Energy
 
-The first example we'll look at is from @Finch2015. chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns with responses to the AGS questionnaire:
+The first example we'll look at is from @Finch2015, chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns with responses to the AGS questionnaire:
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -81,7 +81,7 @@ dat_ags %>%
 
 That's very little missingness. Probably no need to do multiple imputation here.
 
-The authors also do a preliminary test of whether the responses are normally distributed, since this is one of the fundamental assumptions of maximum likelihood estimation. Kristoffer Magnusson has created [a cool interactive teaching tool that nicely illustrates this point](https://rpsychologist.com/likelihood/). It is worth remembering that we *do not* make this type of assumption for linear regression in general -- only for maximum likelihood estimates. All we need assume for linear regression is that the *residuals* are normally distributed, as opposed to the data themselves. This common misunderstanding leads to what Richard McElreath has called ['histomancy'](https://stats.stackexchange.com/questions/515444/histomancy-what-does-mcelreath-propose-we-do-instead).
+The authors also do a preliminary test of whether the responses are normally distributed, since this is one of the fundamental assumptions of maximum likelihood estimation. Kristoffer Magnusson has created [a cool interactive teaching tool that nicely illustrates this point](https://rpsychologist.com/likelihood/). It is worth remembering that we *do not* make this type of assumption for linear regression in general -- only for maximum likelihood estimates. All we need assume for linear regression is that the *residuals* are normally distributed, as opposed to the data themselves. This common misunderstanding can lead researchers to commit what Richard McElreath has called ['histomancy'](https://stats.stackexchange.com/questions/515444/histomancy-what-does-mcelreath-propose-we-do-instead).
 
 To evaluate the assumption of normalness underlying maximum likelihood estimation, the authors do what seems to be a multivariate version of a classic 'normal probability plot'. These are explained nicely in [this stack exchange thread.](https://stats.stackexchange.com/questions/218638/understanding-normal-probability-plots) They also produce some of the classic tests of skew and kurtosis, which I don't want to get into here. [This youtuber](https://www.youtube.com/watch?v=TM033GCU-SY&t=26s) has nice introductory videos about these topics.
 
@@ -148,49 +148,188 @@ h1.fit <- cfa(
 )
 
 # Look at the results
-summary(h1.fit, fit.measures = TRUE)
+h1.summary <- summary(h1.fit, fit.measures = TRUE)
+
+h1.summary
 
 semPlot::semPaths(h1.fit)
 
 ```
 
-That's a lot of outputs. Let's talk about what's here.
+That's a lot of outputs. Let's break down the output into smaller bite-sized chunks.
 
 ### Goodness of Fit Statistics
 
 #### Chi-Squared Statistic
 
-The main thing to look at is the chi-squared statistic from the 'User Model', IE the model I, the user, have just fit. I like to think of this as a measure of how different the model's reconstructed correlation matrix looks compared to the actual empirical correlation matrix of the data. So we use this statistic to test the null hypothesis "there is no significant difference between model's reconstructed correlation matrix and the empirical one". So, confusingly, we're actually hoping to *accept* the null hypothesis here. This model returns a value of 328.312 with a vanishingly small p-value, so we reject the null hypothesis, which is bad: it suggests our model isn't doing a good job replicating the empirical correlation matrix.
+The first thing to look at is the chi-squared statistic from the 'User Model', IE the model I, the user, have just fit. I like to think of this as a measure of how different the model's reconstructed correlation matrix looks compared to the actual empirical correlation matrix of the data. So we use this statistic to test the null hypothesis "there is no significant difference between model's reconstructed correlation matrix and the empirical one". So, confusingly, we're actually hoping to *accept* the null hypothesis here. This model returns a value of 328.312 with a vanishingly small p-value, so we reject the null hypothesis, which is bad: it suggests our model isn't doing a good job replicating the empirical correlation matrix.
 
 Here's a quote from @gorsuch1983 that explains this stuff from the slightly different angle:
 
 > "The test of significance \[for a CFA model fit by maximum likelihood\] gives a chi-square statistic with the null hypothesis being that all the population covariance has been extracted by the hypothesized number of factors. If the chi-square is significant at the designated probability level, then the residual matrix still has significant covariance in it."
 
-So this chi-squared statistic provides a first look at goodness-of-fit, but \@Finch2015 say it is actually not very trustworthy in practice because the null hypothesis is sort of crazy: we want a more permissive test than just whether the model is *perfectly* recreating the empirical correlation matrix.
+So this chi-squared statistic provides a first look at goodness-of-fit, but @Finch2015 say it is actually not very trustworthy in practice because the null hypothesis is sort of crazy: we want a more permissive test than just whether the model is *perfectly* recreating the empirical correlation matrix.
 
 > "this statistic is not particularly useful in practice because it tests the null hypothesis that \[the model-reconstructed correlation matrix is equal to the empirical correlation matrix\], which is very restrictive. The test will almost certainly be rejected when the sample size is sufficiently large... In addition, the chi-square test relies on the assumption of multivariate normality of the indicators, which may not be tenable in many situations."
 
-So we're gonna wanna look at statistics other than just chi-squared for goodness-of-fit.
+So we're gonna wanna look at statistics other than just chi-squared for goodness-of-fit, but it seems like a fine place to start. Let's look at the chi-squared statistic of our model:
+
+```{r}
+
+### Create a nice summary table
+tibble(
+  Test             = "standard chi-squared",
+  `DF`             = h1.summary$test$standard$df,
+  `Test Statistic` = round(h1.summary$test$standard$stat, 2),
+  `p-value`        = h1.summary$test$standard$pvalue
+) %>% 
+  
+  mutate(across(everything(), as.character)) %>% 
+  
+  pivot_longer(everything()) %>% 
+  
+  knitr::kable()
+
+```
+
+It takes lots of skill and experience to have a sense of whether a test statistic is big or small given the degrees of freedom at play, but we can see from the p-value that we reject the null hypothesis in a big way. This is bad -- it suggests that, given our assumptions, there's a big difference between our model and the data.
 
 #### Root Mean Squared Error Approximation (RMSEA)
 
 Another one people like to go with is the Root Mean Squared Error Approximation (RMSEA). This statistic takes some math and background to understand, which I'm not going to go over here. I found [this document](http://www.statpower.net/Content/312/Handout/Measures%20of%20Fit%20in%20Structural%20Equation%20Modeling.pdf) to be the clearest (but also pretty mathy) explanation.
 
-Essentially RMSEA is a weighted sum of the discrepancies between the model's reconstructed correlation matrix and the empirical correlation matrix. But it also does a nice thing where it discounts model complexity and sample size to help us not overfit. Here's the definition:
+Essentially, RMSEA is a weighted sum of the discrepancies between the model's reconstructed correlation matrix and the empirical correlation matrix. But it also does a nice thing where it discounts model complexity and sample size to help us not overfit. Here's the definition:
 
 $\text{RMSEA} = \sqrt{\dfrac{χ^2 - \text{df}}{\text{df}(n-1)}}$
 
-See how it takes the chi-squared statistic and divides it by degrees of freedom (as a proxy for model complexity) and sample size? This makes for a more conservative measure of goodness-of-fit. Apparently the square-root is used *"to return the index to the same metric as the original standardized parameters"*. I don't really understand that part.
+See how it takes the chi-squared statistic and divides it by degrees of freedom (as a proxy for model complexity) and sample size? This makes for a more conservative measure of goodness-of-fit. Apparently the square-root is used *"to return the index to the same metric as the original standardized parameters"*. I don't really understand that part... is it because a Chi-squared random variable is the squared version of a normal standard variable?
 
 As with the raw chi-squared statistic, we want RMSEA to be small because it is intended as a measure of the distance between the empirical correlation matrix and the model-estimated correlation matrix. According to @Finch2015, people like to say:
 
--    RMSEA \<= 0.05 is a 'good fit';
+-   RMSEA \<= 0.05 is a 'good fit';
 
 -   0.05 \< RMSEA \<= 0.08 is an 'ok fit'
 
 -   RMSEA > .08 is a 'bad fit'.
 
-**Comparative Fit Index (CFI)**
+Let's check the RMSEA of our model:
+
+```{r}
+
+# make a nice summary table
+h1.summary$fit %>% 
+  
+  as_tibble(rownames = "stat") %>% 
+  
+  filter(str_detect(stat, "rmsea")) %>% 
+  
+  knitr::kable()
+
+```
+
+Yikes -- looks like our whole RMSEA, as well as its confidence interval, are above the 'bad fit' conventional threshold of .08. This corroborates what we saw with the chi-squared statistic above.
+
+#### **Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI)**
+
+CFI seems to be the most trusted and widely-used tool for assessing goodness of fit in a CFA. Basically the idea is that we ask: "how much does the chi-squared statistic of my model differ from the chi-squared statistic of the worst model I can think of?", where the conventional "worst model I can think of" is the model where I assume all of my observed variables are totally uncorrelated. This sort of has the opposite flavour of the deviance statistic I'm already familiar with, which compares the current model with "the best model I can think of."
+
+$\text{CFI} = 1 - \dfrac{\text{max}(χ^2_T - \text{df}_T, 0)}{\text{max}(χ^2_0 - \text{df}_0, 0)}$
+
+Actually, the numerator and denominator are both equal to the 'non-centrality parameter' of their respective candidate distributions. I'm not gonna get into this, but this is an idea that also shows up in power analysis as a way of comparing the null and candidate hypotheses.
+
+We want to end up with a CFI as close to 1 as possible, because that suggests a big difference between my model and the worst possible model. So people say we can sort of think of this as analogous to $R^2$ from linear regression. People seem to have adopted 0.95 as am arbitrary cutoff for 'good fit' for the CFI.
+
+If you want to learn more about the CFI, I found [this article](https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1561&context=pare) a well-written resource.
+
+Tucker-Lewis Index seems to be pretty similar to CFI, and we interpret it in the same way. Let's look at both of them:
+
+```{r}
+
+# Make a nice summary table
+h1.summary$fit %>% 
+  
+  as_tibble(rownames = "stat") %>% 
+  
+  filter(str_detect(stat, "cfi|tli")) %>% 
+  
+  knitr::kable()
+
+```
+
+Looks like the CFI and TLI look ok, but don't meet the conventional .95 cutoff. So they are in line with the chi-squared and RMSEA in suggesting that our goodness-of-fit isn't so good.
+
+### Factor Loadings
+
+These are essentially just the regression coefficients of each factor on each of the outcome variables for which it was allowed to be a covariate. So we want them to be big and significant.
+
+```{r}
+
+### Make a nice summary table of the factor loadings
+h1.summary$pe %>% 
+  
+  as_tibble() %>% 
+  
+  # Keep only the rows with info on factor loadings
+  slice(1:12) %>% 
+  
+  # Clean up the important values, then combine them into a single column
+  mutate(
+    across(.cols = c("est", "se"), round, 2),
+    est = paste0(est, " (se = ", se, ", pvalue = ", pvalue, ")")
+  ) %>% 
+    
+  # reformat the table
+  select(lhs, rhs, est) %>% 
+  
+  pivot_wider(
+    names_from = "lhs", 
+    values_from = "est",
+    values_fill = "0"
+  ) %>% 
+  
+  column_to_rownames("rhs") %>% 
+  
+  knitr::kable(caption = "Factor loadings, standard errors, and p-values")
+
+```
+
+Firstly, notice that the loading of the first factor of each variable is automatically fixed at 1. This is just a default convention we adopt to make sure that the other loadings are identifiable -- you can override this default, but you'd better have an alternative plan for making sure things are identifiable.
+
+Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our factor model is a good fit. But it is not sufficient, so these p-values are not super informative.
+
+Next let's look at the estimated correlations between the factors.
+
+```{r}
+
+### Make a nicer version of the correlation matrix of the factors
+  
+h1.summary$pe %>% 
+  
+  as_tibble() %>% 
+ 
+  # Keep only the rows with info on factor loadings
+  slice(25:34) %>% 
+ 
+  # Clean up the important values, then combine them into a single column
+
+  select(lhs, rhs, std.lv) %>% 
+  
+  mutate(
+    std.lv = round(std.lv, 2),
+    across(everything(), as.character)
+  ) %>% 
+  
+  pivot_wider(
+    names_from = "lhs", 
+    values_from = "std.lv",
+    values_fill = " " 
+  ) %>% 
+  
+  column_to_rownames("rhs") %>% 
+  
+  knitr::kable(caption = "Correlation matrix of the factors")
+
+```
 
 ## Example 2:
 
@@ -216,6 +355,10 @@ The authors fit a CFA for each of the latent variables in isolation, namely Mast
 ```{r message=FALSE, warning=FALSE}
 
 ```
+
+## Cool ecology example I should do instead:
+
+https://www.usgs.gov/centers/wetland-and-aquatic-research-center/science/quantitative-analysis-using-structural-equation
 
 ## Example 3:
 

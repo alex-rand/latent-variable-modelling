@@ -20,10 +20,52 @@ h1.fit <- cfa(
   model = h1.definition
 )
 
-?semp
 
-semPlot::semPaths(h1.fit)
-h1.summary <- summary(h1.fit)
+h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
+
+
+  
+h1.summary$pe %>% 
+  
+  as_tibble() %>% 
+ 
+  # Keep only the rows with info on factor loadings
+  slice(25:34) %>% 
+ 
+  # Clean up the important values, then combine them into a single column
+
+  select(lhs, rhs, std.lv) %>% 
+  
+  mutate(
+    std.lv = round(std.lv, 2),
+    across(everything(), as.character)
+  ) %>% 
+  
+  pivot_wider(
+    names_from = "lhs", 
+    values_from = "std.lv",
+    values_fill = " " 
+  ) %>% 
+  
+  column_to_rownames("rhs") %>% 
+
+  knitr::kable(
+
+  
+  select()
+
+tibble(
+  Test             = "standard chi-squared",
+  `DF`             = h1.summary$test$standard$df,
+  `Test Statistic` = round(h1.summary$test$standard$stat, 2),
+  `p-value`        = h1.summary$test$standard$pvalue
+) %>% 
+  
+  mutate(across(everything(), as.character)) %>% 
+  
+  pivot_longer()
+  
+  
 
 factor_loadings <- h1.summary 
 
