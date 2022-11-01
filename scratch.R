@@ -23,6 +23,7 @@ h1.fit <- cfa(
 
 h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
+h1.summary
 
   
 h1.summary$pe %>%  

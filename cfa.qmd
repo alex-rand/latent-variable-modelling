@@ -295,11 +295,17 @@ h1.summary$pe %>%
 
 Firstly, notice that the loading of the first factor of each variable is automatically fixed at 1. This is just a default convention we adopt to make sure that the other loadings are identifiable -- you can override this default, but you'd better have an alternative plan for making sure things are identifiable.
 
-Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our factor model is a good fit. But it is not sufficient.
+Remember, my goal is to convince my research peers that the observed variables are actually providing a way of measuring the unobservable 'factor' I'm purporting to exist. One way of making this case is to look for **Convergent Validity.** Essentially what we'd like to see is that all of a factor's variables load really highly on that factor, but also that they all load to more or less the same degree. In the words of @gorsuch1983:
+
+> *"Convergent validity occurs when several variables deemed to measure the same construct correlate with each other...factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables."*
+
+Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our measured variables are actually good proxies for the imaginary 'latent' factor we're purporting to use them to measure.
+
+But
 
 All-in-all, this provides fine evidence of convergent validity because the loadings are all significant and positive?
 
-### Factor Loadings and Discriminant Validity
+### Factor Correlations and Discriminant Validity
 
 Next let's look at the estimated correlations between the factors. If my hypothesis H1 is true then we should expect all of the factors to be pretty uncorrelated from each other, but if H2 is true then we should expect MAP and MAV to be super correlated with each other, because H2 thinks there's no such thing as MAP and MAV -- there's just one big 'Mastery' factor:
 
@@ -341,7 +347,7 @@ Interesting -- the 'Mastery' factors and the 'Performance' factors each seem to 
 
 This has the flavour of a likelihood-ratio test. Let's do it. First we need to fit the model where the correlation between the Mastery factors and the correlation between the 'Performance' factors are both constrained to be 1:
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 
 # Define the relationships from my hypothesis
 h1_orthogonal.definition <- 
@@ -375,7 +381,7 @@ Actually, I think another way we could have done this would be to just fit the m
 
 ### Residual Variances
 
-The thing to notice here is that the observables with the biggest loadings will also have the smallest residual variances, unsurprisingly. Be sure to focus on the `Std.all` column when doing these assessments, because [that's what this person does](https://www.youtube.com/watch?v=XnHFWe7RFr0). I SHOULD FIGURE OUT HOW THIS ALL PLAYS IN FOR FIGURING OUT CONVERGENT VALIDITY -- I THINK GORSUCH SAYS THE WITHIN-FACTOR LOADINGS SHOULDN'T BE SIGNIFICANTLY DIFFERENT FROM EACH OTHER? FIND THAT QUOTE
+The thing to notice here is that the observables with the biggest loadings will also have the smallest residual variances, unsurprisingly. Be sure to focus on the `Std.all` column when doing these assessments, because [that's what this person does](https://www.youtube.com/watch?v=XnHFWe7RFr0). This lets you do fair comparisons between the loadings and residual variance parameters, since it constraints them all to the scale of a correlation coefficient, IE \[-1, 1\]. I SHOULD FIGURE OUT HOW THIS ALL PLAYS IN FOR FIGURING OUT CONVERGENT VALIDITY -- I THINK GORSUCH SAYS THE WITHIN-FACTOR LOADINGS SHOULDN'T BE SIGNIFICANTLY DIFFERENT FROM EACH OTHER? FIND THAT QUOTE
 
 ### Model 'Selection'
 
