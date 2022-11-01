@@ -148,7 +148,7 @@ h1.fit <- cfa(
 )
 
 # Look at the results
-h1.summary <- summary(h1.fit, fit.measures = TRUE)
+h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
 h1.summary
 
@@ -258,7 +258,7 @@ h1.summary$fit %>%
 
 Looks like the CFI and TLI look ok, but don't meet the conventional .95 cutoff. So they are in line with the chi-squared and RMSEA in suggesting that our goodness-of-fit isn't so good.
 
-### Factor Loadings
+### Factor Loadings & Convergent Validty
 
 These are essentially just the regression coefficients of each factor on each of the outcome variables for which it was allowed to be a covariate. So we want them to be big and significant.
 
@@ -295,9 +295,13 @@ h1.summary$pe %>%
 
 Firstly, notice that the loading of the first factor of each variable is automatically fixed at 1. This is just a default convention we adopt to make sure that the other loadings are identifiable -- you can override this default, but you'd better have an alternative plan for making sure things are identifiable.
 
-Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our factor model is a good fit. But it is not sufficient, so these p-values are not super informative.
+Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our factor model is a good fit. But it is not sufficient.
 
-Next let's look at the estimated correlations between the factors.
+All-in-all, this provides fine evidence of convergent validity because the loadings are all significant and positive?
+
+### Factor Loadings and Discriminant Validity
+
+Next let's look at the estimated correlations between the factors. If my hypothesis H1 is true then we should expect all of the factors to be pretty uncorrelated from each other, but if H2 is true then we should expect MAP and MAV to be super correlated with each other, because H2 thinks there's no such thing as MAP and MAV -- there's just one big 'Mastery' factor:
 
 ```{r}
 
@@ -310,8 +314,6 @@ h1.summary$pe %>%
   # Keep only the rows with info on factor loadings
   slice(25:34) %>% 
  
-  # Clean up the important values, then combine them into a single column
-
   select(lhs, rhs, std.lv) %>% 
   
   mutate(
@@ -330,6 +332,54 @@ h1.summary$pe %>%
   knitr::kable(caption = "Correlation matrix of the factors")
 
 ```
+
+Interesting -- the 'Mastery' factors and the 'Performance' factors each seem to be very correlated with each other, while being nice and uncorrelated with the two factors that make up the other. This suggests that we have bad **discriminant validity** between the imagined two types of 'Mastery' and two types of 'Performance' -- the model can't really tell them apart as separate things. This makes it harder for me to argue that they *are* in fact separate things. This is a blow to both H1 and H2.
+
+@gorsuch1983 suggests we go a step further and do some additional modelling to assess the degree of discriminant validity here:
+
+> *"\[fit the model\] with the qualification that the correlations between one or more of the constructs being tested for discriminant validity is one. The difference between chi-squares from \[this model vs the model where the correlations are allowed to freely vary\] tests whether the constructs have a correlation significantly less than 1.0. If the correlation between the factors for the two constructs is not significantly different from 1.0, the difference chi-square will be insignificant. This means the null hypothesis of no discriminatory validity would be accepted. If the difference chi-square is significant, then the null hypothesis is rejected and the model that assumes discriminatory validity by allowing the correlation to be less than one is the more appropriate one."*
+
+This has the flavour of a likelihood-ratio test. Let's do it. First we need to fit the model where the correlation between the Mastery factors and the correlation between the 'Performance' factors are both constrained to be 1:
+
+```{r}
+
+# Define the relationships from my hypothesis
+h1_orthogonal.definition <- 
+'map=~ags1+ags5+ags7
+mav=~ags2+ags6+ags12
+pap=~ags3+ags9+ags11
+pav=~ags4+ags8+ags10
+
+map ~~ 1*mav
+pap ~~ 1*pav
+'
+
+# Fit the model
+h1_orthogonal.fit <- cfa(
+  data  = dat_ags,
+  model = h1_orthogonal.definition
+)
+
+# Compare the goodness-of-fit statistics for the two models
+anova(h1.fit, h1_orthogonal.fit) %>% 
+  
+  knitr::kable()
+
+
+
+```
+
+Looks like the reduction in chi-squared goodness-of-fit is statistically significant when we force the within-skill factors to be perfectly correlated. So, according to the @gorsuch1983 quote above, we can reject the null hypothesis that the within-skill factors are perfectly correlated. This gives a justification for continuing to distinguish between them as separate factors, and helps me make a believable claim that my posited factors have discriminant validity.
+
+Actually, I think another way we could have done this would be to just fit the model where we just define one big factor for 'Mastery' and one big factor for 'Performance'. I tried this and it returned even worse fit, which means the extra parameters (the correlation parameters) are significantly improving fit in the pure h1 model.
+
+### Residual Variances
+
+The thing to notice here is that the observables with the biggest loadings will also have the smallest residual variances, unsurprisingly. Be sure to focus on the `Std.all` column when doing these assessments, because [that's what this person does](https://www.youtube.com/watch?v=XnHFWe7RFr0). I SHOULD FIGURE OUT HOW THIS ALL PLAYS IN FOR FIGURING OUT CONVERGENT VALIDITY -- I THINK GORSUCH SAYS THE WITHIN-FACTOR LOADINGS SHOULDN'T BE SIGNIFICANTLY DIFFERENT FROM EACH OTHER? FIND THAT QUOTE
+
+### Model 'Selection'
+
+The authors do some model comparison of goodness-of-fit based on different estimation methods, but they don't mention convergent or discriminant validity as an important part of model 'selection'.
 
 ## Example 2:
 
