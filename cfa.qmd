@@ -110,7 +110,7 @@ The plotted points don't seem to fit the straight line super well, which suggest
 
 The authors proceed with it anyway for pedogogical reasons, because they want to illustrate how the maximum likelihood estimates differ from estimates arrived at using other methods.
 
-> In actual practice, given the lack of multivariate normality that seems apparent in the previous results, we would likely not use ML and instead rely on the alternative estimation approach.
+> "In actual practice, given the lack of multivariate normality that seems apparent in the previous results, we would likely not use ML and instead rely on the alternative estimation approach."
 
 ### Model Fitting
 
@@ -301,7 +301,39 @@ Remember, my goal is to convince my research peers that the observed variables a
 
 Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our measured variables are actually good proxies for the imaginary 'latent' factor we're purporting to use them to measure.
 
-But
+Now let's do what Gorsuch suggests in the above quote: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.
+
+```{r}
+
+```
+
+Actually, there seems to be another conventional thing people do to test for convergent validity, which neither @gorsuch1983 nor @Finch2015 mention: we can calculate the **Average Variance Extracted (AVE),** which is the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE \> 0.5, then you can feel good about claiming convergent validity. I guess this makes sense -- seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I'm at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? Seems risky. Let's do it anyway, for posterity.
+
+@Kline2011 mentions this whole AVE thing in reference to the concept of **reliability,** which he talks about as related to convergent validity. This is where
+
+@Kline2011 evens goes as far as to say that the standardized loadings can in isolation be taken as a measure of convergent validity. In his words on page 344:
+
+> *"\[with reference to a CFA model he has fit\]: A few other standardized coefficients are rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence for convergent validity is mixed."*
+
+A few other standardized coefficients are
+rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence
+for convergent validity is mixed
+
+Rather than doing it manually, we can use a ready-made function from the **semTools** package
+
+```{r}
+
+```
+
+@Kline2011, on page 307, gives yet another way of assessing convergent validity: he fits a CFA, then asks whether "the majority" of the variances of the observed variables have been explained, IE whether the standardized residual variances are \<50. I guess the idea is that the amount of variance explained for a variable by a factor depends on how correlated In his words:
+
+> \[in reference to one of his models:\] \[the\] model fails to explain the majority (> .50) of variance for a total of four out of eight indicators, which indicates poor convergent validity.
+
+```{r}
+
+```
+
+He also invokes the concept of reliability with reference
 
 All-in-all, this provides fine evidence of convergent validity because the loadings are all significant and positive?
 
