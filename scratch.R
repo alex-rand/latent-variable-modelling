@@ -22,9 +22,36 @@ h1.fit <- cfa(
 
 h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
-h1.summary
+h1.summary$pe %>% 
+  
+  as_tibble() %>% 
+  
+  # Keep only the rows with info on factor loadings
+  slice(1:12) %>% 
+  
+  # Clean up the important values, then combine them into a single column
+  mutate(
+    std.all = round(std.all, 2),
+    std.all = paste0(std.all, ", pvalue = ", pvalue, ")")
+  ) %>% 
+  
+  # reformat the table
+  select(lhs, rhs, std.all) %>% 
+  
+  pivot_wider(
+    names_from = "lhs", 
+    values_from = "std.all",
+    values_fill = "0"
+  ) %>% 
+  
+  column_to_rownames("rhs") %>% 
+  
+  knitr::kable(caption = "Standardized factor loadings, standard errors, and p-values")
 
-semTools::AVE(h1.fit)
+
+
+
+
 
 
 # Define the relationships from my hypothesis

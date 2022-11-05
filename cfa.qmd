@@ -274,56 +274,99 @@ h1.summary$pe %>%
   
   # Clean up the important values, then combine them into a single column
   mutate(
-    across(.cols = c("est", "se"), round, 2),
-    est = paste0(est, " (se = ", se, ", pvalue = ", pvalue, ")")
+    std.all = round(std.all, 2),
+    std.all = paste0(std.all, ", pvalue = ", pvalue, ")")
   ) %>% 
-    
+  
   # reformat the table
-  select(lhs, rhs, est) %>% 
+  select(lhs, rhs, std.all) %>% 
   
   pivot_wider(
     names_from = "lhs", 
-    values_from = "est",
+    values_from = "std.all",
     values_fill = "0"
   ) %>% 
   
   column_to_rownames("rhs") %>% 
   
-  knitr::kable(caption = "Factor loadings, standard errors, and p-values")
-
+  knitr::kable(caption = "Standardized factor loadings and p-values")
 ```
-
-Firstly, notice that the loading of the first factor of each variable is automatically fixed at 1. This is just a default convention we adopt to make sure that the other loadings are identifiable -- you can override this default, but you'd better have an alternative plan for making sure things are identifiable.
 
 Remember, my goal is to convince my research peers that the observed variables are actually providing a way of measuring the unobservable 'factor' I'm purporting to exist. One way of making this case is to look for **Convergent Validity.** Essentially what we'd like to see is that all of a factor's variables load really highly on that factor, but also that they all load to more or less the same degree. In the words of @gorsuch1983:
 
-> *"Convergent validity occurs when several variables deemed to measure the same construct correlate with each other...factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables."*
+> *"Convergent validity occurs when several variables deemed to measure the same construct correlate with each other."*
 
-Now notice that, besides these first fixed loadings, all of the loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our measured variables are actually good proxies for the imaginary 'latent' factor we're purporting to use them to measure.
+Or, as @Kline2011 puts it:
 
-Now let's do what Gorsuch suggests in the above quote: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.
+> *"Variables presumed to measure the same construct show convergent validity if their intercorrelations are appreciable in magnitude."*
 
-```{r}
+Firstly, notice that all of the non-fixed loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our measured variables are actually good proxies for the imaginary 'latent' factor we're purporting to use them to measure.
 
-```
-
-Actually, there seems to be another conventional thing people do to test for convergent validity, which neither @gorsuch1983 nor @Finch2015 mention: we can calculate the **Average Variance Extracted (AVE),** which is the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE \> 0.5, then you can feel good about claiming convergent validity. I guess this makes sense -- seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I'm at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? Seems risky. Let's do it anyway, for posterity.
-
-@Kline2011 mentions this whole AVE thing in reference to the concept of **reliability,** which he talks about as related to convergent validity. This is where
-
-@Kline2011 evens goes as far as to say that the standardized loadings can in isolation be taken as a measure of convergent validity. In his words on page 344:
+Next, @Kline2011 says that we can start assessing convergent validity by just looking at the standardized loadings can in isolation. In his words on page 344:
 
 > *"\[with reference to a CFA model he has fit\]: A few other standardized coefficients are rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence for convergent validity is mixed."*
 
-A few other standardized coefficients are
-rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence
-for convergent validity is mixed
+To my eye it looks like some of the standardized loadings on the 'mav' factor are pretty low. Also, it seems like only really 'pap' has really consistent loadings across all of its measured variables: the other three factors all have a bunch of variance between their loadings. So this all seems like a bit of a red flag.
 
-Rather than doing it manually, we can use a ready-made function from the **semTools** package
+There's another conventional thing people do to test for convergent validity, which neither @gorsuch1983 nor @Finch2015 mention: we can look at the **reliability** of the measurements. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a 'true' score and 'noise', where the 'true' score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the 'true' score as opposed to noise, and when they do these things they say they are estimating 'reliability'. Ok.
+
+The all-time classic 'reliability' measure is called **Cronbach's Alpha.** Cronbach didn't actually invent it, so hello [Stigler's Law](https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy). Here's what it looks like:
+
+$\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})$
+
+The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we're asking: 'is the variance of the *sums* larger than the variance of the individual columns?' This will be true if the columns are generally pretty correlated, because the sums will *stack up* the raw values, instead of them cancelling each other out. So really we're just asking: are the columns generally pretty correlated?'. If my columns are pretty correlated and I make the standard assumption that *no other latent factors are influencing my observed values* (an insane assumption), then I can feel comfortable saying that Cronbach's Alpha is useful for figuring out whether my measurements are all loading on the same 'latent' variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach's Alpha gives a picture of **'Internal Consistency Reliability'.**
+
+Let's calculate Cronbach's Alpha for each of the subscales I've used to define my supposed factors:
 
 ```{r}
 
+### Split the dataset into the subscales assumed by my factor model
+subscales <- list(
+  map = dat_ags %>% select(ags1, ags5, ags7),
+  mav = dat_ags %>% select(ags2, ags6, ags12),
+  pap = dat_ags %>% select(ags3, ags9, ags11),
+  pav = dat_ags %>% select(ags4, ags8, ags10)
+)
+
+### Calculate Chronbach's Alpha for each subscale, then analyze.
+alphas <- subscales %>% 
+  
+  map(psych::alpha) %>% 
+  
+  map(summary) %>% 
+  
+  knitr::kable() 
 ```
+
+According to @Kline2011, these all look like good results, so they help me feel good about claiming convergent validity:
+
+> "Generally, coefficients around .90 are considered "excellent," values around .80 as "very good," and values about .70 as "adequate.""
+
+Cronbach's Alpha has some drawbacks as a measure of 'reliability', so @Kline2011 says to also calculate the **Average Variance Extracted (AVE)**, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE \> 0.5, then you can feel good about claiming convergent validity. I guess this makes sense -- seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I'm at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves -- no need to look at an average here.
+
+But just for fun, let's calculate the AVE. Rather than doing it manually, we can use a ready-made function from the **semTools** package
+
+```{r}
+
+semTools::AVE(h1.fit) %>% 
+  
+  knitr::kable()
+
+```
+
+Based on the rule-of-thumb that we want the AVE to be at least .50, it seems like the 'mav' factor is having some trouble. It also had the lowest Cronbach Alpha. So maybe the observed variables I'm using to measure it aren't actually doing a great job? This hurts convergent validity for that factor.
+
+Lastly, we can also try to measure this unicorn of 'reliability' by just directly asking "what proportion of the total variance is explained by the factor model?". People like to do this by summing all the factor loadings, squaring that sum, and dividing it by itself plus the sum of the residual variances of the variables (IE dividing it by the total empirical variance of the variable). They call this one the **Composite Reliability (CR).**
+
+```{r}
+
+semTools::compRelSEM(h1.fit) %>% 
+  
+  knitr::kable()
+
+```
+
+Apparently the rule of thumb for this one is the same as for Cronbach's Alpha. So we can feel good about all of them except for 'mav', which has taken a beating via these 3 checks.
 
 @Kline2011, on page 307, gives yet another way of assessing convergent validity: he fits a CFA, then asks whether "the majority" of the variances of the observed variables have been explained, IE whether the standardized residual variances are \<50. I guess the idea is that the amount of variance explained for a variable by a factor depends on how correlated In his words:
 
@@ -333,9 +376,11 @@ Rather than doing it manually, we can use a ready-made function from the **semTo
 
 ```
 
-He also invokes the concept of reliability with reference
+Lastly, Gorsuch suggests another way of testing for convergent validity:
 
-All-in-all, this provides fine evidence of convergent validity because the loadings are all significant and positive?
+> *factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables."*
+
+Let's try this out: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.
 
 ### Factor Correlations and Discriminant Validity
 
@@ -420,6 +465,8 @@ The thing to notice here is that the observables with the biggest loadings will 
 The authors do some model comparison of goodness-of-fit based on different estimation methods, but they don't mention convergent or discriminant validity as an important part of model 'selection'.
 
 ## Example 2:
+
+USE THE EXAMPLE FROM THIS BOOK INSTEAD: http://www.kharazmi-statistics.ir/Uploads/Public/book/Methodology%20in%20the%20Social%20Sciences.pdf
 
 ```{r message=FALSE, warning=FALSE}
 
