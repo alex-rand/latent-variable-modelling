@@ -126,9 +126,7 @@ One of the candidate hypotheses is that a person's toxic striving energy ('achie
 
 4.  Performance Avoidant 'PAV' (eg. *"It is important for me to avoid doing poorly compared to other students"*)
 
-We'll call the above hypothesis **H1.** But there's another hypothesis that says actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'. We'll call this one **H2.**
-
-These will be the two candidate hypotheses we're gonna test via factor analysis.
+We'll call the above hypothesis **H1.** But there's another hypothesis that says actually the 'Mastery' variables are just one monolithic thing, so really there are only 3 factors, namely 'Mastery', 'PAP', and 'PAV'. We'll call this one **H2.** These will be the two candidate hypotheses we're gonna test via factor analysis.
 
 The way **lavaan** works is that you need to separately define the model syntax as a string, and then feed that string to one of the model-fitting functions like `cfa()` . Then we can call the `summary()` function to get a big table of outputs.
 
@@ -229,7 +227,7 @@ h1.summary$fit %>%
 
 Yikes -- looks like our whole RMSEA, as well as its confidence interval, are above the 'bad fit' conventional threshold of .08. This corroborates what we saw with the chi-squared statistic above.
 
-#### **Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI)**
+#### Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI)
 
 CFI seems to be the most trusted and widely-used tool for assessing goodness of fit in a CFA. Basically the idea is that we ask: "how much does the chi-squared statistic of my model differ from the chi-squared statistic of the worst model I can think of?", where the conventional "worst model I can think of" is the model where I assume all of my observed variables are totally uncorrelated. This sort of has the opposite flavour of the deviance statistic I'm already familiar with, which compares the current model with "the best model I can think of."
 
@@ -258,9 +256,29 @@ h1.summary$fit %>%
 
 Looks like the CFI and TLI look ok, but don't meet the conventional .95 cutoff. So they are in line with the chi-squared and RMSEA in suggesting that our goodness-of-fit isn't so good.
 
-### Factor Loadings & Convergent Validty
+### Convergent Validty
 
-These are essentially just the regression coefficients of each factor on each of the outcome variables for which it was allowed to be a covariate. So we want them to be big and significant.
+When I'm doing factor analysis, my goal is to convince my research peers that the observed variables are providing a way of measuring the unobservable 'factor' I'm purporting to exist. This seems like an ontologically dubious framing, and it also seems impossible to prove. But people who do research have settled on a few ways of trying to make this case.
+
+One such way is to take all of the measured variables I'm imagining to be caused by the same unmeasured factor and show that they are indeed correlated with each other. When this happens, I can say that my factor has **Convergent Validity.** In the words of @gorsuch1983:
+
+> *"Convergent validity occurs when several variables deemed to measure the same construct correlate with each other."*
+
+Or, as @Kline2011 puts it:
+
+> *"Variables presumed to measure the same construct show convergent validity if their intercorrelations are appreciable in magnitude."*
+
+So essentially I'm trying to make the case for a DAG where my observed variables are all caused by a shared unobserved 'latent' variable. It seems like to make the jump from 'these measured variables are correlated' to 'these measured variables are caused by a single shared latent factor' I would need to be also making the further assumption that there aren't *other* unmeasured confounders muddying up the observed covariances. It's DAGs all the way down...
+
+Based on the textbooks I'm working from, here are a few questions I can answer if I want to make the case for Convergent Validity:
+
+1.  Are the factor loadings statistically significant?
+2.  Are the standardized factor loadings pretty big (IE pretty close to 1)?
+3.  Are the within-factor loadings pretty similar to each other?
+4.  Do the measurements seem to have good 'reliability' as measured by something like Chronbach's Alpha, Average Variance Extracted, or Composite Reliability?
+5.  Are all of the residual variances less than .50, IE is the model explaining at least half the variance of each model?
+
+First we can look at the factor loadings. These are essentially just the regression coefficients of each factor on each of the outcome variables for which it was allowed to be a covariate. So we want them to be big and significant.
 
 ```{r}
 
@@ -292,14 +310,6 @@ h1.summary$pe %>%
   knitr::kable(caption = "Standardized factor loadings and p-values")
 ```
 
-Remember, my goal is to convince my research peers that the observed variables are providing a way of measuring the unobservable 'factor' I'm purporting to exist. One way of making this case is to look for **Convergent Validity.** Essentially what we'd like to see is that all of a factor's variables load really highly on that factor, but also that they all load to more or less the same degree. In the words of @gorsuch1983:
-
-> *"Convergent validity occurs when several variables deemed to measure the same construct correlate with each other."*
-
-Or, as @Kline2011 puts it:
-
-> *"Variables presumed to measure the same construct show convergent validity if their intercorrelations are appreciable in magnitude."*
-
 Firstly, notice that all of the non-fixed loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our measured variables are actually good proxies for the imaginary 'latent' factor we're purporting to use them to measure.
 
 Next, @Kline2011 says that we can start assessing convergent validity by just looking at the standardized loadings can in isolation. In his words on page 344:
@@ -308,13 +318,15 @@ Next, @Kline2011 says that we can start assessing convergent validity by just lo
 
 To my eye it looks like some of the standardized loadings on the 'mav' factor are pretty low. Also, it seems like only 'pap' has really consistent loadings across all of its measured variables: the other three factors all have a bunch of variance between their loadings. So this all seems like a bit of a red flag.
 
-There's another conventional thing people do to test for convergent validity, which neither @gorsuch1983 nor @Finch2015 mention: we can look at the **reliability** of the measurements. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a 'true' score and 'noise', where the 'true' score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the 'true' score as opposed to noise, and when they do these things they say they are estimating 'reliability'. Ok.
+Next we can look at measures of **reliability,** which neither @gorsuch1983 nor @Finch2015 mention. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a 'true' score and 'noise', where the 'true' score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the 'true' score as opposed to noise, and when they do these things they say they are estimating 'reliability'. Ok.
 
 The all-time classic 'reliability' measure is called **Cronbach's Alpha.** Cronbach didn't actually invent it, so hello [Stigler's Law](https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy). Here's what it looks like:
 
 $\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})$
 
 The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we're asking: 'is the variance of the *sums* larger than the variance of the individual columns?' This will be true if the columns are generally pretty correlated, because the sums will *stack up* the raw values, instead of them cancelling each other out. So really we're just asking: are the columns generally pretty correlated?'. If my columns are pretty correlated and I make the standard assumption that *no other latent factors are influencing my observed values* (an insane assumption), then I can feel comfortable saying that Cronbach's Alpha is useful for figuring out whether my measurements are all loading on the same 'latent' variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach's Alpha gives a picture of **'Internal Consistency Reliability'.**
+
+As with everything related to convergent validity, this is just another way of asking how correlated my measured variables are.
 
 Let's calculate Cronbach's Alpha for each of the subscales I've used to define my supposed factors:
 
@@ -372,25 +384,38 @@ Apparently the rule of thumb for this one is the same as for Cronbach's Alpha. S
 
 > "\[in reference to one of his models:\] \[the\] model fails to explain the majority (> .50) of variance for a total of four out of eight indicators, which indicates poor convergent validity."
 
+Let's have a look at the residual variances. These are just the proportion of the empirical variance of each measured variable that is left unexplained by the linear models that make up the factor analysis.
+
 ```{r}
+
+h1.summary$pe %>% 
+  
+  as.data.frame() %>% 
+  
+  filter(grepl("ags\\d", lhs)) %>% 
+  
+  mutate(factor = case_when(
+    lhs %in% c("ags1", "ags5", "ags7") ~ "map",
+    lhs %in% c("ags2", "ags6", "ags12") ~ "mav",
+    lhs %in% c("ags3", "ags9", "ags11") ~ "pap",
+    lhs %in% c("ags4", "ags8", "ags10") ~ "pav",
+  )) %>% 
+  
+  select(factor, "var" = lhs, std.all) %>% 
+  
+  knitr::kable()
 
 ```
 
-Lastly, Gorsuch suggests another way of testing for convergent validity:
+Looks like the model has mostly done a good job for the 'Performance' factors, with all variables having at least \~60% of their variance explained. But the 'Mastery' factors are worse, especially 'mav', with two of its three variables having only \~40% of their variances explained. This is yet more evidence that the 'mav' factor isn't doing so great a job.
+
+\~\~Lastly, Gorsuch suggests another way of testing for convergent validity:
 
 > *factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables."*
 
-Let's try this out: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.
+Let's try this out: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.\~\~
 
-So in summary, here's how we check for Convergent Validity:
-
-1.  Are the factor loadings statistically significant?
-2.  Are the standardized factor loadings pretty big (IE pretty close to 1)?
-3.  Are the within-factor loadings pretty similar to each other?
-4.  Do the measurements seem to have good 'reliability' as measured by something like Chronbach's Alpha, Average Variance Extracted, or Composite Reliability?
-5.  Are all of the residual variances less than .50, IE is the model explaining at least half the variance of each model?
-
-### Factor Correlations and Discriminant Validity
+### Discriminant Validity
 
 Next let's look at the estimated correlations between the factors. If my hypothesis H1 is true then we should expect all of the factors to be pretty uncorrelated from each other, but if H2 is true then we should expect MAP and MAV to be super correlated with each other, because H2 thinks there's no such thing as MAP and MAV -- there's just one big 'Mastery' factor:
 
@@ -424,9 +449,13 @@ h1.summary$pe %>%
 
 ```
 
-Interesting -- the 'Mastery' factors and the 'Performance' factors each seem to be very correlated with each other, while being nice and uncorrelated with the two factors that make up the other. This suggests that we have bad **discriminant validity** between the imagined two types of 'Mastery' and two types of 'Performance' -- the model can't really tell them apart as separate things. This makes it harder for me to argue that they *are* in fact separate things. This is a blow to both H1 and H2.
+Interesting -- the 'Mastery' factors and the 'Performance' factors each seem to be very correlated with each other, while being nice and uncorrelated with the two factors that make up the other. This suggests that we have bad **discriminant validity** between the imagined two types of 'Mastery' and two types of 'Performance' -- the model can't really tell them apart as separate things. This makes it harder for me to argue that they *are* in fact separate things. But then again, maybe my hypothesis is that the within-skill factors *should* be highly correlated. Anyhow, the fact that the 'Mastery' and 'Performance' factors are all pretty uncorrelated with each other is a good thing for both hypotheses.
 
-@gorsuch1983 suggests we go a step further and do some additional modelling to assess the degree of discriminant validity here:
+@Brown2006 gives some nice advice about how to assess discriminant validty, and how to deal with it if you have it:
+
+> In applied research, a factor correlation that exceeds .80 or .85 is often used as the criterion to define poor discriminant validity. When two factors are highly overlapping, a common research strategy is to respecify the model by collapsing the dimensions into a single factor and determine whether this modification results in a significant degradation in model fit. If the respecified model provides an acceptable fit to the data, it is usually favored because of its superior parsimony
+>
+> @gorsuch1983 suggests doing something similar:
 
 > *"\[fit the model\] with the qualification that the correlations between one or more of the constructs being tested for discriminant validity is one. The difference between chi-squares from \[this model vs the model where the correlations are allowed to freely vary\] tests whether the constructs have a correlation significantly less than 1.0. If the correlation between the factors for the two constructs is not significantly different from 1.0, the difference chi-square will be insignificant. This means the null hypothesis of no discriminatory validity would be accepted. If the difference chi-square is significant, then the null hypothesis is rejected and the model that assumes discriminatory validity by allowing the correlation to be less than one is the more appropriate one."*
 
@@ -460,21 +489,19 @@ anova(h1.fit, h1_orthogonal.fit) %>%
 
 ```
 
-Looks like the reduction in chi-squared goodness-of-fit is statistically significant when we force the within-skill factors to be perfectly correlated. So, according to the @gorsuch1983 quote above, we can reject the null hypothesis that the within-skill factors are perfectly correlated. This gives a justification for continuing to distinguish between them as separate factors, and helps me make a believable claim that my posited factors have discriminant validity.
+Looks like the reduction in chi-squared goodness-of-fit is statistically significant when we force the within-skill factors to be perfectly correlated. So, according to the @gorsuch1983 quote above, we can reject the null hypothesis that the within-skill factors are perfectly correlated. This gives a justification for continuing to distinguish between them as separate factors, and helps me make a believable claim that my posited factors are in fact different things.
 
 Actually, I think another way we could have done this would be to just fit the model where we just define one big factor for 'Mastery' and one big factor for 'Performance'. I tried this and it returned even worse fit, which means the extra parameters (the correlation parameters) are significantly improving fit in the pure h1 model.
 
-### Residual Variances
+### Conclusion
 
-The thing to notice here is that the observables with the biggest loadings will also have the smallest residual variances, unsurprisingly. Be sure to focus on the `Std.all` column when doing these assessments, because [that's what this person does](https://www.youtube.com/watch?v=XnHFWe7RFr0). This lets you do fair comparisons between the loadings and residual variance parameters, since it constraints them all to the scale of a correlation coefficient, IE \[-1, 1\]. I SHOULD FIGURE OUT HOW THIS ALL PLAYS IN FOR FIGURING OUT CONVERGENT VALIDITY -- I THINK GORSUCH SAYS THE WITHIN-FACTOR LOADINGS SHOULDN'T BE SIGNIFICANTLY DIFFERENT FROM EACH OTHER? FIND THAT QUOTE
+All-in-all it seems like neither of these hypotheses do a great job. Sure, the 'Performance' factors have good convergent validity, and we see good discriminant validity between the 'Performance' and 'Mastery' factors, but the 'Mastery' factors don't have great convergent validity and fitting a single monolithic 'Mastery' factor doesn't improve things.
 
-### Model 'Selection'
+I can make a better model by dropping the measured 'Mastery' variables that aren't having lots of their variance explained by the 'Mastery' factors, but this is contrary to the spirit of CFA. If I want to test a different hypothesis then I should collect a different sample.
 
-The authors do some model comparison of goodness-of-fit based on different estimation methods, but they don't mention convergent or discriminant validity as an important part of model 'selection'.
+For a nice template of a more formal presentation of the results of a CFA, see @Brown2006 chapter 4 appendix 3.
 
 ## Example 2:
-
-USE THE EXAMPLE FROM THIS BOOK INSTEAD: http://www.kharazmi-statistics.ir/Uploads/Public/book/Methodology%20in%20the%20Social%20Sciences.pdf
 
 ```{r message=FALSE, warning=FALSE}
 

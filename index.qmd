@@ -20,11 +20,14 @@ Maybe I'll discover some other types of things along the way. It's a lifelong jo
 
 ## What am I referencing?
 
-The first book on latent variable modelling I read was @gorsuch1983. This was a nice conceptual introduction, but the applied examples were pretty whack. I've since found a few sources with data and R code to work with:
+The first book on latent variable modelling I read was @gorsuch1983. This was a nice conceptual introduction, but the applied examples were pretty whack. I've since found a few sources with data and R code to work with. I also cite these sources throughout as I cobble together the workflows.
 
 - [_Latent Variable Modelling with R_](https://www.routledge.com/Latent-Variable-Modeling-with-R/Finch-French/p/book/9780415832458), by @Finch2015. They helpfully provide all of the datasets [here](https://www.routledge.com/Latent-Variable-Modeling-with-R/Finch-French/p/book/9780415832458).
 
 - [_Principles and Practice of Structural Equation Modeling_](https://www.guilford.com/books/Principles-and-Practice-of-Structural-Equation-Modeling/Rex-Kline/9781462523344), by @Kline2011. The publisher provides data and code [here](https://www.guilford.com/companion-site/Principles-and-Practice-of-Structural-Equation-Modeling-Fourth-Edition/9781462523344).
+
+- [Confirmatory Factor Analysis for Applied Research](http://www.kharazmi-statistics.ir/Uploads/Public/book/Methodology%20in%20the%20Social%20Sciences.pdf), by @Brown2006. No R code available, but there's some data at [the university website](https://people.bu.edu/tabrown/cfabook.html)
+
 
 - [The *lavaan* documentation](https://www.lavaan.ugent.be/tutorial/index.html) has some nice worked examples too.
 
