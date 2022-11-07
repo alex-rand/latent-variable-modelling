@@ -22,85 +22,72 @@ h1.fit <- cfa(
 
 h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
-h1.summary$pe %>% 
-  
-  as_tibble() %>% 
-  
-  # Keep only the rows with info on factor loadings
-  slice(1:12) %>% 
-  
-  # Clean up the important values, then combine them into a single column
-  mutate(
-    std.all = round(std.all, 2),
-    std.all = paste0(std.all, ", pvalue = ", pvalue, ")")
-  ) %>% 
-  
-  # reformat the table
-  select(lhs, rhs, std.all) %>% 
-  
-  pivot_wider(
-    names_from = "lhs", 
-    values_from = "std.all",
-    values_fill = "0"
-  ) %>% 
-  
-  column_to_rownames("rhs") %>% 
-  
-  knitr::kable(caption = "Standardized factor loadings, standard errors, and p-values")
 
 
+### Example of CFA from Stan forum
+library(tidyverse)
+library(brms)
 
+options(brms.backend = "cmdstanr")
+options(mc.cores = parallel::detectCores())
 
+N <- 200
 
+dta <- 
+  tibble(
+    x = rnorm(N, 0, 1),
+    y1 = rnorm(N, 2*x, 1),
+    y2 = rnorm(N, 1*x, 1),
+    y3 = rnorm(N, 0.5*x, 1),
+    xo = as.numeric(NA)
+  )
 
+dta
 
-# Define the relationships from my hypothesis
-h1_test.definition <- 
-'map =~ ags1 + a1*ags5 + a2*ags7
-mav=~ags2+ags6+ags12
-pap=~ags3+ags9+ags11
-pav=~ags4+ags8+ags10
+m1 <- 
+  brm(
+    formula =
+      bf(y1 ~ 0 + mi(xo)) +
+      bf(y2 ~ 0 + mi(xo)) +
+      bf(y3 ~ 0 + mi(xo)) +
+      bf(xo | mi() ~ 1) + 
+      set_rescor(rescor = FALSE),
+    family = gaussian(),
+    prior =
+      prior(constant(1), class = "b", resp = "y1") +
+      prior(constant(1), class = "sigma", resp = "y1") +
+      prior(normal(0, 10), class = "b", resp = "y2") +
+      prior(constant(1), class = "sigma", resp = "y2") +
+      prior(normal(0, 10), class = "b", resp = "y3") +
+      prior(constant(1), class = "sigma", resp = "y3") +
+      prior(normal(0, 10), class = "Intercept", resp = "xo") +
+      prior(cauchy(0, 1), class = "sigma", resp = "xo"),
+    data = dta,
+    backend = "cmdstanr",
+    cores = 4,
+    chains = 4,
+    threads = threading(2),
+    refresh = 5
+  )
 
-a1 == a2
-'
+h1.definition <- 
+  'what=~y1+y2+y3'
 
-# Fit the model
-h1_test.fit <- cfa(
-  data  = dat_ags,
-  model = h1_test.definition
+h1.fit <- cfa(
+  data  = dta,
+  model = h1.definition
 )
 
-# Look at the results
-h1_test.summary <- summary(h1_test.fit, fit.measures = TRUE, standardized = TRUE)
+h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
-h1_test.summary
-
-anova(h1_test.fit, h1.fit)
-
-h1_parsimonious.definition <- 
-'mastery=~ags1+ags5+ags7+ags2+ags6+ags12
- performance=~ags3+ags9+ags11+ags4+ags8+ags10
-'
-
-# Fit the model
-h1_parsimonious.fit <- cfa(
-  data  = dat_ags,
-  model = h1_parsimonious.definition
-)
-
-# Look at the results
-h1_parsimonious.summary <- summary(h1_parsimonious.fit, fit.measures = TRUE, standardized = TRUE)
-h1_parsimonious.summary
 h1.summary
 
 
-anova(h1.fit, h1_orthogonal.fit) %>% 
-  
-  knitr::kable()
-anova(h1_parsimonious.fit, h1.fit)
 
-summary(h1_parsimonious.fit, fit.measures = TRUE)
+summary(m1)
 
 
 
-anova(h1.fit)
+
+
+

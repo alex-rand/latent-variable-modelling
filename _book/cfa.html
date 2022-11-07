@@ -725,10 +725,10 @@ Variances:
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">"rhs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Standardized factor loadings, standard errors, and p-values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Standardized factor loadings and p-values"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
-<caption>Standardized factor loadings, standard errors, and p-values</caption>
+<caption>Standardized factor loadings and p-values</caption>
 <colgroup>
 <col style="width: 7%">
 <col style="width: 23%">
@@ -836,7 +836,7 @@ Variances:
 </div>
 <p>Remember, my goal is to convince my research peers that the observed variables are actually providing a way of measuring the unobservable ‘factor’ I’m purporting to exist. One way of making this case is to look for <strong>Convergent Validity.</strong> Essentially what we’d like to see is that all of a factor’s variables load really highly on that factor, but also that they all load to more or less the same degree. In the words of <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span>:</p>
 <blockquote class="blockquote">
-<p><em>“Convergent validity occurs when several variables deemed to measure the same construct correlate with each other…factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables.”</em></p>
+<p><em>“Convergent validity occurs when several variables deemed to measure the same construct correlate with each other.”</em></p>
 </blockquote>
 <p>Or, as <span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span> puts it:</p>
 <blockquote class="blockquote">
@@ -847,10 +847,7 @@ Variances:
 <blockquote class="blockquote">
 <p><em>“[with reference to a CFA model he has fit]: A few other standardized coefficients are rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence for convergent validity is mixed.”</em></p>
 </blockquote>
-<p>Now let’s do what Gorsuch suggests in the above quote: we’ll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.</p>
-<div class="cell">
-
-</div>
+<p>To my eye it looks like some of the standardized loadings on the ‘mav’ factor are pretty low. Also, it seems like only really ‘pap’ has really consistent loadings across all of its measured variables: the other three factors all have a bunch of variance between their loadings. So this all seems like a bit of a red flag.</p>
 <p>There’s another conventional thing people do to test for convergent validity, which neither <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> nor <span class="citation" data-cites="Finch2015">Finch (<a href="references.html#ref-Finch2015" role="doc-biblioref">2015</a>)</span> mention: we can look at the <strong>reliability</strong> of the measurements. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a ‘true’ score and ‘noise’, where the ‘true’ score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the ‘true’ score as opposed to noise, and when they do these things they say they are estimating ‘reliability’. Ok.</p>
 <p>The all-time classic ‘reliability’ measure is called <strong>Cronbach’s Alpha.</strong> Cronbach didn’t actually invent it, so hello <a href="https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy">Stigler’s Law</a>. Here’s what it looks like:</p>
 <p><span class="math inline">\(\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})\)</span></p>
@@ -974,8 +971,11 @@ Reliability analysis
 <div class="cell">
 
 </div>
-<p>He also invokes the concept of reliability with reference</p>
-<p>All-in-all, this provides fine evidence of convergent validity because the loadings are all significant and positive?</p>
+<p>Lastly, Gorsuch suggests another way of testing for convergent validity:</p>
+<blockquote class="blockquote">
+<p><em>factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables.”</em></p>
+</blockquote>
+<p>Let’s try this out: we’ll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.</p>
 </section>
 <section id="factor-correlations-and-discriminant-validity" class="level3" data-number="2.2.5">
 <h3 data-number="2.2.5" class="anchored" data-anchor-id="factor-correlations-and-discriminant-validity"><span class="header-section-number">2.2.5</span> Factor Correlations and Discriminant Validity</h3>
