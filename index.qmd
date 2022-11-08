@@ -28,6 +28,8 @@ The first book on latent variable modelling I read was @gorsuch1983. This was a 
 
 - [Confirmatory Factor Analysis for Applied Research](http://www.kharazmi-statistics.ir/Uploads/Public/book/Methodology%20in%20the%20Social%20Sciences.pdf), by @Brown2006. No R code available, but there's some data at [the university website](https://people.bu.edu/tabrown/cfabook.html)
 
+- [Quantitative Analysis Using Structural Equation Modelling](https://www.usgs.gov/centers/wetland-and-aquatic-research-center/science/quantitative-analysis-using-structural-equation), a free online course provided by the Wetland and Aquatic Research Center of the United States Geological Survey.
+
 
 - [The *lavaan* documentation](https://www.lavaan.ugent.be/tutorial/index.html) has some nice worked examples too.
 

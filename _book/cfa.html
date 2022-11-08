@@ -205,7 +205,7 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#getting-started" id="toc-getting-started" class="nav-link active" data-scroll-target="#getting-started"><span class="toc-section-number">2.1</span>  Getting started</a></li>
+  <li><a href="#the-whole-game" id="toc-the-whole-game" class="nav-link active" data-scroll-target="#the-whole-game"><span class="toc-section-number">2.1</span>  The Whole Game</a></li>
   <li><a href="#example-1-toxic-striving-energy" id="toc-example-1-toxic-striving-energy" class="nav-link" data-scroll-target="#example-1-toxic-striving-energy"><span class="toc-section-number">2.2</span>  Example 1: Toxic Striving Energy</a>
   <ul class="collapse">
   <li><a href="#data-exploration" id="toc-data-exploration" class="nav-link" data-scroll-target="#data-exploration"><span class="toc-section-number">2.2.1</span>  Data Exploration</a></li>
@@ -215,7 +215,11 @@ div.csl-indent {
   <li><a href="#discriminant-validity" id="toc-discriminant-validity" class="nav-link" data-scroll-target="#discriminant-validity"><span class="toc-section-number">2.2.5</span>  Discriminant Validity</a></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="toc-section-number">2.2.6</span>  Conclusion</a></li>
   </ul></li>
-  <li><a href="#example-2" id="toc-example-2" class="nav-link" data-scroll-target="#example-2"><span class="toc-section-number">2.3</span>  Example 2:</a></li>
+  <li><a href="#example-2-biodiversity" id="toc-example-2-biodiversity" class="nav-link" data-scroll-target="#example-2-biodiversity"><span class="toc-section-number">2.3</span>  Example 2: Biodiversity</a>
+  <ul class="collapse">
+  <li><a href="#data-exploration-1" id="toc-data-exploration-1" class="nav-link" data-scroll-target="#data-exploration-1"><span class="toc-section-number">2.3.1</span>  Data Exploration</a></li>
+  <li><a href="#model-fitting-1" id="toc-model-fitting-1" class="nav-link" data-scroll-target="#model-fitting-1"><span class="toc-section-number">2.3.2</span>  Model Fitting</a></li>
+  </ul></li>
   <li><a href="#cool-ecology-example-i-should-do-instead" id="toc-cool-ecology-example-i-should-do-instead" class="nav-link" data-scroll-target="#cool-ecology-example-i-should-do-instead"><span class="toc-section-number">2.4</span>  Cool ecology example I should do instead:</a></li>
   <li><a href="#example-3" id="toc-example-3" class="nav-link" data-scroll-target="#example-3"><span class="toc-section-number">2.5</span>  Example 3:</a></li>
   <li><a href="#example-4" id="toc-example-4" class="nav-link" data-scroll-target="#example-4"><span class="toc-section-number">2.6</span>  Example 4:</a></li>
@@ -242,8 +246,11 @@ div.csl-indent {
 
 </header>
 
-<section id="getting-started" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="getting-started"><span class="header-section-number">2.1</span> Getting started</h2>
+<section id="the-whole-game" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="the-whole-game"><span class="header-section-number">2.1</span> The Whole Game</h2>
+<p>I think it is safe to say that The Whole Game of Confirmatory Factor Analysis (CFA) is that I’m trying to convince my colleagues that my observed variables are confounded by some unmeasured variables. Usually I’m trying to show that the variables is confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.</p>
+<p>The classic DAGs way of testing for confounding is to condition on the supposed confounder. But in CFA we always assume the confounder is unmeasured. So we can’t test it directly with reference to d-separation. Instead, we can only try to argue for it in a hand-wavy sort of way: we expect confounded variables to be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is <em>consistent</em> with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.</p>
+<p>So interpreting a CFA model is all about checking to see whether the correlations between the variables are what we would expect to see under the DAG where each group of variables is confounded by a single unmeasured variable.</p>
 <p>Let’s load the packages we’ll need for what is to come in this chapter:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -252,7 +259,7 @@ div.csl-indent {
 </section>
 <section id="example-1-toxic-striving-energy" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="example-1-toxic-striving-energy"><span class="header-section-number">2.2</span> Example 1: Toxic Striving Energy</h2>
-<p>The first example we’ll look at is from <span class="citation" data-cites="Finch2015">Finch (<a href="references.html#ref-Finch2015" role="doc-biblioref">2015</a>)</span>, chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the ‘Achievement Goal Scale’ (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we’re probably good to just keep the columns with responses to the AGS questionnaire:</p>
+<p>The first example we’ll look at is from <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span>, chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the ‘Achievement Goal Scale’ (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we’re probably good to just keep the columns with responses to the AGS questionnaire:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat_raw <span class="ot">&lt;-</span> foreign<span class="sc">::</span><span class="fu">read.spss</span>(<span class="st">'data/finch-and-french/edps744.sav'</span>) </span>
@@ -546,11 +553,11 @@ Variances:
 <section id="chi-squared-statistic" class="level4" data-number="2.2.3.1">
 <h4 data-number="2.2.3.1" class="anchored" data-anchor-id="chi-squared-statistic"><span class="header-section-number">2.2.3.1</span> Chi-Squared Statistic</h4>
 <p>The first thing to look at is the chi-squared statistic from the ‘User Model’, IE the model I, the user, have just fit. I like to think of this as a measure of how different the model’s reconstructed correlation matrix looks compared to the actual empirical correlation matrix of the data. So we use this statistic to test the null hypothesis “there is no significant difference between model’s reconstructed correlation matrix and the empirical one”. So, confusingly, we’re actually hoping to <em>accept</em> the null hypothesis here. This model returns a value of 328.312 with a vanishingly small p-value, so we reject the null hypothesis, which is bad: it suggests our model isn’t doing a good job replicating the empirical correlation matrix.</p>
-<p>Here’s a quote from <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> that explains this stuff from the slightly different angle:</p>
+<p>Here’s a quote from <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> that explains this stuff from the slightly different angle:</p>
 <blockquote class="blockquote">
 <p>“The test of significance [for a CFA model fit by maximum likelihood] gives a chi-square statistic with the null hypothesis being that all the population covariance has been extracted by the hypothesized number of factors. If the chi-square is significant at the designated probability level, then the residual matrix still has significant covariance in it.”</p>
 </blockquote>
-<p>So this chi-squared statistic provides a first look at goodness-of-fit, but <span class="citation" data-cites="Finch2015">Finch (<a href="references.html#ref-Finch2015" role="doc-biblioref">2015</a>)</span> say it is actually not very trustworthy in practice because the null hypothesis is sort of crazy: we want a more permissive test than just whether the model is <em>perfectly</em> recreating the empirical correlation matrix.</p>
+<p>So this chi-squared statistic provides a first look at goodness-of-fit, but <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span> say it is actually not very trustworthy in practice because the null hypothesis is sort of crazy: we want a more permissive test than just whether the model is <em>perfectly</em> recreating the empirical correlation matrix.</p>
 <blockquote class="blockquote">
 <p>“this statistic is not particularly useful in practice because it tests the null hypothesis that [the model-reconstructed correlation matrix is equal to the empirical correlation matrix], which is very restrictive. The test will almost certainly be rejected when the sample size is sufficiently large… In addition, the chi-square test relies on the assumption of multivariate normality of the indicators, which may not be tenable in many situations.”</p>
 </blockquote>
@@ -606,7 +613,7 @@ Variances:
 <p>Essentially, RMSEA is a weighted sum of the discrepancies between the model’s reconstructed correlation matrix and the empirical correlation matrix. But it also does a nice thing where it discounts model complexity and sample size to help us not overfit. Here’s the definition:</p>
 <p><span class="math inline">\(\text{RMSEA} = \sqrt{\dfrac{χ^2 - \text{df}}{\text{df}(n-1)}}\)</span></p>
 <p>See how it takes the chi-squared statistic and divides it by degrees of freedom (as a proxy for model complexity) and sample size? This makes for a more conservative measure of goodness-of-fit. Apparently the square-root is used <em>“to return the index to the same metric as the original standardized parameters”</em>. I don’t really understand that part… is it because a Chi-squared random variable is the squared version of a normal standard variable?</p>
-<p>As with the raw chi-squared statistic, we want RMSEA to be small because it is intended as a measure of the distance between the empirical correlation matrix and the model-estimated correlation matrix. According to <span class="citation" data-cites="Finch2015">Finch (<a href="references.html#ref-Finch2015" role="doc-biblioref">2015</a>)</span>, people like to say:</p>
+<p>As with the raw chi-squared statistic, we want RMSEA to be small because it is intended as a measure of the distance between the empirical correlation matrix and the model-estimated correlation matrix. According to <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span>, people like to say:</p>
 <ul>
 <li><p>RMSEA &lt;= 0.05 is a ‘good fit’;</p></li>
 <li><p>0.05 &lt; RMSEA &lt;= 0.08 is an ‘ok fit’</p></li>
@@ -697,11 +704,11 @@ Variances:
 <section id="convergent-validty" class="level3" data-number="2.2.4">
 <h3 data-number="2.2.4" class="anchored" data-anchor-id="convergent-validty"><span class="header-section-number">2.2.4</span> Convergent Validty</h3>
 <p>When I’m doing factor analysis, my goal is to convince my research peers that the observed variables are providing a way of measuring the unobservable ‘factor’ I’m purporting to exist. This seems like an ontologically dubious framing, and it also seems impossible to prove. But people who do research have settled on a few ways of trying to make this case.</p>
-<p>One such way is to take all of the measured variables I’m imagining to be caused by the same unmeasured factor and show that they are indeed correlated with each other. When this happens, I can say that my factor has <strong>Convergent Validity.</strong> In the words of <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span>:</p>
+<p>One such way is to take all of the measured variables I’m imagining to be caused by the same unmeasured factor and show that they are indeed correlated with each other. When this happens, I can say that my factor has <strong>Convergent Validity.</strong> In the words of <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span>:</p>
 <blockquote class="blockquote">
 <p><em>“Convergent validity occurs when several variables deemed to measure the same construct correlate with each other.”</em></p>
 </blockquote>
-<p>Or, as <span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span> puts it:</p>
+<p>Or, as <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span> puts it:</p>
 <blockquote class="blockquote">
 <p><em>“Variables presumed to measure the same construct show convergent validity if their intercorrelations are appreciable in magnitude.”</em></p>
 </blockquote>
@@ -851,12 +858,12 @@ Variances:
 </div>
 </div>
 <p>Firstly, notice that all of the non-fixed loadings are highly statistically significant, with all p-values smaller than .01. This is good! Super statistically-significant loadings are a necessary sign that our measured variables are actually good proxies for the imaginary ‘latent’ factor we’re purporting to use them to measure.</p>
-<p>Next, <span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span> says that we can start assessing convergent validity by just looking at the standardized loadings can in isolation. In his words on page 344:</p>
+<p>Next, <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span> says that we can start assessing convergent validity by just looking at the standardized loadings can in isolation. In his words on page 344:</p>
 <blockquote class="blockquote">
 <p><em>“[with reference to a CFA model he has fit]: A few other standardized coefficients are rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence for convergent validity is mixed.”</em></p>
 </blockquote>
 <p>To my eye it looks like some of the standardized loadings on the ‘mav’ factor are pretty low. Also, it seems like only ‘pap’ has really consistent loadings across all of its measured variables: the other three factors all have a bunch of variance between their loadings. So this all seems like a bit of a red flag.</p>
-<p>Next we can look at measures of <strong>reliability,</strong> which neither <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> nor <span class="citation" data-cites="Finch2015">Finch (<a href="references.html#ref-Finch2015" role="doc-biblioref">2015</a>)</span> mention. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a ‘true’ score and ‘noise’, where the ‘true’ score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the ‘true’ score as opposed to noise, and when they do these things they say they are estimating ‘reliability’. Ok.</p>
+<p>Next we can look at measures of <strong>reliability,</strong> which neither <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> nor <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span> mention. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a ‘true’ score and ‘noise’, where the ‘true’ score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the ‘true’ score as opposed to noise, and when they do these things they say they are estimating ‘reliability’. Ok.</p>
 <p>The all-time classic ‘reliability’ measure is called <strong>Cronbach’s Alpha.</strong> Cronbach didn’t actually invent it, so hello <a href="https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy">Stigler’s Law</a>. Here’s what it looks like:</p>
 <p><span class="math inline">\(\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})\)</span></p>
 <p>The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we’re asking: ‘is the variance of the <em>sums</em> larger than the variance of the individual columns?’ This will be true if the columns are generally pretty correlated, because the sums will <em>stack up</em> the raw values, instead of them cancelling each other out. So really we’re just asking: are the columns generally pretty correlated?‘. If my columns are pretty correlated and I make the standard assumption that <em>no other latent factors are influencing my observed values</em> (an insane assumption), then I can feel comfortable saying that Cronbach’s Alpha is useful for figuring out whether my measurements are all loading on the same ’latent’ variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach’s Alpha gives a picture of <strong>‘Internal Consistency Reliability’.</strong></p>
@@ -898,11 +905,11 @@ Reliability analysis
       0.87      0.88    0.85       0.7 7.1 0.01  5.6 1.3     0.72</code></pre>
 </div>
 </div>
-<p>According to <span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, these all look like good results, so they help me feel good about claiming convergent validity:</p>
+<p>According to <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, these all look like good results, so they help me feel good about claiming convergent validity:</p>
 <blockquote class="blockquote">
 <p>“Generally, coefficients around .90 are considered”excellent,” values around .80 as “very good,” and values about .70 as “adequate.””</p>
 </blockquote>
-<p>Cronbach’s Alpha has some drawbacks as a measure of ‘reliability’, so <span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span> says to also calculate the <strong>Average Variance Extracted (AVE)</strong>, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE &gt; 0.5, then you can feel good about claiming convergent validity. I guess this makes sense – seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I’m at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves – no need to look at an average here.</p>
+<p>Cronbach’s Alpha has some drawbacks as a measure of ‘reliability’, so <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span> says to also calculate the <strong>Average Variance Extracted (AVE)</strong>, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE &gt; 0.5, then you can feel good about claiming convergent validity. I guess this makes sense – seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I’m at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves – no need to look at an average here.</p>
 <p>But just for fun, let’s calculate the AVE. Rather than doing it manually, we can use a ready-made function from the <strong>semTools</strong> package</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>semTools<span class="sc">::</span><span class="fu">AVE</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
@@ -973,7 +980,7 @@ Reliability analysis
 </div>
 </div>
 <p>Apparently the rule of thumb for this one is the same as for Cronbach’s Alpha. So we can feel good about all of them except for ‘mav’, which has taken a beating via these 3 checks.</p>
-<p><span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, on page 307, gives yet another way of assessing convergent validity: he fits a CFA, then asks whether “the majority” of the variances of the observed variables have been explained, IE whether the standardized residual variances are &lt;50. I guess the idea is that the amount of variance explained for a variable by a factor depends on how correlated In his words:</p>
+<p><span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, on page 307, gives yet another way of assessing convergent validity: he fits a CFA, then asks whether “the majority” of the variances of the observed variables have been explained, IE whether the standardized residual variances are &lt;50. I guess the idea is that the amount of variance explained for a variable by a factor depends on how correlated In his words:</p>
 <blockquote class="blockquote">
 <p>“[in reference to one of his models:] [the] model fails to explain the majority (&gt; .50) of variance for a total of four out of eight indicators, which indicates poor convergent validity.”</p>
 </blockquote>
@@ -1151,10 +1158,10 @@ Reliability analysis
 </div>
 </div>
 <p>Interesting – the ‘Mastery’ factors and the ‘Performance’ factors each seem to be very correlated with each other, while being nice and uncorrelated with the two factors that make up the other. This suggests that we have bad <strong>discriminant validity</strong> between the imagined two types of ‘Mastery’ and two types of ‘Performance’ – the model can’t really tell them apart as separate things. This makes it harder for me to argue that they <em>are</em> in fact separate things. But then again, maybe my hypothesis is that the within-skill factors <em>should</em> be highly correlated. Anyhow, the fact that the ‘Mastery’ and ‘Performance’ factors are all pretty uncorrelated with each other is a good thing for both hypotheses.</p>
-<p><span class="citation" data-cites="Brown2006">Brown (<a href="references.html#ref-Brown2006" role="doc-biblioref">2006</a>)</span> gives some nice advice about how to assess discriminant validty, and how to deal with it if you have it:</p>
+<p><span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> gives some nice advice about how to assess discriminant validty, and how to deal with it if you have it:</p>
 <blockquote class="blockquote">
-<p>In applied research, a factor correlation that exceeds .80 or .85 is often used as the criterion to define poor discriminant validity. When two factors are highly overlapping, a common research strategy is to respecify the model by collapsing the dimensions into a single factor and determine whether this modification results in a significant degradation in model fit. If the respecified model provides an acceptable fit to the data, it is usually favored because of its superior parsimony</p>
-<p><span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> suggests doing something similar:</p>
+<p>“In applied research, a factor correlation that exceeds .80 or .85 is often used as the criterion to define poor discriminant validity. When two factors are highly overlapping, a common research strategy is to respecify the model by collapsing the dimensions into a single factor and determine whether this modification results in a significant degradation in model fit. If the respecified model provides an acceptable fit to the data, it is usually favored because of its superior parsimony.”</p>
+<p><span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> suggests doing something similar:</p>
 </blockquote>
 <blockquote class="blockquote">
 <p><em>“[fit the model] with the qualification that the correlations between one or more of the constructs being tested for discriminant validity is one. The difference between chi-squares from [this model vs the model where the correlations are allowed to freely vary] tests whether the constructs have a correlation significantly less than 1.0. If the correlation between the factors for the two constructs is not significantly different from 1.0, the difference chi-square will be insignificant. This means the null hypothesis of no discriminatory validity would be accepted. If the difference chi-square is significant, then the null hypothesis is rejected and the model that assumes discriminatory validity by allowing the correlation to be less than one is the more appropriate one.”</em></p>
@@ -1231,48 +1238,418 @@ Reliability analysis
 </table>
 </div>
 </div>
-<p>Looks like the reduction in chi-squared goodness-of-fit is statistically significant when we force the within-skill factors to be perfectly correlated. So, according to the <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="references.html#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> quote above, we can reject the null hypothesis that the within-skill factors are perfectly correlated. This gives a justification for continuing to distinguish between them as separate factors, and helps me make a believable claim that my posited factors are in fact different things.</p>
+<p>Looks like the reduction in chi-squared goodness-of-fit is statistically significant when we force the within-skill factors to be perfectly correlated. So, according to the <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> quote above, we can reject the null hypothesis that the within-skill factors are perfectly correlated. This gives a justification for continuing to distinguish between them as separate factors, and helps me make a believable claim that my posited factors are in fact different things.</p>
 <p>Actually, I think another way we could have done this would be to just fit the model where we just define one big factor for ‘Mastery’ and one big factor for ‘Performance’. I tried this and it returned even worse fit, which means the extra parameters (the correlation parameters) are significantly improving fit in the pure h1 model.</p>
 </section>
 <section id="conclusion" class="level3" data-number="2.2.6">
 <h3 data-number="2.2.6" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">2.2.6</span> Conclusion</h3>
-<p>All-in-all it seems like neither of these hypotheses do a great job. Sure, the ‘Performance’ factors have good convergent validity, and we see good discriminant validity between the ‘Performance’ and ‘Mastery’ factors, but the ‘Mastery’ factors don’t have great convergent validity.</p>
+<p>All-in-all it seems like neither of these hypotheses do a great job. Sure, the ‘Performance’ factors have good convergent validity, and we see good discriminant validity between the ‘Performance’ and ‘Mastery’ factors, but the ‘Mastery’ factors don’t have great convergent validity and fitting a single monolithic ‘Mastery’ factor doesn’t improve things.</p>
 <p>I can make a better model by dropping the measured ‘Mastery’ variables that aren’t having lots of their variance explained by the ‘Mastery’ factors, but this is contrary to the spirit of CFA. If I want to test a different hypothesis then I should collect a different sample.</p>
-<p>For a nice template of a more formal presentation of the results of a CFA, see <span class="citation" data-cites="Brown2006">Brown (<a href="references.html#ref-Brown2006" role="doc-biblioref">2006</a>)</span> chapter 4 appendix 3.</p>
+<p>For a nice template of a more formal presentation of the results of a CFA, see <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> chapter 4 appendix 3.</p>
 </section>
 </section>
-<section id="example-2" class="level2" data-number="2.3">
-<h2 data-number="2.3" class="anchored" data-anchor-id="example-2"><span class="header-section-number">2.3</span> Example 2:</h2>
-<p>USE THE EXAMPLE FROM THIS BOOK INSTEAD: http://www.kharazmi-statistics.ir/Uploads/Public/book/Methodology%20in%20the%20Social%20Sciences.pdf</p>
+<section id="example-2-biodiversity" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="example-2-biodiversity"><span class="header-section-number">2.3</span> Example 2: Biodiversity</h2>
+<p>Here’s <a href="https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/SEM_09_2-Ex1_CFA_exercise.pdf">a fun example from the Wetland and Aquatic Research Center of the U.S. Geological Survey</a>: given counts of different types of animals, can we fit a convincing CFA model for ‘diversity’? In other words: is the correlation structure of all my counts of various types of animals consistent with the possibility that those counts are confounded by a single unobserved thing called ‘diversity’?</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>dat_ff <span class="ot">&lt;-</span> foreign<span class="sc">::</span><span class="fu">read.spss</span>(<span class="st">'data/finch-and-french/performance.data.sav'</span>)</span>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>dat_raw <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'data/grace/SEM_09_2-Ex1_CFA_exercise_data.csv'</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Seems like I need to only use the first 12 columns I think?</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>dat_ff <span class="ot">&lt;-</span> dat_ff <span class="sc">%&gt;%</span> </span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>dat_clean <span class="ot">&lt;-</span> dat_raw <span class="sc">%&gt;%</span>  </span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Next we’ll do another example from <span class="citation" data-cites="Finch2015">Finch (<a href="references.html#ref-Finch2015" role="doc-biblioref">2015</a>)</span>, from the SEM chapter on page 62. They say it is important to CFA first before testing the relationships between the latent variables a la SEM, because we first want to make sure those latent variables actually seem good. This example uses a different dataset than the previous one.</p>
-<blockquote class="blockquote">
-<p>[W]e must ascertain whether the proposed model structure is supported by our data, which we will do by fitting a CFA to each of the latent variables…</p>
-</blockquote>
-<p>The authors fit a CFA for each of the latent variables in isolation, namely Mastery, Self-Oriented Perfectionism, and ‘ATTC’, <a href="https://arc.psych.wisc.edu/self-report/attention-control-scale-attc/#:~:text=The%20Attention%20Control%20Scale%20(ATTC,)%20to%204%20(always).">which seems to mean ‘Attention Control’</a></p>
+<section id="data-exploration-1" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="data-exploration-1"><span class="header-section-number">2.3.1</span> Data Exploration</h3>
+<p>Just for fun let’s see if the relative proportions of the different animals varies between countries:</p>
 <div class="cell">
-
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Proportions</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>dat_clean <span class="sc">%&gt;%</span> </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols      =</span> <span class="sc">!</span><span class="fu">matches</span>(<span class="st">"^c"</span>),</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to  =</span> <span class="st">"animal"</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"count"</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">total =</span> <span class="fu">sum</span>(count), </span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">prop  =</span> <span class="fu">round</span>(count <span class="sc">/</span> total, <span class="dv">2</span>)</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="fu">aes</span>(<span class="at">x =</span> animal, <span class="at">y =</span> prop), <span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span> </span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span> </span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>, <span class="at">vjust =</span> <span class="fl">0.5</span>, <span class="at">hjust=</span><span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>country)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="cfa_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
 </div>
+</div>
+<p>The proportions are pretty stable. Finland seems like the weirdest one, and it isn’t even that weird.</p>
+</section>
+<section id="model-fitting-1" class="level3" data-number="2.3.2">
+<h3 data-number="2.3.2" class="anchored" data-anchor-id="model-fitting-1"><span class="header-section-number">2.3.2</span> Model Fitting</h3>
+<p>The hypothesis we want to test here is simply that all of these counts are confounded by a single unmeasured ‘biodiversity’ variable. This is straightforward to fit:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>h1.definition <span class="ot">&lt;-</span> </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="st">'diversity =~ mammals + birds + amphibians + reptiles + beetles + butterflies'</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>h1.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data  =</span> dat_clean <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>country) <span class="sc">%&gt;%</span> <span class="fu">scale</span>(),</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> h1.definition</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>h1.summary <span class="ot">&lt;-</span> <span class="fu">summary</span>(h1.fit)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>h1.summary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>lavaan 0.6-12 ended normally after 23 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        12
+
+  Number of observations                            20
+
+Model Test User Model:
+                                                      
+  Test statistic                                20.817
+  Degrees of freedom                                 9
+  P-value (Chi-square)                           0.013
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)
+  diversity =~                                        
+    mammals           1.000                           
+    birds             0.825    0.277    2.978    0.003
+    amphibians        1.115    0.260    4.281    0.000
+    reptiles          0.780    0.279    2.793    0.005
+    beetles           1.135    0.259    4.380    0.000
+    butterflies       1.261    0.254    4.960    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)
+   .mammals           0.387    0.131    2.958    0.003
+   .birds             0.566    0.184    3.073    0.002
+   .amphibians        0.250    0.092    2.727    0.006
+   .reptiles          0.608    0.197    3.089    0.002
+   .beetles           0.224    0.085    2.645    0.008
+   .butterflies       0.054    0.054    1.010    0.313
+    diversity         0.563    0.278    2.025    0.043</code></pre>
+</div>
+</div>
+<p>Let’s have a look at the same 4 goodness-of-fit measures we used in the previous example. We can bring them all together with a nice utility function:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Define a custom function</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>fit_measures <span class="ot">&lt;-</span> <span class="cf">function</span>(fit){</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  summary <span class="ot">&lt;-</span> <span class="fu">summary</span>(fit, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Chi-Squared</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">chi_squared =</span> <span class="fu">tibble</span>(</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">Test             =</span> <span class="st">"standard chi-squared"</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">DF</span><span class="st">`</span>             <span class="ot">=</span> summary<span class="sc">$</span>test<span class="sc">$</span>standard<span class="sc">$</span>df,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">Test Statistic</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(summary<span class="sc">$</span>test<span class="sc">$</span>standard<span class="sc">$</span>stat, <span class="dv">2</span>),</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>        <span class="ot">=</span> summary<span class="sc">$</span>test<span class="sc">$</span>standard<span class="sc">$</span>pvalue) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character)) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">pivot_longer</span>(<span class="fu">everything</span>()),</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># RMSEA</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">rmsea =</span> summary<span class="sc">$</span>fit <span class="sc">%&gt;%</span> </span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as_tibble</span>(<span class="at">rownames =</span> <span class="st">"stat"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(<span class="fu">str_detect</span>(stat, <span class="st">"rmsea"</span>)),</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># CFI and TLI</span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">cfi_tli =</span> summary<span class="sc">$</span>fit <span class="sc">%&gt;%</span> </span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as_tibble</span>(<span class="at">rownames =</span> <span class="st">"stat"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(<span class="fu">str_detect</span>(stat, <span class="st">"cfi|tli"</span>)) </span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>  res</span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-39"><a href="#cb25-39" aria-hidden="true" tabindex="-1"></a><span class="do">### Call the function, then send its outputs to clean tables</span></span>
+<span id="cb25-40"><a href="#cb25-40" aria-hidden="true" tabindex="-1"></a><span class="fu">fit_measures</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb25-41"><a href="#cb25-41" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(knitr<span class="sc">::</span>kable)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$chi_squared
+
+
+|name           |value                |
+|:--------------|:--------------------|
+|Test           |standard chi-squared |
+|DF             |9                    |
+|Test Statistic |20.82                |
+|p-value        |0.0134888288206897   |
+
+$rmsea
+
+
+|stat           |      value|
+|:--------------|----------:|
+|rmsea          | 0.25622117|
+|rmsea.ci.lower | 0.11034617|
+|rmsea.ci.upper | 0.40224444|
+|rmsea.pvalue   | 0.01890337|
+
+$cfi_tli
+
+
+|stat |     value|
+|:----|---------:|
+|cfi  | 0.8695573|
+|tli  | 0.7825955|</code></pre>
+</div>
+</div>
+<p>The model isn’t fitting very well – Chi-Squared is highly statistically significant (we fail to reject the null hypothesis that there is residual variance left to explain), RMSEA is well above its conventional threshold, and CFI and TLI are both well below their conventional thresholds.</p>
+<p>Here <span class="citation" data-cites="Grace">(<a href="#ref-Grace" role="doc-biblioref"><strong>Grace?</strong></a>)</span> introduces a new method for tweaking our CFA model to improve goodness of fit. The idea is that we can use fancy math to ask “if I took a certain fixed parameter from my model definition and allowed it to be freely estimated, how much would my model’s chi-squared goodness of fit change?” People like to take this estimated change in goodness-of-fit and call it a <strong>modification index.</strong> As <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> puts it:</p>
+<blockquote class="blockquote">
+<p>“The modification index reflects an approximation of how much the overall model <span class="math inline">\(χ^2\)</span> would decrease if the fixed or constrained parameter was freely estimated.”</p>
+</blockquote>
+<p>So to get some ideas on how we might improve our goodness-of-fit, let’s print out the modification indexes for each of the fixed parameters in the model:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the estimated change in chi-squared for each fixed parameter</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">modindices</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Arrange them in order of modification index</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mi)) <span class="sc">%&gt;%</span> </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(lhs, op, rhs, mi) <span class="sc">%&gt;%</span> </span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">digits =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<thead>
+<tr class="header">
+<th style="text-align: left;">lhs</th>
+<th style="text-align: left;">op</th>
+<th style="text-align: left;">rhs</th>
+<th style="text-align: right;">mi</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">birds</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">beetles</td>
+<td style="text-align: right;">4.44</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">birds</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">amphibians</td>
+<td style="text-align: right;">3.99</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">mammals</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">butterflies</td>
+<td style="text-align: right;">2.84</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">beetles</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">butterflies</td>
+<td style="text-align: right;">2.78</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">mammals</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">amphibians</td>
+<td style="text-align: right;">2.31</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">birds</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">reptiles</td>
+<td style="text-align: right;">2.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">amphibians</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">butterflies</td>
+<td style="text-align: right;">1.72</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">birds</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">butterflies</td>
+<td style="text-align: right;">1.55</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">mammals</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">reptiles</td>
+<td style="text-align: right;">1.29</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mammals</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">birds</td>
+<td style="text-align: right;">1.20</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">amphibians</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">beetles</td>
+<td style="text-align: right;">0.58</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mammals</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">beetles</td>
+<td style="text-align: right;">0.38</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">reptiles</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">butterflies</td>
+<td style="text-align: right;">0.22</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">reptiles</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">beetles</td>
+<td style="text-align: right;">0.15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">amphibians</td>
+<td style="text-align: left;">~~</td>
+<td style="text-align: left;">reptiles</td>
+<td style="text-align: right;">0.14</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Based on the ‘ops’ symbol “~~”, it seems like all of the modification indexes correspond to residual correlations between observed variables. This teaches me something about CFA models! I guess in the typical CFA model we fix the residual correlations to 0? This helps me understand why the <a href="https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139">Bayesian CFA model as implemented in <strong>brms</strong></a> specifies <code>rescor = FALSE</code> . I was confused about this!</p>
+<p>Actually, I just realized <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> already explained this to me! Think back to where he showed us the definition of the ‘Common Factor Model’:</p>
+<p><span class="math inline">\(R_{vv} = PR_{ff}P' + U_{vv}\)</span></p>
+<p>And remember how Gorsuch specified that <span class="math inline">\(U_{vv}\)</span> is assumed to be a diagonal matrix, IE the residual correlations is assumed to be uncorrelated for each variable. This is the whole thing about the ‘unique factors’, IE the error terms, of the linear models of each measured variable are gonna be uncorrelated. <a href="https://stats.oarc.ucla.edu/r/seminars/rcfa/">This recorded seminar and notes from UCLA</a> give a nice clear walkthrough of the notation in a slightly different form from <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span>.</p>
+<p>From the DAGs perspective of CFA, assuming uncorrelated residuals sort of makes sense to me: if I want to convince you that my measured variables are all confounded by the same single unmeasured variable, then I think fixing the residual errors at 0 is a way of committing my model to the idea that there aren’t <em>other</em> unmeasured variables confounding certain of my measured guys. It is a strong assumption that, if it holds up, provides better evidence that my variables really truly are just confounded by a single unmeasured thing.</p>
+<p>So I guess I could write out this standard CFA model in a more McElreath fashion like so:</p>
+<p>$$ <span class="math display">\[\begin{align*}
+\begin{bmatrix} \text{mammals}_i \\ \text{birds}_i \\ \text{amphibians}_i \\ \text{reptiles}_i \\ \text{beetles}_i \\ \end{bmatrix} &amp; \sim
+\operatorname{MVNormal} \begin{pmatrix} \begin{bmatrix} \mu_{mammals} \\ \mu_{birds} \\ \mu_{amphibians} \\ \mu_{reptiles} \\ \mu_{beetles} \end{bmatrix}, \mathbf \Sigma\end{pmatrix}\\
+
+\mu_{mammals} = \lambda_{mammals} F_i \\
+\mu_{birds} = \lambda_{birds} F_i \\
+\mu_{amphibians} = \lambda_{amphibians} F_i \\
+\mu_{reptiles} = \lambda_{reptiles} F_i \\
+\mu_{beetles} = \lambda_{beetles} F_i \\
+
+\Sigma \begin{pmatrix}
+\sigma_{mammals}&amp;0 &amp;0 &amp;0 &amp;0 \\
+0 &amp; \sigma_{birds} &amp;0 &amp;0 &amp;0 \\
+0 &amp; 0 &amp; \sigma_{amphibians} &amp;0 &amp;0 \\
+0 &amp; 0 &amp; 0 &amp; \sigma_{reptiles} &amp;0 \\
+0 &amp; 0 &amp; 0 &amp; 0 &amp; \sigma_{beetles}
+\end{pmatrix} \\
+\end{align*}\]</span> $$</p>
+<p>In human words: the observed counts of each of the 5 animal types are imagined to be drawn from a shared multivariate normal distribution. The mean of each dimension of that distribution is a linear function of a single shared factor, which we’re calling ‘biodiversity’. The variance of each dimension of that distribution is unique, and there is no covariance between the dimensions.</p>
+<p>But now think back to our modification indexes: a few of them are saying that if we allow the residual covariances to be freely estimated rather than fixed at 0, then we can improve model fit by a whole lot. Specifically, if we allow the residual covariance between birds and beetles and/or between birds and amphibians to be freely estimated, then model fit as measured by the chi-squared statistic might be significantly improved. Here’s what the model is gonna look like now:</p>
+<p>$$ <span class="math display">\[\begin{align*}
+\begin{bmatrix} \text{mammals}_i \\ \text{birds}_i \\ \text{amphibians}_i \\ \text{reptiles}_i \\ \text{beetles}_i \\ \end{bmatrix} &amp; \sim
+\operatorname{MVNormal} \begin{pmatrix} \begin{bmatrix} \mu_{mammals} \\ \mu_{birds} \\ \mu_{amphibians} \\ \mu_{reptiles} \\ \mu_{beetles} \end{bmatrix}, \mathbf \Sigma\end{pmatrix}\\
+
+\mu_{mammals} = \lambda_{mammals} F_i \\
+\mu_{birds} = \lambda_{birds} F_i \\
+\mu_{amphibians} = \lambda_{amphibians} F_i \\
+\mu_{reptiles} = \lambda_{reptiles} F_i \\
+\mu_{beetles} = \lambda_{beetles} F_i \\
+
+\Sigma \begin{pmatrix}
+\sigma_{mammals}&amp;0 &amp;0 &amp;0 &amp;0 \\
+0 &amp; \sigma_{birds} &amp;\theta_\text{b&amp;a} &amp;0 &amp;\theta_\text{b&amp;b} \\
+0 &amp;\theta_\text{b&amp;a} &amp; \sigma_{amphibians} &amp;0 &amp;0 \\
+0 &amp; 0 &amp; 0 &amp; \sigma_{reptiles} &amp;0 \\
+0 &amp;\theta_\text{b&amp;b} &amp; 0 &amp; 0 &amp; \sigma_{beetles}
+\end{pmatrix} \\
+\end{align*}\]</span> $$</p>
+<p>See how I’ve filled in the variance-covariance matrix of the likelihood to include a few more free parameters?</p>
+<p>Actually, Grace proceeds by fitting two more models, one with each of these two candidate covariance parameters as freely fitting. Then he uses <code>anova()</code> to do a likelihood-ratio test for them. We can’t test all 3 models at once because models 2 and 3 aren’t nested with each other.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Letting the covariance between birds and beetles be freely estimated</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>h2.definition <span class="ot">&lt;-</span> </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="st">'diversity =~ mammals + birds + amphibians + </span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="st">              reptiles + beetles + butterflies</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="st"> birds ~~ beetles'</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>h2.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">data  =</span> dat_clean <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>country) <span class="sc">%&gt;%</span> <span class="fu">scale</span>(),</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> h2.definition</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>h2.summary <span class="ot">&lt;-</span> <span class="fu">summary</span>(h2.fit, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="do">### Letting the covariance between birds and amphibians be freely estimated</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>h3.definition <span class="ot">&lt;-</span> </span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">'diversity =~ mammals + birds + amphibians + </span></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="st">              reptiles + beetles + butterflies</span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a><span class="st"> </span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a><span class="st"> birds ~~ amphibians'</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>h3.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a> <span class="at">data  =</span> dat_clean <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>country) <span class="sc">%&gt;%</span> <span class="fu">scale</span>(),</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> h3.definition</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(h1.fit, h2.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Chi-Squared Difference Test
+
+       Df    AIC    BIC  Chisq Chisq diff Df diff Pr(&gt;Chisq)  
+h2.fit  8 270.81 283.76 16.013                                
+h1.fit  9 273.62 285.56 20.817      4.804       1    0.02839 *
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(h1.fit, h3.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Chi-Squared Difference Test
+
+       Df    AIC    BIC  Chisq Chisq diff Df diff Pr(&gt;Chisq)   
+h3.fit  8 267.72 280.67 12.924                                 
+h1.fit  9 273.62 285.56 20.817     7.8934       1   0.004961 **
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>CHOOSE ONE OF THE MODELS, THEN DO CONVERGENT VALIDITY AND RELIABILITY!</p>
+</section>
 </section>
 <section id="cool-ecology-example-i-should-do-instead" class="level2" data-number="2.4">
 <h2 data-number="2.4" class="anchored" data-anchor-id="cool-ecology-example-i-should-do-instead"><span class="header-section-number">2.4</span> Cool ecology example I should do instead:</h2>
-<p>https://www.usgs.gov/centers/wetland-and-aquatic-research-center/science/quantitative-analysis-using-structural-equation</p>
 </section>
 <section id="example-3" class="level2" data-number="2.5">
 <h2 data-number="2.5" class="anchored" data-anchor-id="example-3"><span class="header-section-number">2.5</span> Example 3:</h2>
-<p>Now we’ll look at an example from <span class="citation" data-cites="Kline2011">Kline (<a href="references.html#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, chapter 13.</p>
+<p>Do an example from here, or possibly from the linked 3rd lecture that covers more advanced CFA topics https://stats.oarc.ucla.edu/r/seminars/rcfa/</p>
+<p>Now we’ll look at an example from <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, chapter 13.</p>
 <p>Load the data:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>dat_kline <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/kline/kabc-amos.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>dat_kline <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/kline/kabc-amos.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
 e.g.:
@@ -1296,7 +1673,7 @@ dbl (8): HM, NR, WO, GC, Tr, SM, MA, PS
 <p>Lastly, let’s walk through <a href="https://www.lavaan.ugent.be/tutorial/cfa.html">an example from the lavaan documentation</a></p>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
 <div id="ref-Brown2006" class="csl-entry" role="doc-biblioentry">
 Brown, Timothy A. 2006. <em>Confirmatory Factor Analysis for Applied Research</em>.
 </div>
