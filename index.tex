@@ -213,7 +213,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, frame hidden, interior hidden, enhanced, breakable, sharp corners, boxrule=0pt]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, enhanced, breakable, sharp corners, frame hidden]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -1855,11 +1855,11 @@ amphibians & \textasciitilde\textasciitilde{} & reptiles & 0.14 \\
 \bottomrule()
 \end{longtable}
 
-Based on the `ops' symbol ``\textasciitilde\textasciitilde{}'', it seems
-like all of the modification indexes correspond to residual correlations
-between observed variables. This teaches me something about CFA models!
-I guess in the typical CFA model we fix the residual correlations to 0?
-This helps me understand why the
+Based on the operation symbol ``\textasciitilde\textasciitilde{}'', it
+seems like all of the modification indexes correspond to residual
+correlations between observed variables. This teaches me something about
+CFA models! I guess in the typical CFA model we fix the residual
+correlations to 0? This helps me understand why the
 \href{https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139}{Bayesian
 CFA model as implemented in \textbf{brms}} specifies
 \texttt{rescor\ =\ FALSE} . I was confused about this!
@@ -2012,6 +2012,9 @@ h1.fit  9 273.62 285.56 20.817     7.8934       1   0.004961 **
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 \end{verbatim}
+
+\hypertarget{validity}{%
+\subsection{Validity}\label{validity}}
 
 CHOOSE ONE OF THE MODELS, THEN DO CONVERGENT VALIDITY AND RELIABILITY!
 

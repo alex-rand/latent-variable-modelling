@@ -115,6 +115,9 @@ h3.fit <- cfa(
 
 h3.summary <- summary(h3.fit, fit.measures = TRUE, standardized = TRUE)
 
-h2.summary
+
+summary.h3 <- summary(h3.fit, fit.measures = TRUE, standardized = TRUE)
+
+summary.h3
 
 

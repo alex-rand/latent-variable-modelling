@@ -1,0 +1,12 @@
+---
+title: "SEM"
+format:
+  html:
+    theme: default
+---
+
+```{r}
+
+```
+
+Someone on the stan forums recommended this book for a bayesian example: https://www.guilford.com/books/Bayesian-Structural-Equation-Modeling/Sarah-Depaoli/9781462547746

@@ -9,7 +9,7 @@ format:
 
 I think it is safe to say that The Whole Game of Confirmatory Factor Analysis (CFA) is that I'm trying to convince my colleagues that my observed variables are confounded by some unmeasured variables. Usually I'm trying to show that the variables is confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.
 
-The classic DAGs way of testing for confounding is to condition on the supposed confounder. But in CFA we always assume the confounder is unmeasured. So we can't test it directly with reference to d-separation. Instead, we can only try to argue for it in a hand-wavy sort of way: we expect confounded variables to be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is *consistent* with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.
+The classic DAGs way of testing for confounding is to condition on the supposed confounder. But in CFA we always assume the confounder is unmeasured. So we can't directly test our DAG of confounding by using d-separation. Instead, we can only try to argue for it in a hand-wavy sort of way: we expect confounded variables to be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is *consistent* with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.
 
 So interpreting a CFA model is all about checking to see whether the correlations between the variables are what we would expect to see under the DAG where each group of variables is confounded by a single unmeasured variable.
 
@@ -264,9 +264,9 @@ Looks like the CFI and TLI look ok, but don't meet the conventional .95 cutoff. 
 
 ### Convergent Validty
 
-When I'm doing factor analysis, my goal is to convince my research peers that the observed variables are providing a way of measuring the unobservable 'factor' I'm purporting to exist. This seems like an ontologically dubious framing, and it also seems impossible to prove. But people who do research have settled on a few ways of trying to make this case.
+Like I said before: when I'm doing factor analysis, my goal is to convince my research peers that my observed variables are confounded by an unobserved variable, and that therefore they provide a way of 'measuring' that unobserved variable. This seems like an ontologically dubious framing, and it also seems impossible to prove. But people who do research have settled on a few ways of trying to make this case.
 
-One such way is to take all of the measured variables I'm imagining to be caused by the same unmeasured factor and show that they are indeed correlated with each other. When this happens, I can say that my factor has **Convergent Validity.** In the words of @gorsuch1983:
+One such way is to take all of the measured variables I'm imagining to be caused by the same unmeasured factor and show that they are indeed correlated with each other, because this is what we would expect under the simple DAG where they are all confounded by the same latent variable. When this happens, I can say that my factor has **Convergent Validity.** In the words of @gorsuch1983:
 
 > *"Convergent validity occurs when several variables deemed to measure the same construct correlate with each other."*
 
@@ -274,13 +274,13 @@ Or, as @Kline2011 puts it:
 
 > *"Variables presumed to measure the same construct show convergent validity if their intercorrelations are appreciable in magnitude."*
 
-So essentially I'm trying to make the case for a DAG where my observed variables are all caused by a shared unobserved 'latent' variable. It seems like to make the jump from 'these measured variables are correlated' to 'these measured variables are caused by a single shared latent factor' I would need to be also making the further assumption that there aren't *other* unmeasured confounders muddying up the observed covariances. It's DAGs all the way down...
+It seems like to make the jump from 'these measured variables are correlated' to 'these measured variables are *caused* by a single shared latent factor' I would need to be also making the further assumption that there aren't *other* unmeasured confounders muddying up the observed covariances. It's DAGs all the way down...
 
 Based on the textbooks I'm working from, here are a few questions I can answer if I want to make the case for Convergent Validity:
 
 1.  Are the factor loadings statistically significant?
 2.  Are the standardized factor loadings pretty big (IE pretty close to 1)?
-3.  Are the within-factor loadings pretty similar to each other?
+3.  Are the standardized within-factor loadings pretty similar to each other?
 4.  Do the measurements seem to have good 'reliability' as measured by something like Chronbach's Alpha, Average Variance Extracted, or Composite Reliability?
 5.  Are all of the residual variances less than .50, IE is the model explaining at least half the variance of each model?
 
@@ -629,7 +629,7 @@ Here @Grace introduces a new method for tweaking our CFA model to improve goodne
 
 > "The modification index reflects an approximation of how much the overall model $χ^2$ would decrease if the fixed or constrained parameter was freely estimated."
 
-So to get some ideas on how we might improve our goodness-of-fit, let's print out the modification indexes for each of the fixed parameters in the model:
+Apparently conventional cutoff for a 'good' modification index is 3.84. So to get some ideas on how we might improve our goodness-of-fit, let's print out the modification indexes for each of the fixed parameters in the model and see which of them pass that threshold:
 
 ```{r}
 
@@ -645,7 +645,7 @@ modindices(h1.fit) %>%
 
 ```
 
-Based on the 'ops' symbol "\~\~", it seems like all of the modification indexes correspond to residual correlations between observed variables. This teaches me something about CFA models! I guess in the typical CFA model we fix the residual correlations to 0? This helps me understand why the [Bayesian CFA model as implemented in **brms**](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139) specifies `rescor = FALSE` . I was confused about this!
+Based on the operation symbol "\~\~", it seems like all of the modification indexes correspond to residual correlations between observed variables. This teaches me something about CFA models! I guess in the typical CFA model we fix the residual correlations to 0? This helps me understand why the [Bayesian CFA model as implemented in **brms**](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139) specifies `rescor = FALSE` . I was confused about this!
 
 Actually, I just realized @gorsuch1983 already explained this to me! Think back to where he showed us the definition of the 'Common Factor Model':
 
@@ -718,8 +718,6 @@ h2.fit <- cfa(
   model = h2.definition
 )
 
-h2.summary <- summary(h2.fit, fit.measures = TRUE, standardized = TRUE)
-
 ### Letting the covariance between birds and amphibians be freely estimated
 h3.definition <- 
   'diversity =~ mammals + birds + amphibians + 
@@ -737,13 +735,51 @@ anova(h1.fit, h2.fit)
 anova(h1.fit, h3.fit)
 ```
 
-CHOOSE ONE OF THE MODELS, THEN DO CONVERGENT VALIDITY AND RELIABILITY!
+Looks like model H3 has the lowest AIC and the more significant improvement in chi-squared fit. So let's continue working with that one in the following sections.
+
+### Validity
+
+We can do the same 5 checks of validity we used in the previous 'Mastery and Performance' example. Let's start with the big summary printout:
+
+```{r}
+
+summary.h3 <- summary(h3.fit, fit.measures = TRUE, standardized = TRUE)
+
+summary.h3
+
+```
+
+The factor loadings are all highly statistically significant, which is the first thing to check to make sure nothing is going horribly wrong.
+
+The standardized loadings are pretty big as well, but not super great for 'reptiles'. Also there's a lot of variance in the loadings, which is evidence that my simple DAG of confounding may not be perfect -- there are other unmeasured variables influencing some of my animal counts to different degrees. I mean of course there are, but the degree to which this is apparent based on the factor loadings undermines my claims to convergent validity.
+
+Next we can look at the standardized residual variances. Some of them look great, and all but 'reptiles' pass the threshold of 0.5.
+
+I could look at the 'reliability' statistics too, but can't be bothered right now. Onwards to another example!
+
+## Example 3: MTMM and 'Error Theory'
+
+In the previous example we saw how we can sometimes improve model fit by freeing-up some of the residual covariance terms, rather than doing the typical thing of fixing them at 0. But this feels a bit icky to me -- just pumping out some modification indexes and using that as a basis for opening up some free parameters feels pretty overfitty, because we don't have a strong theory-driven reason for changing the model in that way.
+
+But there *are* more kosher-feeling theory-driven reasons for freeing up a some of the residual covariance parameters. Let's talk about two of them: the first relates to convergent validity, the second relates to discriminant validity.
+
+Here's the first example: imagine I have a theory where there's a thing called 'exceptional leadership', and it is made up of 3 unobservable features, like 'self-confidence', 'oratorical skill', and 'robust compassionateness'. So I make up a survey where I ask 12 questions total, 4 per imagined factor. Then I fit a CFA model and find that it does a great job recreating the empirical variance-covariance matrix. There's lots of great convergent validity between the questions I imagine to define the 3 factors. So I get published! But there's a first problem: what if my within-factor variables are correlated not because they are cleanly confounded by 'self-confidence' (which is what I'm trying to convince you of), but instead because the within-factor survey questions are just worded in a really similar way? This possibility undermines my case for clean confounding. Freely fitting the residual covariances between the within-factor questions can help me make the case that "see, even when I allow for correlated errors due to *other* unobserved confounders (like common wording), the factors still do a good job recreating the empirical covariance structure, IE the loadings still look good, so my argument for *mostly* clean confounding is still reasonable. I think this makes sense?
+
+Now the second example: imagine I do the same analysis described above, but I find my discriminant validity actually doesn't look so hot, IE there are some high between-factor correlations. It is possible that this is just being caused by the fact that the variables making up those factors are confounded by their shared **measurement approach,** IE confounded by all being survey questions. Maybe I can get better discriminant validity, IE reduce the between-factor correlations, by
+
+Correlated Methods Model vs Correlated Uniqueness Model????? I think this is the difference between explicitly including method factors vs just letting within-measurement-approach factors have correlated residual errors. What are the advantages/disadvantages of these two approaches?? Read on
+
+....
+
+Getting on to MTMM...I think the idea is that if I look at the empirical variance covariance matrix and I notice that variables I'm claiming to measure different factors are actually highly correlated but only *within* measurement approaches, then that suggests the method approaches might be confounding my variables. So one thing I can do is control for method effects by including method factors. This is a **Correlated Methods Model??** If the trait factors still load well, then that's good for my argument that they are still confounding in a big way. It's just like in linear regression where we control for other variables by including them in the model.
+
+One situation where I may want to do this do this is when . @Brown2006 calls this an "error theory".
 
 ## Cool ecology example I should do instead:
 
 ## Example 3:
 
-Do an example from here, or possibly from the linked 3rd lecture that covers more advanced CFA topics https://stats.oarc.ucla.edu/r/seminars/rcfa/
+Do an example from here, or possibly from the linked 3rd lecture that covers more advanced CFA topics https://stats.oarc.ucla.edu/r/seminars/rcfa/ but read the corresponding Brown chapter first.
 
 Now we'll look at an example from @Kline2011, chapter 13.
 
