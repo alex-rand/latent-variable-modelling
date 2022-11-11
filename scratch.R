@@ -1,5 +1,6 @@
 library(tidyverse)
 library(lavaan)
+library(readxl)
 
 dat_raw <- read.csv('data/grace/SEM_09_2-Ex1_CFA_exercise_data.csv')
 
@@ -7,53 +8,6 @@ dat_clean <- dat_raw %>%
   
   janitor::clean_names()
   
-
-# Raw Counts
-dat_clean %>% 
-  
-  pivot_longer(
-    cols      = !matches("^c"),
-    names_to  = "animal",
-    values_to = "count"
-  ) %>% 
-  
-  ggplot() + 
-  geom_bar(aes(x = animal, y = count), stat = "identity") + 
-  theme_bw() + 
-  facet_wrap(~country)
-
-# Proportions
-dat_clean %>% 
-  
-  janitor::clean_names() %>% 
-  
-  pivot_longer(
-    cols      = !matches("^c"),
-    names_to  = "animal",
-    values_to = "count"
-  ) %>% 
-  
-  group_by(country) %>% 
-  mutate(
-    total = sum(count), 
-    prop  = round(count / total, 2)
-  ) %>% 
-
-  ggplot() + 
-  geom_bar(aes(x = animal, y = prop), stat = "identity") + 
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  facet_wrap(~country)
-  
-
-# Corr
-cor(dat_clean %>% select(-country))
-
-dat_clean %>% 
-  
-  select(-country) %>% 
-  
-  scale()
 
 h1.definition <- 
 'diversity =~ mammals + birds + amphibians + reptiles + beetles + butterflies'
@@ -63,61 +17,93 @@ h1.fit <- cfa(
   model = h1.definition
 )
 
-
 h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
 h1.summary
 
-modindices(h1.fit) %>% 
-  
-  # Arrange them in order of modification index
-  arrange(desc(mi)) 
-  
-  select(lhs, ops, rhs, mi) %>% 
-  
-  knitr::kable(digits = 2)
 
-# Get the estimated change in chi-squared for each fixed parameter
-modindices(h1.fit, op = "~~") %>% 
+library(readxl)
+
+brown_cov <- readxl::read_excel("data/brown/figure-6.3.xlsx") %>% 
   
-  # Arrange them in order of modification index
-  arrange(desc(mi)) %>% 
-  
-  knitr::kable()
+  column_to_rownames("...1") 
 
+h1.definition <- 
+  'happy =~ HACL + HAD + HDESC + HLKRT 
+   sad   =~ SACL + SAD + SDESC + SLKRT'
 
-h2.definition <- 
-'diversity =~ mammals + birds + amphibians + 
-              reptiles + beetles + butterflies
- 
- birds ~~ beetles'
-
-
-h2.fit <- cfa(
-  data  = dat_clean %>% select(-country) %>% scale(),
-  model = h2.definition
+h1.fit <- cfa(
+  sample.cov = brown_cov,
+  sample.nobs = 304,
+  model = h1.definition
 )
 
-h2.summary <- summary(h2.fit, fit.measures = TRUE, standardized = TRUE)
 
+### Simulate based on a DAG
 
-h3.definition <- 
-  'diversity =~ mammals + birds + amphibians + 
-              reptiles + beetles + butterflies
- 
- birds ~~ amphibians'
+# Sample size
+N <- 400
 
-
-h3.fit <- cfa(
- data  = dat_clean %>% select(-country) %>% scale(),
-  model = h3.definition
+dat_fake <- tibble(
+  
+  # The factors are uncorrelated in reality, but
+  # will be confounded by the measurement effects!
+  F1 = rnorm(N, 0, 1),
+  F2 = rnorm(N, 0, 1),
+  
+  # The measurement effects
+  M1 = rnorm(N, 0, 1),
+  M2 = rnorm(N, 0, 1),
+  M3 = rnorm(N, 0, 1),
+  M4 = rnorm(N, 0, 1),
+  
+  
+  # The measurements
+  H1 = .8*F1 + M1,
+  H2 = .7*F1 + M2,
+  H3 = .9*F1 + M3,
+  H4 = .7*F1 + M4,
+  S1 = .8*F2 + M1,
+  S2 = .7*F2 + M2,
+  S3 = .9*F2 + M3,
+  S4 = .7*F2 + M4
 )
 
-h3.summary <- summary(h3.fit, fit.measures = TRUE, standardized = TRUE)
+voc()
+
+h1.definition <- 
+  'happy =~ H1 + H2 + H3 + H4
+   sad =~ S1 + S2 + S3 + S4'
+
+h1.fit <- cfa(
+  data = dat_fake,
+  model = h1.definition
+)
+
+dat_fake
+
+dat_fake %>% 
+  
+  select(H1, S1) %>% 
+  
+  view()
 
 
-summary.h3 <- summary(h3.fit, fit.measures = TRUE, standardized = TRUE)
+cov(dat_fake %>% select(matches("^(H|S)")))
 
-summary.h3
+cor(dat_fake %>% select(matches("^F")))
 
 
+lm(H1 ~ S1 )
+lm(H1 ~ S1)
+
+
+cov
+
+
+
+
+  
+  view()
+?read_xlsx
+brown %>% view()
