@@ -213,7 +213,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, enhanced, breakable, sharp corners, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, frame hidden, breakable, borderline west={3pt}{0pt}{shadecolor}, interior hidden, enhanced, sharp corners]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -334,19 +334,19 @@ unmeasured variable per group.
 
 The classic DAGs way of testing for confounding is to condition on the
 supposed confounder. But in CFA we always assume the confounder is
-unmeasured. So we can't test it directly with reference to d-separation.
-Instead, we can only try to argue for it in a hand-wavy sort of way: we
-expect confounded variables to be correlated with each other. This is
-why we focus on the empirical correlation matrix as the basis for our
-model: if a few of my variables are very correlated with each other then
-that is \emph{consistent} with them being confounded by the same
-unobserved variable. But it is not proof! You can never prove a DAG,
-after all.
+unmeasured, so we can't directly test our DAG using regression. Instead,
+we can only try to argue for it in a hand-wavy sort of way: we expect
+confounded variables to be correlated with each other, and uncounfounded
+variables to \emph{not} be correlated with each other. This is why we
+focus on the empirical correlation matrix as the basis for our model: if
+a few of my variables are very correlated with each other then that is
+\emph{consistent} with them being confounded by the same unobserved
+variable. But it is not proof! You can never prove a DAG, after all.
 
 So interpreting a CFA model is all about checking to see whether the
-correlations between the variables are what we would expect to see under
-the DAG where each group of variables is confounded by a single
-unmeasured variable.
+correlations between the variables are consistent with what we would
+expect to see under the DAG where each group of variables is confounded
+by a single unmeasured variable.
 
 Let's load the packages we'll need for what is to come in this chapter:
 
@@ -354,12 +354,16 @@ Let's load the packages we'll need for what is to come in this chapter:
 \begin{Highlighting}[]
 \FunctionTok{library}\NormalTok{(tidyverse)}
 \FunctionTok{library}\NormalTok{(lavaan)}
+\FunctionTok{library}\NormalTok{(ggdag)}
 \end{Highlighting}
 \end{Shaded}
 
 \hypertarget{example-1-toxic-striving-energy}{%
-\section{Example 1: Toxic Striving
+\section*{Example 1: Toxic Striving
 Energy}\label{example-1-toxic-striving-energy}}
+\addcontentsline{toc}{section}{Example 1: Toxic Striving Energy}
+
+\markright{Example 1: Toxic Striving Energy}
 
 The first example we'll look at is from Finch (2015), chapter 3. The
 practice dataset is introduced on page 10. It is from a study about
@@ -386,7 +390,8 @@ the columns with responses to the AGS questionnaire:
 \end{Shaded}
 
 \hypertarget{data-exploration}{%
-\subsection{Data Exploration}\label{data-exploration}}
+\subsection*{Data Exploration}\label{data-exploration}}
+\addcontentsline{toc}{subsection}{Data Exploration}
 
 We don't want to do too much exploration before fitting our factor
 models, because the whole game of CFA is to commit to our hypotheses
@@ -576,7 +581,8 @@ instead rely on the alternative estimation approach.''
 \end{quote}
 
 \hypertarget{model-fitting}{%
-\subsection{Model Fitting}\label{model-fitting}}
+\subsection*{Model Fitting}\label{model-fitting}}
+\addcontentsline{toc}{subsection}{Model Fitting}
 
 The researchers who collected the data do what good factor analysts do:
 they look to the literature to set up some clear and specific candidate
@@ -758,11 +764,13 @@ That's a lot of outputs. Let's break down the output into smaller
 bite-sized chunks.
 
 \hypertarget{goodness-of-fit-statistics}{%
-\subsection{Goodness of Fit
+\subsection*{Goodness of Fit
 Statistics}\label{goodness-of-fit-statistics}}
+\addcontentsline{toc}{subsection}{Goodness of Fit Statistics}
 
 \hypertarget{chi-squared-statistic}{%
-\subsubsection{Chi-Squared Statistic}\label{chi-squared-statistic}}
+\subsubsection*{Chi-Squared Statistic}\label{chi-squared-statistic}}
+\addcontentsline{toc}{subsubsection}{Chi-Squared Statistic}
 
 The first thing to look at is the chi-squared statistic from the `User
 Model', IE the model I, the user, have just fit. I like to think of this
@@ -845,8 +853,10 @@ way. This is bad -- it suggests that, given our assumptions, there's a
 big difference between our model and the data.
 
 \hypertarget{root-mean-squared-error-approximation-rmsea}{%
-\subsubsection{Root Mean Squared Error Approximation
+\subsubsection*{Root Mean Squared Error Approximation
 (RMSEA)}\label{root-mean-squared-error-approximation-rmsea}}
+\addcontentsline{toc}{subsubsection}{Root Mean Squared Error
+Approximation (RMSEA)}
 
 Another one people like to go with is the Root Mean Squared Error
 Approximation (RMSEA). This statistic takes some math and background to
@@ -916,8 +926,10 @@ are above the `bad fit' conventional threshold of .08. This corroborates
 what we saw with the chi-squared statistic above.
 
 \hypertarget{comparative-fit-index-cfi-and-tucker-lewis-index-tli}{%
-\subsubsection{Comparative Fit Index (CFI) and Tucker-Lewis Index
+\subsubsection*{Comparative Fit Index (CFI) and Tucker-Lewis Index
 (TLI)}\label{comparative-fit-index-cfi-and-tucker-lewis-index-tli}}
+\addcontentsline{toc}{subsubsection}{Comparative Fit Index (CFI) and
+Tucker-Lewis Index (TLI)}
 
 CFI seems to be the most trusted and widely-used tool for assessing
 goodness of fit in a CFA. Basically the idea is that we ask: ``how much
@@ -976,19 +988,22 @@ cutoff. So they are in line with the chi-squared and RMSEA in suggesting
 that our goodness-of-fit isn't so good.
 
 \hypertarget{convergent-validty}{%
-\subsection{Convergent Validty}\label{convergent-validty}}
+\subsection*{Convergent Validty}\label{convergent-validty}}
+\addcontentsline{toc}{subsection}{Convergent Validty}
 
-When I'm doing factor analysis, my goal is to convince my research peers
-that the observed variables are providing a way of measuring the
-unobservable `factor' I'm purporting to exist. This seems like an
-ontologically dubious framing, and it also seems impossible to prove.
-But people who do research have settled on a few ways of trying to make
-this case.
+Like I said before: when I'm doing factor analysis, my goal is to
+convince my research peers that my observed variables are confounded by
+an unobserved variable, and that therefore they provide a way of
+`measuring' that unobserved variable. This seems like an ontologically
+dubious framing, and it also seems impossible to prove. But people who
+do research have settled on a few ways of trying to make this case.
 
 One such way is to take all of the measured variables I'm imagining to
 be caused by the same unmeasured factor and show that they are indeed
-correlated with each other. When this happens, I can say that my factor
-has \textbf{Convergent Validity.} In the words of Gorsuch (1983):
+correlated with each other, because this is what we would expect under
+the simple DAG where they are all confounded by the same latent
+variable. When this happens, I can say that my factor has
+\textbf{Convergent Validity.} In the words of Gorsuch (1983):
 
 \begin{quote}
 \emph{``Convergent validity occurs when several variables deemed to
@@ -1002,13 +1017,11 @@ Or, as Kline (2011) puts it:
 validity if their intercorrelations are appreciable in magnitude.''}
 \end{quote}
 
-So essentially I'm trying to make the case for a DAG where my observed
-variables are all caused by a shared unobserved `latent' variable. It
-seems like to make the jump from `these measured variables are
-correlated' to `these measured variables are caused by a single shared
-latent factor' I would need to be also making the further assumption
-that there aren't \emph{other} unmeasured confounders muddying up the
-observed covariances. It's DAGs all the way down\ldots{}
+It seems like to make the jump from `these measured variables are
+correlated' to `these measured variables are \emph{caused} by a single
+shared latent factor' I would need to be also making the further
+assumption that there aren't \emph{other} unmeasured confounders
+muddying up the observed covariances. It's DAGs all the way down\ldots{}
 
 Based on the textbooks I'm working from, here are a few questions I can
 answer if I want to make the case for Convergent Validity:
@@ -1022,7 +1035,8 @@ answer if I want to make the case for Convergent Validity:
   Are the standardized factor loadings pretty big (IE pretty close to
   1)?
 \item
-  Are the within-factor loadings pretty similar to each other?
+  Are the standardized within-factor loadings pretty similar to each
+  other?
 \item
   Do the measurements seem to have good `reliability' as measured by
   something like Chronbach's Alpha, Average Variance Extracted, or
@@ -1388,7 +1402,8 @@ we lose some evidence of convergent
 validity.\textasciitilde\textasciitilde{}
 
 \hypertarget{discriminant-validity}{%
-\subsection{Discriminant Validity}\label{discriminant-validity}}
+\subsection*{Discriminant Validity}\label{discriminant-validity}}
+\addcontentsline{toc}{subsection}{Discriminant Validity}
 
 Next let's look at the estimated correlations between the factors. If my
 hypothesis H1 is true then we should expect all of the factors to be
@@ -1567,7 +1582,8 @@ fit, which means the extra parameters (the correlation parameters) are
 significantly improving fit in the pure h1 model.
 
 \hypertarget{conclusion}{%
-\subsection{Conclusion}\label{conclusion}}
+\subsection*{Conclusion}\label{conclusion}}
+\addcontentsline{toc}{subsection}{Conclusion}
 
 All-in-all it seems like neither of these hypotheses do a great job.
 Sure, the `Performance' factors have good convergent validity, and we
@@ -1584,7 +1600,10 @@ For a nice template of a more formal presentation of the results of a
 CFA, see Brown (2006) chapter 4 appendix 3.
 
 \hypertarget{example-2-biodiversity}{%
-\section{Example 2: Biodiversity}\label{example-2-biodiversity}}
+\section*{Example 2: Biodiversity}\label{example-2-biodiversity}}
+\addcontentsline{toc}{section}{Example 2: Biodiversity}
+
+\markright{Example 2: Biodiversity}
 
 Here's
 \href{https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/SEM_09_2-Ex1_CFA_exercise.pdf}{a
@@ -1606,7 +1625,8 @@ single unobserved thing called `diversity'?
 \end{Shaded}
 
 \hypertarget{data-exploration-1}{%
-\subsection{Data Exploration}\label{data-exploration-1}}
+\subsection*{Data Exploration}\label{data-exploration-1}}
+\addcontentsline{toc}{subsection}{Data Exploration}
 
 Just for fun let's see if the relative proportions of the different
 animals varies between countries:
@@ -1649,7 +1669,8 @@ The proportions are pretty stable. Finland seems like the weirdest one,
 and it isn't even that weird.
 
 \hypertarget{model-fitting-1}{%
-\subsection{Model Fitting}\label{model-fitting-1}}
+\subsection*{Model Fitting}\label{model-fitting-1}}
+\addcontentsline{toc}{subsection}{Model Fitting}
 
 The hypothesis we want to test here is simply that all of these counts
 are confounded by a single unmeasured `biodiversity' variable. This is
@@ -1814,9 +1835,10 @@ overall model \(χ^2\) would decrease if the fixed or constrained
 parameter was freely estimated.''
 \end{quote}
 
+Apparently conventional cutoff for a `good' modification index is 3.84.
 So to get some ideas on how we might improve our goodness-of-fit, let's
 print out the modification indexes for each of the fixed parameters in
-the model:
+the model and see which of them pass that threshold:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1968,8 +1990,6 @@ other.
   \AttributeTok{model =}\NormalTok{ h2.definition}
 \NormalTok{)}
 
-\NormalTok{h2.summary }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(h2.fit, }\AttributeTok{fit.measures =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{standardized =} \ConstantTok{TRUE}\NormalTok{)}
-
 \DocumentationTok{\#\#\# Letting the covariance between birds and amphibians be freely estimated}
 \NormalTok{h3.definition }\OtherTok{\textless{}{-}} 
   \StringTok{\textquotesingle{}diversity =\textasciitilde{} mammals + birds + amphibians + }
@@ -2013,21 +2033,523 @@ h1.fit  9 273.62 285.56 20.817     7.8934       1   0.004961 **
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 \end{verbatim}
 
-\hypertarget{validity}{%
-\subsection{Validity}\label{validity}}
+Looks like model H3 has the lowest AIC and the more significant
+improvement in chi-squared fit. So let's continue working with that one
+in the following sections.
 
-CHOOSE ONE OF THE MODELS, THEN DO CONVERGENT VALIDITY AND RELIABILITY!
+\hypertarget{validity}{%
+\subsection*{Validity}\label{validity}}
+\addcontentsline{toc}{subsection}{Validity}
+
+We can do the same 5 checks of validity we used in the previous `Mastery
+and Performance' example. Let's start with the big summary printout:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{summary.h3 }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(h3.fit, }\AttributeTok{fit.measures =} \ConstantTok{TRUE}\NormalTok{, }\AttributeTok{standardized =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{summary.h3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+lavaan 0.6-12 ended normally after 25 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        13
+
+  Number of observations                            20
+
+Model Test User Model:
+                                                      
+  Test statistic                                12.923
+  Degrees of freedom                                 8
+  P-value (Chi-square)                           0.115
+
+Model Test Baseline Model:
+
+  Test statistic                               105.591
+  Degrees of freedom                                15
+  P-value                                        0.000
+
+User Model versus Baseline Model:
+
+  Comparative Fit Index (CFI)                    0.946
+  Tucker-Lewis Index (TLI)                       0.898
+
+Loglikelihood and Information Criteria:
+
+  Loglikelihood user model (H0)               -120.861
+  Loglikelihood unrestricted model (H1)       -114.400
+                                                      
+  Akaike (AIC)                                 267.723
+  Bayesian (BIC)                               280.667
+  Sample-size adjusted Bayesian (BIC)          240.592
+
+Root Mean Square Error of Approximation:
+
+  RMSEA                                          0.175
+  90 Percent confidence interval - lower         0.000
+  90 Percent confidence interval - upper         0.344
+  P-value RMSEA <= 0.05                          0.138
+
+Standardized Root Mean Square Residual:
+
+  SRMR                                           0.055
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+  diversity =~                                                          
+    mammals           1.000                               0.706    0.725
+    birds             1.013    0.310    3.266    0.001    0.716    0.734
+    amphibians        1.209    0.306    3.956    0.000    0.854    0.876
+    reptiles          0.899    0.307    2.928    0.003    0.635    0.652
+    beetles           1.264    0.301    4.196    0.000    0.893    0.916
+    butterflies       1.261    0.301    4.187    0.000    0.891    0.914
+
+Covariances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+ .birds ~~                                                              
+   .amphibians       -0.245    0.094   -2.615    0.009   -0.245   -0.789
+
+Variances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+   .mammals           0.451    0.148    3.048    0.002    0.451    0.475
+   .birds             0.438    0.152    2.877    0.004    0.438    0.461
+   .amphibians        0.221    0.090    2.451    0.014    0.221    0.232
+   .reptiles          0.546    0.177    3.087    0.002    0.546    0.575
+   .beetles           0.153    0.061    2.506    0.012    0.153    0.161
+   .butterflies       0.156    0.062    2.526    0.012    0.156    0.165
+    diversity         0.499    0.267    1.866    0.062    1.000    1.000
+\end{verbatim}
+
+The factor loadings are all highly statistically significant, which is
+the first thing to check to make sure nothing is going horribly wrong.
+
+The standardized loadings are pretty big as well, but not super great
+for `reptiles'. Also there's a lot of variance in the loadings, which is
+evidence that my simple DAG of confounding may not be perfect -- there
+are other unmeasured variables influencing some of my animal counts to
+different degrees. I mean of course there are, but the degree to which
+this is apparent based on the factor loadings undermines my claims to
+convergent validity.
+
+Next we can look at the standardized residual variances. Some of them
+look great, and all but `reptiles' pass the threshold of 0.5.
+
+I could look at the `reliability' statistics too, but can't be bothered
+right now. Onwards to another example!
+
+\hypertarget{example-3-happy-and-sad}{%
+\section*{Example 3: Happy and Sad}\label{example-3-happy-and-sad}}
+\addcontentsline{toc}{section}{Example 3: Happy and Sad}
+
+\markright{Example 3: Happy and Sad}
+
+\hypertarget{mtmm-and-error-theory}{%
+\subsection*{MTMM and `Error Theory'}\label{mtmm-and-error-theory}}
+\addcontentsline{toc}{subsection}{MTMM and `Error Theory'}
+
+In the previous example we saw how we can sometimes improve model fit by
+freeing-up some of the residual covariance terms, rather than doing the
+typical thing of fixing them at 0. But this feels a bit icky to me --
+just pumping out some modification indexes and using that as a basis for
+opening up some free parameters feels pretty overfitty, because we don't
+have a strong theory-driven reason for changing the model in that way.
+
+But there \emph{are} more kosher-feeling theory-driven reasons for
+freeing up some of the residual covariance parameters. Let's talk about
+two of them: the first relates to convergent validity, the second
+relates to discriminant validity.
+
+Here's the first example: imagine I have a theory where there's a thing
+called `exceptional leadership', and it is made up of 3 unobservable
+features, like `self-confidence', `oratorical skill', and `robust
+compassionateness'. So I make up a survey where I ask 12 questions
+total, 4 per imagined factor. Then I fit a CFA model and find that it
+does a great job recreating the empirical variance-covariance matrix.
+There's lots of great convergent validity between the questions I
+imagine to define the 3 factors. So I get published! But there's a first
+problem: what if my within-factor variables are correlated not because
+they are cleanly confounded by `self-confidence' (which is what I'm
+trying to convince you of), but instead because the within-factor survey
+questions are just worded in a really similar way, IE they are
+confounded by a latent factor we might call `wording similarity'? This
+possibility undermines my case for clean confounding.
+
+Now the second example: imagine I do the same analysis described above,
+but I find my discriminant validity actually doesn't look so hot, IE
+there are some high between-factor correlations. It is possible that
+this is just being caused by some of the variables used in different
+factors being confounded by their shared \textbf{measurement approach,}
+which creates a backdoor path between the factors.
+
+As Brown (2006) puts it:
+
+\begin{quote}
+``when each construct is assessed by the same measurement approach
+(e.g., observer rating), it cannot be determined how much of the
+observed overlap (i.e., factor correlations) is due to method effects as
+opposed to''true'' covariance of the traits.''
+\end{quote}
+
+So we have these two risks:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Maybe some of my within-factor variables are confounded by method
+  effects, which creates the \emph{illusion} of convergent validity. If
+  I go to publish my paper and someone raises this concern, then maybe I
+  won't get published! I'll need to find a way to make my model control
+  for possible method-confounding and \emph{still} show good convergent
+  validity.
+\item
+  Maybe some of my variables of different factors are confounded by
+  method effects, so I don't end up with great discriminant validity.
+  This would be bad, but fitting a model that controls for method
+  effects can maybe make things better.
+\end{enumerate}
+
+Fear not: there are two ways of adjusting the model to control for
+measurement confounding, thereby addressing the above risks.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Add method-specific factors to my model (to control for them in the
+  linear model of each variable). Brown (2006) calls this a
+  \textbf{Correlated Methods Model};
+\item
+  Just freely fit the residual covariances between the observed
+  variables that share a method. Brown (2006) calls this a
+  \textbf{Correlated Uniqueness Model.} Because remember, `Uniqueness'
+  is just a fancy term for variable-specific residual variance.
+\end{enumerate}
+
+It's all still just basic linear modelling, and trying to show that the
+model's results are consistent with the DAG of clean confounding. By
+adding a method factors or allowing some of the error residuals to be
+freely fit, I'm controlling for sources of confounding that a reviewer
+might bring up as a concern, or that might be pulling down my
+discriminant validity.
+
+Here's how these approaches can improve convergent or divergent
+validity:
+
+\textbf{Convergent validity:} By adding method-factors to the model or
+freely fitting the residual covariances between the within-factor
+questions can help me make the case that ``see, even when I allow for
+correlated errors due to \emph{other} unobserved confounders (like
+common wording or common methods), the factors still do a good job
+recreating the empirical covariance structure, IE the loadings still
+look good, so my argument for \emph{mostly} clean confounding is still
+reasonable.'' I think this makes sense?
+
+\textbf{Divergent validity:} Maybe I can get better discriminant
+validity, IE reduce the between-factor correlations, by adding those
+method effects to the linear models, thereby controlling for them. I can
+do this either by literally adding in some new factors to represent each
+method, or just by allowing the residual covariances of like-method
+variables to be freely estimated.
+
+\hypertarget{simulating-data-based-on-a-dag}{%
+\subsection*{Simulating Data Based on a
+DAG}\label{simulating-data-based-on-a-dag}}
+\addcontentsline{toc}{subsection}{Simulating Data Based on a DAG}
+
+Now let's look at an example in detail. This example is taken from Brown
+(2006), chapter 6.
+
+Some researchers were curious about whether `happiness' and `sadness'
+are totally separate things vs two sides of a single shared spectrum. I
+guess the implication is that if they are totally separate things then I
+could be \href{https://www.youtube.com/watch?v=U5oIvfraRrU}{happy and
+sad at the same time}, whereas if they're two sides of a spectrum then I
+can only ever be one or the other.
+
+This feels like a good factor analysis question! I can collect a bunch
+of data that I think map to `happy' and a bunch of other data that I
+think map to `sad', fit a CFA, and see whether the two factors have
+discriminant validity.
+
+This is exactly what al (n.d.) did. They collected a few columns each
+for `happy' and `sad', fit a factor model, and fit a CFA. Each
+within-factor column had its own measurement approach, but shared a
+measurement approach with one of the columns of the other factor. So we
+are at risk of our estimate of between-factor correlations being
+confounding due to shared measurement approach, which could be hurting
+my case for discriminant validity!
+
+Here's how we can show this situation in a DAG:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Set DAG coordinates}
+\NormalTok{dag\_coords }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{x =} \FunctionTok{c}\NormalTok{(}
+    \AttributeTok{F1 =} \DecValTok{1}\NormalTok{, }
+    \AttributeTok{F2 =} \DecValTok{1}\NormalTok{,}
+    \AttributeTok{H1 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{H2 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{H3 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{S1 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{S2 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{S3 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{M1 =} \DecValTok{3}\NormalTok{,}
+    \AttributeTok{M2 =} \DecValTok{3}\NormalTok{,}
+    \AttributeTok{M3 =} \DecValTok{3}\NormalTok{),}
+  \AttributeTok{y =} \FunctionTok{c}\NormalTok{(}
+    \AttributeTok{F1 =} \FloatTok{2.5}\NormalTok{,}
+    \AttributeTok{F2 =} \FloatTok{1.5}\NormalTok{,}
+    \AttributeTok{H1 =} \FloatTok{2.8}\NormalTok{,}
+    \AttributeTok{H2 =} \FloatTok{2.5}\NormalTok{,}
+    \AttributeTok{H3 =} \FloatTok{2.2}\NormalTok{,}
+    \AttributeTok{S1 =} \FloatTok{1.8}\NormalTok{,}
+    \AttributeTok{S2 =} \FloatTok{1.5}\NormalTok{,}
+    \AttributeTok{S3 =} \FloatTok{1.2}\NormalTok{,}
+    \AttributeTok{M1 =} \FloatTok{2.6}\NormalTok{,}
+    \AttributeTok{M2 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{M3 =} \FloatTok{1.4}
+\NormalTok{  )}
+\NormalTok{)}
+
+\CommentTok{\# Set DAG relationships and aesthetics}
+\NormalTok{measurement\_confounding\_dag }\OtherTok{\textless{}{-}}\NormalTok{ ggdag}\SpecialCharTok{::}\FunctionTok{dagify}\NormalTok{(}
+\NormalTok{  H1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+\NormalTok{  H2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+\NormalTok{  H3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+\NormalTok{  S1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F2,}
+\NormalTok{  S2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F2,}
+\NormalTok{  S3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F2,}
+\NormalTok{  H1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M1,}
+\NormalTok{  S1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M1,}
+\NormalTok{  H2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M2,}
+\NormalTok{  S2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M2,}
+\NormalTok{  H3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M3,}
+\NormalTok{  S3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M3,}
+  \AttributeTok{coords =}\NormalTok{ dag\_coords}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{tidy\_dagitty}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{mutate}\NormalTok{(}
+    
+    \AttributeTok{node\_colour =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}F|M"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"latent"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}H|S"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"observed"}
+\NormalTok{    ),}
+    
+    \AttributeTok{edge\_colour =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}M"}\NormalTok{, name) }\SpecialCharTok{\&} \FunctionTok{grepl}\NormalTok{(}\StringTok{"1$"}\NormalTok{, to) }\SpecialCharTok{\textasciitilde{}} \StringTok{"cornflower blue"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}M"}\NormalTok{, name) }\SpecialCharTok{\&} \FunctionTok{grepl}\NormalTok{(}\StringTok{"2$"}\NormalTok{, to) }\SpecialCharTok{\textasciitilde{}} \StringTok{"\#daed64"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}M"}\NormalTok{, name) }\SpecialCharTok{\&} \FunctionTok{grepl}\NormalTok{(}\StringTok{"3$"}\NormalTok{, to) }\SpecialCharTok{\textasciitilde{}} \StringTok{"\#ed7864"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}F"}\NormalTok{, name)                   }\SpecialCharTok{\textasciitilde{}} \StringTok{"black"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\CommentTok{\# Plot the DAG}
+\NormalTok{measurement\_confounding\_dag }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{xend =}\NormalTok{ xend, }\AttributeTok{yend =}\NormalTok{ yend)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_dag\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{colour =}\NormalTok{ node\_colour)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_colour\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"dark blue"}\NormalTok{, }\StringTok{"\#edbc64"}\NormalTok{)) }\SpecialCharTok{+} 
+  \FunctionTok{geom\_dag\_edges}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{edge\_colour =}\NormalTok{ edge\_colour)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_dag\_text}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme\_void}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-24-1.pdf}
+
+}
+
+\end{figure}
+
+See how the measurment effects M1, M2, and M3 each create a backdoor
+path between the two factors F1 and F2. So if I want to get
+better-seeming (and, under the DAG, more accurate) estimate of
+between-factor correlation, then I need to find a way to close those
+backdoor paths. The classic way to close these paths would be to
+condition on the measurement effects by adding them to the linear model,
+but I can't directly do this because they are unmeasured. But, as
+discussed above, I can still sort of do it by adding them as factors to
+my CFA model, or by freely estimating residual correlation between the
+observed variables that share a measurement approach, which should work
+if my DAG is mostly accurate.
+
+Unfortunately, the authors of this paper haven't published their data.
+But we can take this as an opportunity to practice simulating a dataset
+with relationships implied by a DAG.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\#\# Simulate Data from the DAG}
+
+\CommentTok{\# Set seed for replicable results}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{233}\NormalTok{)}
+
+\CommentTok{\# Set sample size}
+\NormalTok{N }\OtherTok{\textless{}{-}} \DecValTok{305}
+
+\CommentTok{\# Create the dataset}
+\NormalTok{dat\_fake }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  
+  \CommentTok{\# The factors are uncorrelated in reality, but}
+  \CommentTok{\# will be confounded by the measurement effects!}
+  \AttributeTok{F1 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  \AttributeTok{F2 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  
+  \CommentTok{\# The measurement effects}
+  \AttributeTok{M1 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  \AttributeTok{M2 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  \AttributeTok{M3 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  
+  \CommentTok{\# The DAG says the measurements are fully determined by the latent factors and measurement effects}
+  \AttributeTok{H1 =}\NormalTok{ .}\DecValTok{8}\SpecialCharTok{*}\NormalTok{F1 }\SpecialCharTok{+} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M1 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{H2 =}\NormalTok{ .}\DecValTok{7}\SpecialCharTok{*}\NormalTok{F1 }\SpecialCharTok{+} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M2 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{H3 =}\NormalTok{ .}\DecValTok{9}\SpecialCharTok{*}\NormalTok{F1 }\SpecialCharTok{+} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M3 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{S1 =}\NormalTok{ .}\DecValTok{8}\SpecialCharTok{*}\NormalTok{F2 }\SpecialCharTok{+} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M1 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{S2 =}\NormalTok{ .}\DecValTok{7}\SpecialCharTok{*}\NormalTok{F2 }\SpecialCharTok{+} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M2 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{S3 =}\NormalTok{ .}\DecValTok{9}\SpecialCharTok{*}\NormalTok{F2 }\SpecialCharTok{+} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M3 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{) }
+\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+Fun! Now we have our fake data to play with. For starters, since we
+actually \emph{do} have the values of the latent variables in our
+dataset, we can demonstrate how directly controlling for the measurement
+effects in a regression model can close the backdoor path between the
+factors.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{list}\NormalTok{(}
+  \FunctionTok{lm}\NormalTok{(H1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ S1, dat\_fake), }
+  \FunctionTok{lm}\NormalTok{(H1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ S1 }\SpecialCharTok{+}\NormalTok{ M1, dat\_fake)}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{map}\NormalTok{(broom}\SpecialCharTok{::}\NormalTok{tidy) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+
+\centering
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+term & estimate & std.error & statistic & p.value\\
+\hline
+(Intercept) & 0.0249271 & 0.0572795 & 0.435184 & 0.6637387\\
+\hline
+S1 & 0.4555127 & 0.0491323 & 9.271137 & 0.0000000\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+term & estimate & std.error & statistic & p.value\\
+\hline
+(Intercept) & 0.0466841 & 0.0456881 & 1.0217995 & 0.3076936\\
+\hline
+S1 & -0.0137610 & 0.0528505 & -0.2603763 & 0.7947509\\
+\hline
+M1 & 0.7636731 & 0.0577500 & 13.2237680 & 0.0000000\\
+\hline
+\end{tabular}
+\end{table}
+
+When we just do the simple regression of H1 on S1 we get a big effect
+with a highly statistically significant p-value, despite the fact that
+we \emph{know} there's no causal relationship there! But then when we
+include the confounding measurement effect in the model this effect
+vanishes in smoke.
+
+That's all well and good. But in reality we won't have measurements of
+the latent variables, so we won't be able to directly control for them.
+Thankfully, we have Factor Analysis. We can control for the measurement
+effects by estimating the residual correlation between each pair of
+variables that share a measurement effect. Since, under the DAG, the
+measurement effects are the only source of correlation between these
+variables, this should close the backdoor path, IE we should get
+unbiased estimates of the factor loadings.
+
+\ldots.@Brown2006 calls this an ``error theory''\ldots..
+
+\ldots.
+
+\hypertarget{correlated-uniqueness-model}{%
+\subsection*{Correlated Uniqueness
+Model}\label{correlated-uniqueness-model}}
+\addcontentsline{toc}{subsection}{Correlated Uniqueness Model}
+
+To illustrate, we'll fit 2 models: The first is a basic CFA model that
+just loads each measured variable on its corresponding factor. The
+second specifies that the residual correlation between the
+measurement-confounded variables should be freely estimated, IE not
+fixed at 0.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{basic.definition }\OtherTok{\textless{}{-}} 
+  \StringTok{\textquotesingle{}happy =\textasciitilde{} H1 + H2 + H3}
+\StringTok{   sad =\textasciitilde{} S1 + S2 + S3}
+\StringTok{   \textquotesingle{}}
+
+\NormalTok{correlated\_uniqueness.definition }\OtherTok{\textless{}{-}} 
+  \StringTok{\textquotesingle{}happy =\textasciitilde{} H1 + H2 + H3}
+\StringTok{   sad =\textasciitilde{} S1 + S2 + S3}
+\StringTok{   }
+\StringTok{   H1 \textasciitilde{}\textasciitilde{} S1}
+\StringTok{   H2 \textasciitilde{}\textasciitilde{} S2}
+\StringTok{   H3 \textasciitilde{}\textasciitilde{} S3}
+\StringTok{   \textquotesingle{}}
+\NormalTok{basic.fit }\OtherTok{\textless{}{-}} \FunctionTok{cfa}\NormalTok{(}
+  \AttributeTok{data =}\NormalTok{ dat\_fake }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{matches}\NormalTok{(}\StringTok{"\^{}(H|S)"}\NormalTok{)),}
+  \AttributeTok{model =}\NormalTok{ basic.definition}
+\NormalTok{)}
+
+\NormalTok{correlated\_uniqueness.fit }\OtherTok{\textless{}{-}} \FunctionTok{cfa}\NormalTok{(}
+  \AttributeTok{data =}\NormalTok{ dat\_fake }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{matches}\NormalTok{(}\StringTok{"\^{}(H|S)"}\NormalTok{)),}
+  \AttributeTok{model =}\NormalTok{ correlated\_uniqueness.definition}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\ldots{} We also could have controlled for the measurement effects by
+including measurement factors, but I actually I couldn't get this model
+to converge, regardless of whether its method factors were correlated or
+uncorrelated (or uncorrelated). I think Brown (2006) actually mentions
+this as a common issue, and favours the Correlated Uniqueness Model for
+that reason FIND THE QUOTE
+
+Getting on to MTMM\ldots I think the idea is t
+
+One situation where I may want to do this do this is when .
 
 \hypertarget{cool-ecology-example-i-should-do-instead}{%
-\section{Cool ecology example I should do
+\section*{Cool ecology example I should do
 instead:}\label{cool-ecology-example-i-should-do-instead}}
+\addcontentsline{toc}{section}{Cool ecology example I should do
+instead:}
 
-\hypertarget{example-3}{%
-\section{Example 3:}\label{example-3}}
+\markright{Cool ecology example I should do instead:}
 
 Do an example from here, or possibly from the linked 3rd lecture that
 covers more advanced CFA topics
-https://stats.oarc.ucla.edu/r/seminars/rcfa/
+https://stats.oarc.ucla.edu/r/seminars/rcfa/ but read the corresponding
+Brown chapter first.
 
 Now we'll look at an example from Kline (2011), chapter 13.
 
@@ -2064,6 +2586,93 @@ Lastly, let's walk through
 \href{https://www.lavaan.ugent.be/tutorial/cfa.html}{an example from the
 lavaan documentation}
 
+\hypertarget{session-info}{%
+\section{Session Info}\label{session-info}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sessionInfo}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+R version 4.2.1 (2022-06-23 ucrt)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 19044)
+
+Matrix products: default
+
+locale:
+[1] LC_COLLATE=English_United States.utf8 
+[2] LC_CTYPE=English_United States.utf8   
+[3] LC_MONETARY=English_United States.utf8
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.utf8    
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] ggdag_0.2.7     lavaan_0.6-12   forcats_0.5.1   stringr_1.4.1  
+ [5] dplyr_1.0.9     purrr_0.3.4     readr_2.1.3     tidyr_1.2.0    
+ [9] tibble_3.1.8    ggplot2_3.3.6   tidyverse_1.3.2
+
+loaded via a namespace (and not attached):
+  [1] readxl_1.4.0        backports_1.4.1     Hmisc_4.7-1        
+  [4] semPlot_1.1.6       plyr_1.8.7          igraph_1.3.5       
+  [7] splines_4.2.1       digest_0.6.29       htmltools_0.5.3    
+ [10] viridis_0.6.2       fansi_1.0.3         magrittr_2.0.3     
+ [13] checkmate_2.1.0     googlesheets4_1.0.0 lisrelToR_0.1.5    
+ [16] cluster_2.1.3       tzdb_0.3.0          openxlsx_4.2.5     
+ [19] graphlayouts_0.8.3  modelr_0.1.8        RcppParallel_5.1.5 
+ [22] vroom_1.6.0         jpeg_0.1-9          sem_3.1-15         
+ [25] colorspace_2.0-3    ggrepel_0.9.1       rvest_1.0.3        
+ [28] haven_2.5.0         xfun_0.32           crayon_1.5.2       
+ [31] jsonlite_1.8.3      lme4_1.1-30         survival_3.3-1     
+ [34] glue_1.6.2          polyclip_1.10-4     gtable_0.3.1       
+ [37] gargle_1.2.0        mi_1.1              V8_4.2.2           
+ [40] abind_1.4-5         scales_1.2.1        DBI_1.1.3          
+ [43] Rcpp_1.0.9          viridisLite_0.4.1   xtable_1.8-4       
+ [46] htmlTable_2.4.1     bit_4.0.4           foreign_0.8-82     
+ [49] Formula_1.2-4       stats4_4.2.1        htmlwidgets_1.5.4  
+ [52] httr_1.4.4          RColorBrewer_1.1-3  ellipsis_0.3.2     
+ [55] pkgconfig_2.0.3     XML_3.99-0.10       farver_2.1.1       
+ [58] nnet_7.3-17         kutils_1.70         dbplyr_2.2.1       
+ [61] deldir_1.0-6        utf8_1.2.2          janitor_2.1.0      
+ [64] tidyselect_1.2.0    labeling_0.4.2      rlang_1.0.6        
+ [67] reshape2_1.4.4      munsell_0.5.0       dagitty_0.3-1      
+ [70] cellranger_1.1.0    tools_4.2.1         cli_3.3.0          
+ [73] generics_0.1.3      broom_1.0.0         fdrtool_1.2.17     
+ [76] evaluate_0.17       fastmap_1.1.0       arm_1.13-1         
+ [79] yaml_2.3.5          bit64_4.0.5         knitr_1.40         
+ [82] fs_1.5.2            tidygraph_1.2.2     zip_2.2.0          
+ [85] ggraph_2.1.0        glasso_1.11         pbapply_1.5-0      
+ [88] nlme_3.1-157        xml2_1.3.3          compiler_4.2.1     
+ [91] rstudioapi_0.14     curl_4.3.2          png_0.1-7          
+ [94] reprex_2.0.1        tweenr_2.0.2        pbivnorm_0.6.0     
+ [97] stringi_1.7.8       highr_0.9           qgraph_1.9.2       
+[100] rockchalk_1.8.157   lattice_0.20-45     Matrix_1.5-1       
+[103] psych_2.2.9         nloptr_2.0.3        vctrs_0.4.1        
+[106] pillar_1.8.1        lifecycle_1.0.3     OpenMx_2.20.6      
+[109] data.table_1.14.2   corpcor_1.6.10      R6_2.5.1           
+[112] latticeExtra_0.6-30 gridExtra_2.3       boot_1.3-28        
+[115] MASS_7.3-57         gtools_3.9.3        assertthat_0.2.1   
+[118] withr_2.5.0         mnormt_2.1.1        parallel_4.2.1     
+[121] hms_1.1.2           grid_4.2.1          rpart_4.1.16       
+[124] coda_0.19-4         minqa_1.2.5         rmarkdown_2.17     
+[127] snakecase_0.11.0    carData_3.0-5       googledrive_2.0.0  
+[130] ggforce_0.4.1       semTools_0.5-6      lubridate_1.8.0    
+[133] base64enc_0.1-3     interp_1.1-3       
+\end{verbatim}
+
+\bookmarksetup{startatroot}
+
+\hypertarget{sem}{%
+\chapter{SEM}\label{sem}}
+
+Someone on the stan forums recommended this book for a bayesian example:
+https://www.guilford.com/books/Bayesian-Structural-Equation-Modeling/Sarah-Depaoli/9781462547746
+
 \bookmarksetup{startatroot}
 
 \hypertarget{references}{%
@@ -2074,6 +2683,10 @@ lavaan documentation}
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-Green-et-al-1993}{}}%
+al, Green et. n.d. {``Measurement Error Masks Bipolarity in Affect
+Ratings.''} \emph{Journal of Personality and Social Psychology} 64(6).
+
 \leavevmode\vadjust pre{\hypertarget{ref-Brown2006}{}}%
 Brown, Timothy A. 2006. \emph{Confirmatory Factor Analysis for Applied
 Research}.

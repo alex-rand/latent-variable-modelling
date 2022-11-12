@@ -5,24 +5,25 @@ format:
     theme: default
 ---
 
-## The Whole Game
+## The Whole Game {-}
 
 I think it is safe to say that The Whole Game of Confirmatory Factor Analysis (CFA) is that I'm trying to convince my colleagues that my observed variables are confounded by some unmeasured variables. Usually I'm trying to show that the variables is confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.
 
-The classic DAGs way of testing for confounding is to condition on the supposed confounder. But in CFA we always assume the confounder is unmeasured. So we can't directly test our DAG of confounding by using d-separation. Instead, we can only try to argue for it in a hand-wavy sort of way: we expect confounded variables to be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is *consistent* with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.
+The classic DAGs way of testing for confounding is to condition on the supposed confounder. But in CFA we always assume the confounder is unmeasured, so we can't directly test our DAG using regression. Instead, we can only try to argue for it in a hand-wavy sort of way: we expect confounded variables to be correlated with each other, and uncounfounded variables to _not_ be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is *consistent* with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.
 
-So interpreting a CFA model is all about checking to see whether the correlations between the variables are what we would expect to see under the DAG where each group of variables is confounded by a single unmeasured variable.
+So interpreting a CFA model is all about checking to see whether the correlations between the variables are consistent with what we would expect to see under the DAG where each group of variables is confounded by a single unmeasured variable.
 
 Let's load the packages we'll need for what is to come in this chapter:
 
-```{r message=FALSE, results=FALSE}
+```{r message = FALSE, results = FALSE, warning = FALSE}
 
 library(tidyverse)
 library(lavaan)
+library(ggdag)
 
 ```
 
-## Example 1: Toxic Striving Energy
+## Example 1: Toxic Striving Energy {-}
 
 The first example we'll look at is from @Finch2015, chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns with responses to the AGS questionnaire:
 
@@ -42,7 +43,7 @@ dat_ags <- dat_raw %>%
 
 ```
 
-### Data Exploration
+### Data Exploration {-}
 
 We don't want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don't mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf). But just for fun, we can explore the distributions of the answers to each of the 12 questions:
 
@@ -118,7 +119,7 @@ The authors proceed with it anyway for pedogogical reasons, because they want to
 
 > "In actual practice, given the lack of multivariate normality that seems apparent in the previous results, we would likely not use ML and instead rely on the alternative estimation approach."
 
-### Model Fitting
+### Model Fitting {-}
 
 The researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them.
 
@@ -162,9 +163,9 @@ semPlot::semPaths(h1.fit)
 
 That's a lot of outputs. Let's break down the output into smaller bite-sized chunks.
 
-### Goodness of Fit Statistics
+### Goodness of Fit Statistics {-}
 
-#### Chi-Squared Statistic
+#### Chi-Squared Statistic {-}
 
 The first thing to look at is the chi-squared statistic from the 'User Model', IE the model I, the user, have just fit. I like to think of this as a measure of how different the model's reconstructed correlation matrix looks compared to the actual empirical correlation matrix of the data. So we use this statistic to test the null hypothesis "there is no significant difference between model's reconstructed correlation matrix and the empirical one". So, confusingly, we're actually hoping to *accept* the null hypothesis here. This model returns a value of 328.312 with a vanishingly small p-value, so we reject the null hypothesis, which is bad: it suggests our model isn't doing a good job replicating the empirical correlation matrix.
 
@@ -198,7 +199,7 @@ tibble(
 
 It takes lots of skill and experience to have a sense of whether a test statistic is big or small given the degrees of freedom at play, but we can see from the p-value that we reject the null hypothesis in a big way. This is bad -- it suggests that, given our assumptions, there's a big difference between our model and the data.
 
-#### Root Mean Squared Error Approximation (RMSEA)
+#### Root Mean Squared Error Approximation (RMSEA) {-}
 
 Another one people like to go with is the Root Mean Squared Error Approximation (RMSEA). This statistic takes some math and background to understand, which I'm not going to go over here. I found [this document](http://www.statpower.net/Content/312/Handout/Measures%20of%20Fit%20in%20Structural%20Equation%20Modeling.pdf) to be the clearest (but also pretty mathy) explanation.
 
@@ -233,7 +234,7 @@ h1.summary$fit %>%
 
 Yikes -- looks like our whole RMSEA, as well as its confidence interval, are above the 'bad fit' conventional threshold of .08. This corroborates what we saw with the chi-squared statistic above.
 
-#### Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI)
+#### Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI) {-}
 
 CFI seems to be the most trusted and widely-used tool for assessing goodness of fit in a CFA. Basically the idea is that we ask: "how much does the chi-squared statistic of my model differ from the chi-squared statistic of the worst model I can think of?", where the conventional "worst model I can think of" is the model where I assume all of my observed variables are totally uncorrelated. This sort of has the opposite flavour of the deviance statistic I'm already familiar with, which compares the current model with "the best model I can think of."
 
@@ -262,7 +263,7 @@ h1.summary$fit %>%
 
 Looks like the CFI and TLI look ok, but don't meet the conventional .95 cutoff. So they are in line with the chi-squared and RMSEA in suggesting that our goodness-of-fit isn't so good.
 
-### Convergent Validty
+### Convergent Validty {-}
 
 Like I said before: when I'm doing factor analysis, my goal is to convince my research peers that my observed variables are confounded by an unobserved variable, and that therefore they provide a way of 'measuring' that unobserved variable. This seems like an ontologically dubious framing, and it also seems impossible to prove. But people who do research have settled on a few ways of trying to make this case.
 
@@ -421,7 +422,7 @@ Looks like the model has mostly done a good job for the 'Performance' factors, w
 
 Let's try this out: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.\~\~
 
-### Discriminant Validity
+### Discriminant Validity {-}
 
 Next let's look at the estimated correlations between the factors. If my hypothesis H1 is true then we should expect all of the factors to be pretty uncorrelated from each other, but if H2 is true then we should expect MAP and MAV to be super correlated with each other, because H2 thinks there's no such thing as MAP and MAV -- there's just one big 'Mastery' factor:
 
@@ -499,7 +500,7 @@ Looks like the reduction in chi-squared goodness-of-fit is statistically signifi
 
 Actually, I think another way we could have done this would be to just fit the model where we just define one big factor for 'Mastery' and one big factor for 'Performance'. I tried this and it returned even worse fit, which means the extra parameters (the correlation parameters) are significantly improving fit in the pure h1 model.
 
-### Conclusion
+### Conclusion {-}
 
 All-in-all it seems like neither of these hypotheses do a great job. Sure, the 'Performance' factors have good convergent validity, and we see good discriminant validity between the 'Performance' and 'Mastery' factors, but the 'Mastery' factors don't have great convergent validity and fitting a single monolithic 'Mastery' factor doesn't improve things.
 
@@ -507,7 +508,7 @@ I can make a better model by dropping the measured 'Mastery' variables that aren
 
 For a nice template of a more formal presentation of the results of a CFA, see @Brown2006 chapter 4 appendix 3.
 
-## Example 2: Biodiversity
+## Example 2: Biodiversity {-}
 
 Here's [a fun example from the Wetland and Aquatic Research Center of the U.S. Geological Survey](https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/SEM_09_2-Ex1_CFA_exercise.pdf): given counts of different types of animals, can we fit a convincing CFA model for 'diversity'? In other words: is the correlation structure of all my counts of various types of animals consistent with the possibility that those counts are confounded by a single unobserved thing called 'diversity'?
 
@@ -521,7 +522,7 @@ dat_clean <- dat_raw %>%
 
 ```
 
-### Data Exploration
+### Data Exploration {-}
 
 Just for fun let's see if the relative proportions of the different animals varies between countries:
 
@@ -553,7 +554,7 @@ dat_clean %>%
 
 The proportions are pretty stable. Finland seems like the weirdest one, and it isn't even that weird.
 
-### Model Fitting
+### Model Fitting {-}
 
 The hypothesis we want to test here is simply that all of these counts are confounded by a single unmeasured 'biodiversity' variable. This is straightforward to fit:
 
@@ -737,7 +738,7 @@ anova(h1.fit, h3.fit)
 
 Looks like model H3 has the lowest AIC and the more significant improvement in chi-squared fit. So let's continue working with that one in the following sections.
 
-### Validity
+### Validity {-}
 
 We can do the same 5 checks of validity we used in the previous 'Mastery and Performance' example. Let's start with the big summary printout:
 
@@ -756,23 +757,15 @@ Next we can look at the standardized residual variances. Some of them look great
 
 I could look at the 'reliability' statistics too, but can't be bothered right now. Onwards to another example!
 
-## Example 3: Happy and Sad
+## Example 3: Happy and Sad {-}
 
-Some researchers were curious about whether 'happiness' and 'sadness' are totally separate things vs two sides of a single shared spectrum. I guess the implication is that if they are totally separate things then I could be [happy and sad at the same time](https://www.youtube.com/watch?v=U5oIvfraRrU), whereas if they're two sides of a spectrum then I can only ever be one or the other.
-
-This feels like a good factor analysis question! I can collect a bunch of data that I think map to 'happy' and a bunch of other data that I think map to 'sad', fit a CFA, and see whether the two factors have discriminant validity.
-
-This is exactly what @Green-et-al-1993 did. They collected 4 columns each for 'happy' and 'sad', with each column having a different measurement approach.
-
-But wait -- what about the confounding due to shared measurement approach! We should control for that, either by adding some measurement approach factors, or by freeing-up the relevant residual covariance parameters in the likelihood.
-
-### MTMM and 'Error Theory'
+### MTMM and 'Error Theory' {-}
 
 In the previous example we saw how we can sometimes improve model fit by freeing-up some of the residual covariance terms, rather than doing the typical thing of fixing them at 0. But this feels a bit icky to me -- just pumping out some modification indexes and using that as a basis for opening up some free parameters feels pretty overfitty, because we don't have a strong theory-driven reason for changing the model in that way.
 
-But there *are* more kosher-feeling theory-driven reasons for freeing up a some of the residual covariance parameters. Let's talk about two of them: the first relates to convergent validity, the second relates to discriminant validity.
+But there *are* more kosher-feeling theory-driven reasons for freeing up some of the residual covariance parameters. Let's talk about two of them: the first relates to convergent validity, the second relates to discriminant validity.
 
-Here's the first example: imagine I have a theory where there's a thing called 'exceptional leadership', and it is made up of 3 unobservable features, like 'self-confidence', 'oratorical skill', and 'robust compassionateness'. So I make up a survey where I ask 12 questions total, 4 per imagined factor. Then I fit a CFA model and find that it does a great job recreating the empirical variance-covariance matrix. There's lots of great convergent validity between the questions I imagine to define the 3 factors. So I get published! But there's a first problem: what if my within-factor variables are correlated not because they are cleanly confounded by 'self-confidence' (which is what I'm trying to convince you of), but instead because the within-factor survey questions are just worded in a really similar way? This possibility undermines my case for clean confounding.
+Here's the first example: imagine I have a theory where there's a thing called 'exceptional leadership', and it is made up of 3 unobservable features, like 'self-confidence', 'oratorical skill', and 'robust compassionateness'. So I make up a survey where I ask 12 questions total, 4 per imagined factor. Then I fit a CFA model and find that it does a great job recreating the empirical variance-covariance matrix. There's lots of great convergent validity between the questions I imagine to define the 3 factors. So I get published! But there's a first problem: what if my within-factor variables are correlated not because they are cleanly confounded by 'self-confidence' (which is what I'm trying to convince you of), but instead because the within-factor survey questions are just worded in a really similar way, IE they are confounded by a latent factor we might call 'wording similarity'? This possibility undermines my case for clean confounding.
 
 Now the second example: imagine I do the same analysis described above, but I find my discriminant validity actually doesn't look so hot, IE there are some high between-factor correlations. It is possible that this is just being caused by some of the variables used in different factors being confounded by their shared **measurement approach,** which creates a backdoor path between the factors.
 
@@ -799,19 +792,203 @@ Here's how these approaches can improve convergent or divergent validity:
 
 **Divergent validity:** Maybe I can get better discriminant validity, IE reduce the between-factor correlations, by adding those method effects to the linear models, thereby controlling for them. I can do this either by literally adding in some new factors to represent each method, or just by allowing the residual covariances of like-method variables to be freely estimated.
 
+### Simulating Data Based on a DAG {-}
+
+Now let's look at an example in detail. This example is taken from @Brown2006, chapter 6.
+
+Some researchers were curious about whether 'happiness' and 'sadness' are totally separate things vs two sides of a single shared spectrum. I guess the implication is that if they are totally separate things then I could be [happy and sad at the same time](https://www.youtube.com/watch?v=U5oIvfraRrU), whereas if they're two sides of a spectrum then I can only ever be one or the other.
+
+This feels like a good factor analysis question! I can collect a bunch of data that I think map to 'happy' and a bunch of other data that I think map to 'sad', fit a CFA, and see whether the two factors have discriminant validity.
+
+This is exactly what @Green-et-al-1993 did. They collected a few columns each for 'happy' and 'sad', fit a factor model, and fit a CFA. Each within-factor column had its own measurement approach, but shared a measurement approach with one of the columns of the other factor. So we are at risk of our estimate of between-factor correlations being confounding due to shared measurement approach, which could be hurting my case for discriminant validity!
+
+Here's how we can show this situation in a DAG:
+
+```{r}
+
+# Set DAG coordinates
+dag_coords <- list(
+  x = c(
+    F1 = 1, 
+    F2 = 1,
+    H1 = 2,
+    H2 = 2,
+    H3 = 2,
+    S1 = 2,
+    S2 = 2,
+    S3 = 2,
+    M1 = 3,
+    M2 = 3,
+    M3 = 3),
+  y = c(
+    F1 = 2.5,
+    F2 = 1.5,
+    H1 = 2.8,
+    H2 = 2.5,
+    H3 = 2.2,
+    S1 = 1.8,
+    S2 = 1.5,
+    S3 = 1.2,
+    M1 = 2.6,
+    M2 = 2,
+    M3 = 1.4
+  )
+)
+
+# Set DAG relationships and aesthetics
+measurement_confounding_dag <- ggdag::dagify(
+  H1 ~ F1,
+  H2 ~ F1,
+  H3 ~ F1,
+  S1 ~ F2,
+  S2 ~ F2,
+  S3 ~ F2,
+  H1 ~ M1,
+  S1 ~ M1,
+  H2 ~ M2,
+  S2 ~ M2,
+  H3 ~ M3,
+  S3 ~ M3,
+  coords = dag_coords
+) %>% 
+  
+  tidy_dagitty() %>% 
+  
+  mutate(
+    
+    node_colour = case_when(
+      grepl("^F|M", name) ~ "latent",
+      grepl("^H|S", name) ~ "observed"
+    ),
+    
+    edge_colour = case_when(
+      grepl("^M", name) & grepl("1$", to) ~ "cornflower blue",
+      grepl("^M", name) & grepl("2$", to) ~ "#daed64",
+      grepl("^M", name) & grepl("3$", to) ~ "#ed7864",
+      grepl("^F", name)                   ~ "black"
+    )
+  )
+
+# Plot the DAG
+measurement_confounding_dag %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(aes(colour = node_colour)) +
+  scale_colour_manual(values = c("dark blue", "#edbc64")) + 
+  geom_dag_edges(aes(edge_colour = edge_colour)) +
+  geom_dag_text() +
+  theme_void()
+
+```
+
+See how the measurment effects M1, M2, and M3 each create a backdoor path between the two factors F1 and F2. So if I want to get better-seeming (and, under the DAG, more accurate) estimate of between-factor correlation, then I need to find a way to close those backdoor paths. The classic way to close these paths would be to condition on the measurement effects by adding them to the linear model, but I can't directly do this because they are unmeasured. But, as discussed above, I can still sort of do it by adding them as factors to my CFA model, or by freely estimating residual correlation between the observed variables that share a measurement approach, which should work if my DAG is mostly accurate. 
+
+Unfortunately, the authors of this paper haven't published their data. But we can take this as an opportunity to practice simulating a dataset with relationships implied by a DAG.
+
+```{r}
+
+### Simulate Data from the DAG
+
+# Set seed for replicable results
+set.seed(233)
+
+# Set sample size
+N <- 305
+
+# Create the dataset
+dat_fake <- tibble(
+  
+  # The factors are uncorrelated in reality, but
+  # will be confounded by the measurement effects!
+  F1 = rnorm(N, 0, 1),
+  F2 = rnorm(N, 0, 1),
+  
+  # The measurement effects
+  M1 = rnorm(N, 0, 1),
+  M2 = rnorm(N, 0, 1),
+  M3 = rnorm(N, 0, 1),
+  
+  # The DAG says the measurements are fully determined by the latent factors and measurement effects
+  H1 = .8*F1 + 0.7*M1 + rnorm(N, 0, .3),
+  H2 = .7*F1 + 0.7*M2 + rnorm(N, 0, .3),
+  H3 = .9*F1 + 0.7*M3 + rnorm(N, 0, .3),
+  S1 = .8*F2 + 0.7*M1 + rnorm(N, 0, .3),
+  S2 = .7*F2 + 0.7*M2 + rnorm(N, 0, .3),
+  S3 = .9*F2 + 0.7*M3 + rnorm(N, 0, .3) 
+) 
+
+```
+
+Fun! Now we have our fake data to play with. For starters, since we actually _do_ have the values of the latent variables in our dataset, we can demonstrate how directly controlling for the measurement effects in a regression model can close the backdoor path between the factors.  
+
+```{r}
+
+list(
+  lm(H1 ~ S1, dat_fake), 
+  lm(H1 ~ S1 + M1, dat_fake)
+) %>% 
+  
+  map(broom::tidy) %>% 
+  
+  knitr::kable()
+
+```
+
+When we just do the simple regression of H1 on S1 we get a big effect with a highly statistically significant p-value, despite the fact that we _know_ there's no causal relationship there! But then when we include the confounding measurement effect in the model this effect vanishes in smoke. 
+
+That's all well and good. But in reality we won't have measurements of the latent variables, so we won't be able to directly control for them. Thankfully, we have Factor Analysis. We can control for the measurement effects by estimating the residual correlation between each pair of variables that share a measurement effect. Since, under the DAG, the measurement effects are the only source of correlation between these variables, this should close the backdoor path, IE we should get unbiased estimates of the factor loadings.
+
+BUT WHEN I REGRESS F1 ~ F2 I GET NO EFFECT, EVEN THOUGH THE DUMB VERSION OF THE CFA FINDS THEM TO BE CORRELATED. THIS PROBABLY REVEALS SOMETHING DEEP ABOUT FACTOR ANALYSIS THAT I DONT UNDERSTAND?
+
+
+
+
+
 ....@Brown2006 calls this an "error theory".....
 
-Let's go ahead and fit an example of each of these types of model:
 
 ....
+
+### Correlated Uniqueness Model {-}
+
+To illustrate, we'll fit 2 models: The first is a basic CFA model that just loads each measured variable on its corresponding factor. The second specifies that the residual correlation between the measurement-confounded variables should be freely estimated, IE not fixed at 0. 
+
+```{r}
+
+basic.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad =~ S1 + S2 + S3
+   '
+
+correlated_uniqueness.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad =~ S1 + S2 + S3
+   
+   H1 ~~ S1
+   H2 ~~ S2
+   H3 ~~ S3
+   '
+basic.fit <- cfa(
+  data = dat_fake %>% select(matches("^(H|S)")),
+  model = basic.definition
+)
+
+correlated_uniqueness.fit <- cfa(
+  data = dat_fake %>% select(matches("^(H|S)")),
+  model = correlated_uniqueness.definition
+)
+
+```
+
+
+
+...  We also could have controlled for the measurement effects by including measurement factors, but I actually I couldn't get this model to converge, regardless of whether its method factors were correlated or uncorrelated (or uncorrelated). I think @Brown2006 actually mentions this as a common issue, and favours the Correlated Uniqueness Model for that reason FIND THE QUOTE 
 
 Getting on to MTMM...I think the idea is t
 
 One situation where I may want to do this do this is when .
 
-## Cool ecology example I should do instead:
+## Cool ecology example I should do instead: {-}
 
-## Example 3:
 
 Do an example from here, or possibly from the linked 3rd lecture that covers more advanced CFA topics https://stats.oarc.ucla.edu/r/seminars/rcfa/ but read the corresponding Brown chapter first.
 
@@ -829,3 +1006,12 @@ dat_kline <- read_csv('data/kline/kabc-amos.csv')
 ## Example 4:
 
 Lastly, let's walk through [an example from the lavaan documentation](https://www.lavaan.ugent.be/tutorial/cfa.html)
+
+## Session Info
+
+```{r}
+
+sessionInfo()
+
+
+```

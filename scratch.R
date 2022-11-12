@@ -22,64 +22,133 @@ h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 h1.summary
 
 
-library(readxl)
+# Set DAG coordinates
+dag_coords <- list(
+  x = c(
+    F1 = 1, 
+    F2 = 1,
+    H1 = 2,
+    H2 = 2,
+    H3 = 2,
+    S1 = 2,
+    S2 = 2,
+    S3 = 2,
+    M1 = 3,
+    M2 = 3,
+    M3 = 3),
+  y = c(
+    F1 = 2.5,
+    F2 = 1.5,
+    H1 = 2.8,
+    H2 = 2.5,
+    H3 = 2.2,
+    S1 = 1.8,
+    S2 = 1.5,
+    S3 = 1.2,
+    M1 = 2.6,
+    M2 = 2,
+    M3 = 1.4
+  )
+)
 
-brown_cov <- readxl::read_excel("data/brown/figure-6.3.xlsx") %>% 
+# Set DAG relationships and aesthetics
+measurement_confounding_dag <- ggdag::dagify(
+  H1 ~ F1,
+  H2 ~ F1,
+  H3 ~ F1,
+  S1 ~ F2,
+  S2 ~ F2,
+  S3 ~ F2,
+  H1 ~ M1,
+  S1 ~ M1,
+  H2 ~ M2,
+  S2 ~ M2,
+  H3 ~ M3,
+  S3 ~ M3,
+  coords = dag_coords
+) %>% 
   
-  column_to_rownames("...1") 
+  tidy_dagitty() %>% 
+  
+  mutate(
+    
+    node_colour = case_when(
+      grepl("^F|M", name) ~ "latent",
+      grepl("^H|S", name) ~ "observed"
+    ),
+    
+    edge_colour = case_when(
+      grepl("^M", name) & grepl("1$", to) ~ "cornflower blue",
+      grepl("^M", name) & grepl("2$", to) ~ "#daed64",
+      grepl("^M", name) & grepl("3$", to) ~ "#ed7864",
+      grepl("^F", name)                   ~ "black"
+    )
+  )
 
-h1.definition <- 
-  'happy =~ HACL + HAD + HDESC + HLKRT 
-   sad   =~ SACL + SAD + SDESC + SLKRT'
+# Plot the DAG
+measurement_confounding_dag %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(aes(colour = node_colour)) +
+  scale_colour_manual(values = c("dark blue", "#edbc64")) + 
+  geom_dag_edges(aes(edge_colour = edge_colour)) +
+  geom_dag_text() +
+  theme()
+  theme_void()
 
-h1.fit <- cfa(
-  sample.cov = brown_cov,
-  sample.nobs = 304,
-  model = h1.definition
+summary(h1.fit, standardized = TRUE)
+
+
+population.model <- ' happy =~ H1 + 0.8*H2 + 1.2*H3
+                      sad =~ S1 + 0.8*S2 + 1.2*S3
+                      M1 =~ H1 + 0.3*S1
+                      M2 =~ H2 + 0.3*S2
+                      M3 =~ H3 + 0.3*S3
+                    '
+
+# generate data
+set.seed(1234)
+dat_sim <- simulateData(population.model, sample.nobs=100L)
+
+
+dumb.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad =~ S1 + S2 + S3
+   '
+
+correlated_uniqueness.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad =~ S1 + S2 + S3
+   
+   H1 ~~ S1
+   H2 ~~ S2
+   H3 ~~ S3
+   '
+
+
+dumb.fit <- cfa(
+  data = dat_sim,
+  model = dumb.definition
+)
+
+correlated_uniqueness.fit <- cfa(
+  data = dat_sim,
+  model = correlated_uniqueness.definition
+)
+
+uncorrelated_methods.fit <- cfa(
+  data = dat_sim,
+  model = uncorrelated_methods.definition
 )
 
 
-### Simulate based on a DAG
+summary(dumb.fit, standardized = TRUE)
+summary(correlated_uniqueness.fit, standardized = TRUE)
+summary(uncorrelated_methods.fit, standardized = TRUE)
 
-# Sample size
-N <- 400
 
-dat_fake <- tibble(
+correlated_uniqueness.definition
   
-  # The factors are uncorrelated in reality, but
-  # will be confounded by the measurement effects!
-  F1 = rnorm(N, 0, 1),
-  F2 = rnorm(N, 0, 1),
-  
-  # The measurement effects
-  M1 = rnorm(N, 0, 1),
-  M2 = rnorm(N, 0, 1),
-  M3 = rnorm(N, 0, 1),
-  M4 = rnorm(N, 0, 1),
-  
-  
-  # The measurements
-  H1 = .8*F1 + M1,
-  H2 = .7*F1 + M2,
-  H3 = .9*F1 + M3,
-  H4 = .7*F1 + M4,
-  S1 = .8*F2 + M1,
-  S2 = .7*F2 + M2,
-  S3 = .9*F2 + M3,
-  S4 = .7*F2 + M4
-)
-
-voc()
-
-h1.definition <- 
-  'happy =~ H1 + H2 + H3 + H4
-   sad =~ S1 + S2 + S3 + S4'
-
-h1.fit <- cfa(
-  data = dat_fake,
-  model = h1.definition
-)
-
+  view()
 dat_fake
 
 dat_fake %>% 

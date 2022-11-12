@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.11.8)  9 NOV 2022 09:18
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.11.8)  12 NOV 2022 12:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1174,12 +1174,12 @@ chapter 2.
 File: ./cfa_files/figure-pdf/unnamed-chunk-3-1.pdf Graphic file (type pdf)
 <use ./cfa_files/figure-pdf/unnamed-chunk-3-1.pdf>
 [7]
-Overfull \hbox (0.14395pt too wide) in alignment at lines 463--491
+Overfull \hbox (0.14395pt too wide) in alignment at lines 468--496
  [] [] [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (0.14395pt too wide) in alignment at lines 491--495
+Overfull \hbox (0.14395pt too wide) in alignment at lines 496--500
  [] [] [] [] [] [] [] [] [] [] [] [] 
  []
 
@@ -1189,7 +1189,7 @@ File: ./cfa_files/figure-pdf/unnamed-chunk-5-1.pdf Graphic file (type pdf)
 [9]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.2 on input line 560.
+(longtable)                in table 2.2 on input line 565.
 
 [10] [11] [12] [13]
 File: ./cfa_files/figure-pdf/unnamed-chunk-6-1.pdf Graphic file (type pdf)
@@ -1197,61 +1197,61 @@ File: ./cfa_files/figure-pdf/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 [14] [15]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.3 on input line 839.
+(longtable)                in table 2.3 on input line 847.
 
 [16]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 863.
+(Font)              scaled to size 7.665pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 863.
+(Font)              scaled to size 5.475pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 863.
+(Font)              scaled to size 10.95099pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 863.
+(Font)              scaled to size 7.66568pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 863.
+(Font)              scaled to size 5.4755pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 863.
+(Font)              scaled to size 10.94882pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 863.
+(Font)              scaled to size 7.66417pt on input line 873.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 863.
+(Font)              scaled to size 5.47441pt on input line 873.
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.4 on input line 912.
+(longtable)                in table 2.4 on input line 922.
 
 [17] [18]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.5 on input line 972.
+(longtable)                in table 2.5 on input line 984.
 
 [19] [20] [21] [22]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.7 on input line 1265.
+(longtable)                in table 2.7 on input line 1279.
 
 [23]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.8 on input line 1299.
+(longtable)                in table 2.8 on input line 1313.
 
 [24]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.9 on input line 1362.
+(longtable)                in table 2.9 on input line 1376.
 
 [25]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.10 on input line 1445.
+(longtable)                in table 2.10 on input line 1460.
 
 [26] [27]
-Overfull \hbox (3.48898pt too wide) in paragraph at lines 1545--1546
+Overfull \hbox (3.48898pt too wide) in paragraph at lines 1560--1561
  []\TU/lmr/m/n/10.95 Pr(>Chisq)
  []
 
 
-Overfull \hbox (0.58836pt too wide) in paragraph at lines 1550--1550
+Overfull \hbox (0.58836pt too wide) in paragraph at lines 1565--1565
 []|\TU/lmr/m/n/10.95 h1_orthogonal.fit|  
  []
 
@@ -1261,7 +1261,7 @@ File: ./cfa_files/figure-pdf/unnamed-chunk-18-1.pdf Graphic file (type pdf)
 [29] [30] [31] [32] [33]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.12 on input line 1856.
+(longtable)                in table 2.12 on input line 1878.
 
 [34]
 Runaway argument?
@@ -1269,15 +1269,15 @@ Runaway argument?
 ! Paragraph ended before \align* was complete.
 <to be read again> 
                    \par 
-l.1897 
+l.1919 
         
 Here is how much of TeX's memory you used:
- 38050 strings out of 477623
- 806143 string characters out of 5838672
+ 38044 strings out of 477623
+ 805980 string characters out of 5838672
  1453646 words of memory out of 5000000
- 58643 multiletter control sequences out of 15000+600000
+ 58637 multiletter control sequences out of 15000+600000
  475714 words of font info for 81 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 108i,9n,121p,10600b,1025s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 108i,9n,121p,10600b,1030s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on index.pdf (34 pages).
