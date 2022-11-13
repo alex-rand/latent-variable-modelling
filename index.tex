@@ -213,7 +213,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, frame hidden, breakable, borderline west={3pt}{0pt}{shadecolor}, interior hidden, enhanced, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, enhanced, breakable, borderline west={3pt}{0pt}{shadecolor}, sharp corners, frame hidden, boxrule=0pt]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -325,31 +325,6 @@ This is a book created from markdown and executable code.
 \hypertarget{cfa}{%
 \chapter{CFA}\label{cfa}}
 
-I think it is safe to say that The Whole Game of Confirmatory Factor
-Analysis (CFA) is that I'm trying to convince my colleagues that my
-observed variables are confounded by some unmeasured variables. Usually
-I'm trying to show that the variables is confounded in a very particular
-way, where a few small groups of variables are confounded only by one
-unmeasured variable per group.
-
-The classic DAGs way of testing for confounding is to condition on the
-supposed confounder. But in CFA we always assume the confounder is
-unmeasured, so we can't directly test our DAG using regression. Instead,
-we can only try to argue for it in a hand-wavy sort of way: we expect
-confounded variables to be correlated with each other, and uncounfounded
-variables to \emph{not} be correlated with each other. This is why we
-focus on the empirical correlation matrix as the basis for our model: if
-a few of my variables are very correlated with each other then that is
-\emph{consistent} with them being confounded by the same unobserved
-variable. But it is not proof! You can never prove a DAG, after all.
-
-So interpreting a CFA model is all about checking to see whether the
-correlations between the variables are consistent with what we would
-expect to see under the DAG where each group of variables is confounded
-by a single unmeasured variable.
-
-Let's load the packages we'll need for what is to come in this chapter:
-
 \begin{Shaded}
 \begin{Highlighting}[]
 \FunctionTok{library}\NormalTok{(tidyverse)}
@@ -357,6 +332,100 @@ Let's load the packages we'll need for what is to come in this chapter:
 \FunctionTok{library}\NormalTok{(ggdag)}
 \end{Highlighting}
 \end{Shaded}
+
+I think it is safe to say that The Whole Game of Confirmatory Factor
+Analysis (CFA) is that I'm trying to convince my colleagues that my
+observed variables are confounded by some unmeasured variables. Usually
+I'm trying to show that the variables are confounded in a very
+particular way, where a few small groups of variables are confounded
+only by one unmeasured variable per group.
+
+So here's the architypal DAG of a CFA, where the Xs are observed
+variables, and F1 is an unmeasured variable I am imagining to exist.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Set DAG coordinates}
+\NormalTok{dag\_coords }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{x =} \FunctionTok{c}\NormalTok{(}
+    \AttributeTok{F1 =} \DecValTok{1}\NormalTok{, }
+    \AttributeTok{X1 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{X2 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{X3 =} \DecValTok{2}
+\NormalTok{  ),}
+  \AttributeTok{y =} \FunctionTok{c}\NormalTok{(}
+    \AttributeTok{F1 =} \FloatTok{1.5}\NormalTok{,}
+    \AttributeTok{X1 =} \FloatTok{1.8}\NormalTok{,}
+    \AttributeTok{X2 =} \FloatTok{1.5}\NormalTok{,}
+    \AttributeTok{X3 =} \FloatTok{1.2}
+\NormalTok{  )}
+\NormalTok{)}
+
+\CommentTok{\# Set DAG relationships and aesthetics}
+\NormalTok{measurement\_confounding\_dag }\OtherTok{\textless{}{-}}\NormalTok{ ggdag}\SpecialCharTok{::}\FunctionTok{dagify}\NormalTok{(}
+\NormalTok{  X1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+\NormalTok{  X2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+\NormalTok{  X3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+  \AttributeTok{coords =}\NormalTok{ dag\_coords}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{tidy\_dagitty}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{mutate}\NormalTok{(}
+    \StringTok{\textasciigrave{}}\AttributeTok{ }\StringTok{\textasciigrave{}} \OtherTok{=} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}F"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"latent"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}X"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"observed"}
+\NormalTok{    ))}
+
+\CommentTok{\# Plot the DAG}
+\NormalTok{measurement\_confounding\_dag }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{xend =}\NormalTok{ xend, }\AttributeTok{yend =}\NormalTok{ yend)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_dag\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{colour =} \StringTok{\textasciigrave{}}\AttributeTok{ }\StringTok{\textasciigrave{}}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_colour\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"dark blue"}\NormalTok{, }\StringTok{"\#edbc64"}\NormalTok{)) }\SpecialCharTok{+} 
+  \FunctionTok{geom\_dag\_edges}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_dag\_text}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.title =} \FunctionTok{element\_blank}\NormalTok{()) }\SpecialCharTok{+}
+  \FunctionTok{theme\_void}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-2-1.pdf}
+
+}
+
+\end{figure}
+
+The Whole Game of CFA is to convince your reader that the patterns of
+variance and covariance in your data are consistent with the above DAG
+(or some other version of it).
+
+The classic way of testing whether your data are consistent with a DAG
+is to condition on some of the variables, perhaps by including it as a
+predictor in a linear regression model, and see whether the patterns of
+correlation change in the ways the DAG expects based on the rules of
+d-separation. For the above DAG, this would mean controlling for F1 and
+seeing whether the correlations between X1, X2, and X3 decrease as a
+result.
+
+But in CFA we always assume the confounder is unmeasured, so we can't
+directly control for it. Instead, we can only try to argue for our DAG
+in a more hand-wavy sort of way: we expect confounded variables to be
+correlated with each other, and uncounfounded variables to \emph{not} be
+correlated with each other. This is why we focus on the empirical
+correlation matrix as the basis for our model: if a few of my variables
+are very correlated with each other then that is \emph{consistent} with
+them being confounded by the same unobserved variable. But it is not
+proof! You can never prove a DAG, after all.
+
+So interpreting a CFA model is all about checking to see whether the
+correlations between the variables are consistent with what we would
+expect to see under the DAG where each group of variables is confounded
+by a single unmeasured variable.
+
+Let's look at some examples of how people have liked to make the case
+for their missing-confounder DAG.
 
 \hypertarget{example-1-toxic-striving-energy}{%
 \section*{Example 1: Toxic Striving
@@ -423,7 +492,7 @@ answers to each of the 12 questions:
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-3-1.pdf}
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-4-1.pdf}
 
 }
 
@@ -532,7 +601,7 @@ has nice introductory videos about these topics.
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-5-1.pdf}
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-6-1.pdf}
 
 }
 
@@ -754,7 +823,7 @@ Variances:
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-6-1.pdf}
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-7-1.pdf}
 
 }
 
@@ -1659,7 +1728,7 @@ animals varies between countries:
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-18-1.pdf}
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-19-1.pdf}
 
 }
 
@@ -2369,7 +2438,7 @@ Here's how we can show this situation in a DAG:
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-24-1.pdf}
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-25-1.pdf}
 
 }
 
@@ -2485,6 +2554,10 @@ measurement effects are the only source of correlation between these
 variables, this should close the backdoor path, IE we should get
 unbiased estimates of the factor loadings.
 
+BUT WHEN I REGRESS F1 \textasciitilde{} F2 I GET NO EFFECT, EVEN THOUGH
+THE DUMB VERSION OF THE CFA FINDS THEM TO BE CORRELATED. THIS PROBABLY
+REVEALS SOMETHING DEEP ABOUT FACTOR ANALYSIS THAT I DONT UNDERSTAND?
+
 \ldots.@Brown2006 calls this an ``error theory''\ldots..
 
 \ldots.
@@ -2524,8 +2597,227 @@ fixed at 0.
   \AttributeTok{data =}\NormalTok{ dat\_fake }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{matches}\NormalTok{(}\StringTok{"\^{}(H|S)"}\NormalTok{)),}
   \AttributeTok{model =}\NormalTok{ correlated\_uniqueness.definition}
 \NormalTok{)}
+
+\NormalTok{summary.basic.fit }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(basic.fit, }\AttributeTok{standardized =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{summary.correlated\_uniqueness.fit }\OtherTok{\textless{}{-}} \FunctionTok{summary}\NormalTok{(correlated\_uniqueness.fit, }\AttributeTok{standardized =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{summary.basic.fit}
 \end{Highlighting}
 \end{Shaded}
+
+\begin{verbatim}
+lavaan 0.6-12 ended normally after 23 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        13
+
+  Number of observations                           305
+
+Model Test User Model:
+                                                      
+  Test statistic                               802.905
+  Degrees of freedom                                 8
+  P-value (Chi-square)                           0.000
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+  happy =~                                                              
+    H1                1.000                               0.816    0.723
+    H2                0.741    0.090    8.236    0.000    0.605    0.615
+    H3                1.044    0.123    8.496    0.000    0.852    0.741
+  sad =~                                                                
+    S1                1.000                               0.906    0.778
+    S2                0.818    0.079   10.302    0.000    0.742    0.704
+    S3                0.980    0.093   10.522    0.000    0.888    0.752
+
+Covariances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+  happy ~~                                                              
+    sad               0.236    0.060    3.934    0.000    0.319    0.319
+
+Variances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+   .H1                0.609    0.084    7.214    0.000    0.609    0.478
+   .H2                0.601    0.062    9.662    0.000    0.601    0.621
+   .H3                0.597    0.089    6.721    0.000    0.597    0.451
+   .S1                0.537    0.077    6.989    0.000    0.537    0.395
+   .S2                0.560    0.062    8.964    0.000    0.560    0.505
+   .S3                0.604    0.078    7.726    0.000    0.604    0.434
+    happy             0.667    0.114    5.860    0.000    1.000    1.000
+    sad               0.822    0.119    6.886    0.000    1.000    1.000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{summary.correlated\_uniqueness.fit}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+lavaan 0.6-12 ended normally after 47 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        16
+
+  Number of observations                           305
+
+Model Test User Model:
+                                                      
+  Test statistic                                13.448
+  Degrees of freedom                                 5
+  P-value (Chi-square)                           0.020
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+  happy =~                                                              
+    H1                1.000                               0.738    0.669
+    H2                0.915    0.055   16.787    0.000    0.676    0.657
+    H3                1.157    0.066   17.625    0.000    0.854    0.755
+  sad =~                                                                
+    S1                1.000                               0.866    0.744
+    S2                0.863    0.042   20.433    0.000    0.747    0.724
+    S3                1.057    0.048   21.972    0.000    0.915    0.761
+
+Covariances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+ .H1 ~~                                                                 
+   .S1                0.551    0.061    9.007    0.000    0.551    0.866
+ .H2 ~~                                                                 
+   .S2                0.458    0.051    8.973    0.000    0.458    0.831
+ .H3 ~~                                                                 
+   .S3                0.501    0.062    8.133    0.000    0.501    0.868
+  happy ~~                                                              
+    sad               0.032    0.050    0.638    0.524    0.050    0.050
+
+Variances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+   .H1                0.672    0.070    9.641    0.000    0.672    0.552
+   .H2                0.600    0.061    9.813    0.000    0.600    0.568
+   .H3                0.550    0.071    7.769    0.000    0.550    0.430
+   .S1                0.604    0.066    9.121    0.000    0.604    0.446
+   .S2                0.507    0.053    9.538    0.000    0.507    0.476
+   .S3                0.607    0.069    8.789    0.000    0.607    0.420
+    happy             0.545    0.073    7.450    0.000    1.000    1.000
+    sad               0.749    0.086    8.762    0.000    1.000    1.000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{fit\_measures}\NormalTok{(basic.fit) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Basic Model"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption{Basic Model}
+
+\centering
+\begin{tabular}[t]{l|l}
+\hline
+name & value\\
+\hline
+Test & standard chi-squared\\
+\hline
+DF & 8\\
+\hline
+Test Statistic & 802.9\\
+\hline
+p-value & 0\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+stat & value\\
+\hline
+rmsea & 0.5707720\\
+\hline
+rmsea.ci.lower & 0.5377551\\
+\hline
+rmsea.ci.upper & 0.6044999\\
+\hline
+rmsea.pvalue & 0.0000000\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+stat & value\\
+\hline
+cfi & 0.3742618\\
+\hline
+tli & -0.1732591\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{fit\_measures}\NormalTok{(correlated\_uniqueness.fit) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Correlated Uniqueness Model"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\caption{Correlated Uniqueness Model}
+
+\centering
+\begin{tabular}[t]{l|l}
+\hline
+name & value\\
+\hline
+Test & standard chi-squared\\
+\hline
+DF & 5\\
+\hline
+Test Statistic & 13.45\\
+\hline
+p-value & 0.0195200124719597\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+stat & value\\
+\hline
+rmsea & 0.07443086\\
+\hline
+rmsea.ci.lower & 0.02734066\\
+\hline
+rmsea.ci.upper & 0.12377511\\
+\hline
+rmsea.pvalue & 0.16609111\\
+\hline
+\end{tabular}
+\centering
+\begin{tabular}[t]{l|r}
+\hline
+stat & value\\
+\hline
+cfi & 0.9933495\\
+\hline
+tli & 0.9800485\\
+\hline
+\end{tabular}
+\end{table}
+
+Under the basic model we have a correlation
 
 \ldots{} We also could have controlled for the measurement effects by
 including measurement factors, but I actually I couldn't get this model
@@ -2626,7 +2918,7 @@ loaded via a namespace (and not attached):
  [16] cluster_2.1.3       tzdb_0.3.0          openxlsx_4.2.5     
  [19] graphlayouts_0.8.3  modelr_0.1.8        RcppParallel_5.1.5 
  [22] vroom_1.6.0         jpeg_0.1-9          sem_3.1-15         
- [25] colorspace_2.0-3    ggrepel_0.9.1       rvest_1.0.3        
+ [25] colorspace_2.0-3    rvest_1.0.3         ggrepel_0.9.1      
  [28] haven_2.5.0         xfun_0.32           crayon_1.5.2       
  [31] jsonlite_1.8.3      lme4_1.1-30         survival_3.3-1     
  [34] glue_1.6.2          polyclip_1.10-4     gtable_0.3.1       
@@ -2638,7 +2930,7 @@ loaded via a namespace (and not attached):
  [52] httr_1.4.4          RColorBrewer_1.1-3  ellipsis_0.3.2     
  [55] pkgconfig_2.0.3     XML_3.99-0.10       farver_2.1.1       
  [58] nnet_7.3-17         kutils_1.70         dbplyr_2.2.1       
- [61] deldir_1.0-6        utf8_1.2.2          janitor_2.1.0      
+ [61] deldir_1.0-6        janitor_2.1.0       utf8_1.2.2         
  [64] tidyselect_1.2.0    labeling_0.4.2      rlang_1.0.6        
  [67] reshape2_1.4.4      munsell_0.5.0       dagitty_0.3-1      
  [70] cellranger_1.1.0    tools_4.2.1         cli_3.3.0          
@@ -2655,12 +2947,12 @@ loaded via a namespace (and not attached):
 [103] psych_2.2.9         nloptr_2.0.3        vctrs_0.4.1        
 [106] pillar_1.8.1        lifecycle_1.0.3     OpenMx_2.20.6      
 [109] data.table_1.14.2   corpcor_1.6.10      R6_2.5.1           
-[112] latticeExtra_0.6-30 gridExtra_2.3       boot_1.3-28        
-[115] MASS_7.3-57         gtools_3.9.3        assertthat_0.2.1   
+[112] latticeExtra_0.6-30 gridExtra_2.3       gtools_3.9.3       
+[115] boot_1.3-28         MASS_7.3-57         assertthat_0.2.1   
 [118] withr_2.5.0         mnormt_2.1.1        parallel_4.2.1     
 [121] hms_1.1.2           grid_4.2.1          rpart_4.1.16       
-[124] coda_0.19-4         minqa_1.2.5         rmarkdown_2.17     
-[127] snakecase_0.11.0    carData_3.0-5       googledrive_2.0.0  
+[124] coda_0.19-4         minqa_1.2.5         snakecase_0.11.0   
+[127] rmarkdown_2.17      carData_3.0-5       googledrive_2.0.0  
 [130] ggforce_0.4.1       semTools_0.5-6      lubridate_1.8.0    
 [133] base64enc_0.1-3     interp_1.1-3       
 \end{verbatim}

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.11.8)  12 NOV 2022 12:49
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.11.8)  13 NOV 2022 10:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1171,113 +1171,116 @@ chapter 2.
 [6
 
 ]
-File: ./cfa_files/figure-pdf/unnamed-chunk-3-1.pdf Graphic file (type pdf)
-<use ./cfa_files/figure-pdf/unnamed-chunk-3-1.pdf>
-[7]
-Overfull \hbox (0.14395pt too wide) in alignment at lines 468--496
- [] [] [] [] [] [] [] [] [] [] [] [] 
- []
-
-
-Overfull \hbox (0.14395pt too wide) in alignment at lines 496--500
- [] [] [] [] [] [] [] [] [] [] [] [] 
- []
-
-[8]
-File: ./cfa_files/figure-pdf/unnamed-chunk-5-1.pdf Graphic file (type pdf)
-<use ./cfa_files/figure-pdf/unnamed-chunk-5-1.pdf>
+File: ./cfa_files/figure-pdf/unnamed-chunk-2-1.pdf Graphic file (type pdf)
+<use ./cfa_files/figure-pdf/unnamed-chunk-2-1.pdf>
+[7] [8]
+File: ./cfa_files/figure-pdf/unnamed-chunk-4-1.pdf Graphic file (type pdf)
+<use ./cfa_files/figure-pdf/unnamed-chunk-4-1.pdf>
 [9]
+Overfull \hbox (0.14395pt too wide) in alignment at lines 537--565
+ [] [] [] [] [] [] [] [] [] [] [] [] 
+ []
 
-Package longtable Warning: Column widths have changed
-(longtable)                in table 2.2 on input line 565.
 
-[10] [11] [12] [13]
+Overfull \hbox (0.14395pt too wide) in alignment at lines 565--569
+ [] [] [] [] [] [] [] [] [] [] [] [] 
+ []
+
+[10]
 File: ./cfa_files/figure-pdf/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use ./cfa_files/figure-pdf/unnamed-chunk-6-1.pdf>
-[14] [15]
+[11]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.3 on input line 847.
+(longtable)                in table 2.2 on input line 634.
 
-[16]
+[12] [13] [14] [15]
+File: ./cfa_files/figure-pdf/unnamed-chunk-7-1.pdf Graphic file (type pdf)
+<use ./cfa_files/figure-pdf/unnamed-chunk-7-1.pdf>
+[16] [17]
+
+Package longtable Warning: Column widths have changed
+(longtable)                in table 2.3 on input line 916.
+
+[18]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 7.665pt on input line 873.
+(Font)              scaled to size 7.665pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
-(Font)              scaled to size 5.475pt on input line 873.
+(Font)              scaled to size 5.475pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 10.95099pt on input line 873.
+(Font)              scaled to size 10.95099pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 7.66568pt on input line 873.
+(Font)              scaled to size 7.66568pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
-(Font)              scaled to size 5.4755pt on input line 873.
+(Font)              scaled to size 5.4755pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 10.94882pt on input line 873.
+(Font)              scaled to size 10.94882pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 7.66417pt on input line 873.
+(Font)              scaled to size 7.66417pt on input line 942.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
-(Font)              scaled to size 5.47441pt on input line 873.
+(Font)              scaled to size 5.47441pt on input line 942.
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.4 on input line 922.
+(longtable)                in table 2.4 on input line 991.
 
-[17] [18]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 2.5 on input line 984.
-
-[19] [20] [21] [22]
+[19] [20]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.7 on input line 1279.
+(longtable)                in table 2.5 on input line 1053.
 
-[23]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 2.8 on input line 1313.
-
-[24]
+[21] [22] [23] [24]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.9 on input line 1376.
+(longtable)                in table 2.7 on input line 1348.
 
 [25]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.10 on input line 1460.
+(longtable)                in table 2.8 on input line 1382.
 
-[26] [27]
-Overfull \hbox (3.48898pt too wide) in paragraph at lines 1560--1561
+[26]
+
+Package longtable Warning: Column widths have changed
+(longtable)                in table 2.9 on input line 1445.
+
+[27]
+
+Package longtable Warning: Column widths have changed
+(longtable)                in table 2.10 on input line 1529.
+
+[28] [29]
+Overfull \hbox (3.48898pt too wide) in paragraph at lines 1629--1630
  []\TU/lmr/m/n/10.95 Pr(>Chisq)
  []
 
 
-Overfull \hbox (0.58836pt too wide) in paragraph at lines 1565--1565
+Overfull \hbox (0.58836pt too wide) in paragraph at lines 1634--1634
 []|\TU/lmr/m/n/10.95 h1_orthogonal.fit|  
  []
 
-[28]
-File: ./cfa_files/figure-pdf/unnamed-chunk-18-1.pdf Graphic file (type pdf)
-<use ./cfa_files/figure-pdf/unnamed-chunk-18-1.pdf>
-[29] [30] [31] [32] [33]
+[30]
+File: ./cfa_files/figure-pdf/unnamed-chunk-19-1.pdf Graphic file (type pdf)
+<use ./cfa_files/figure-pdf/unnamed-chunk-19-1.pdf>
+[31] [32] [33] [34] [35]
 
 Package longtable Warning: Column widths have changed
-(longtable)                in table 2.12 on input line 1878.
+(longtable)                in table 2.12 on input line 1947.
 
-[34]
+[36]
 Runaway argument?
 \\ 
 ! Paragraph ended before \align* was complete.
 <to be read again> 
                    \par 
-l.1919 
+l.1988 
         
 Here is how much of TeX's memory you used:
- 38044 strings out of 477623
- 805980 string characters out of 5838672
+ 38055 strings out of 477623
+ 806408 string characters out of 5838672
  1453646 words of memory out of 5000000
- 58637 multiletter control sequences out of 15000+600000
+ 58647 multiletter control sequences out of 15000+600000
  475714 words of font info for 81 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  108i,9n,121p,10600b,1030s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on index.pdf (34 pages).
+Output written on index.pdf (36 pages).
