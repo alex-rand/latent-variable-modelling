@@ -86,11 +86,14 @@ measurement_confounding_dag %>%
 
 ### Simulate Data from the DAG
 
+BROKEN BECAUSE OF WHAT THIS GUY SAYS: https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r
+Try simulating the method effects explicitly as factors instead
+
 # Set seed for replicable results
 set.seed(233)
 
 # Set sample size
-N <- 3000
+N <- 30000
 
 # Create the dataset
 dat_fake <- tibble(
@@ -113,7 +116,7 @@ dat_fake <- tibble(
   S3 = 0.7*M2 + rnorm(N, 0, .3) 
 ) 
 
-lm(H1 ~ H2 + M1, dat_fake)
+cor(dat_fake)
 
 
 dumb.definition <- 
