@@ -1794,6 +1794,7 @@ Variances:
 <h2 class="unnumbered anchored" data-anchor-id="example-3-happy-and-sad">Example 3: Happy and Sad</h2>
 <section id="mtmm-and-error-theory" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="mtmm-and-error-theory">MTMM and ‘Error Theory’</h3>
+<p>“multitrait–multimethod”</p>
 <p>In the previous example we saw how we can sometimes improve model fit by freeing-up some of the residual covariance terms, rather than doing the typical thing of fixing them at 0. But this feels a bit icky to me – just pumping out some modification indexes and using that as a basis for opening up some free parameters feels pretty overfitty, because we don’t have a strong theory-driven reason for changing the model in that way.</p>
 <p>But there <em>are</em> more kosher-feeling theory-driven reasons for freeing up some of the residual covariance parameters. Let’s talk about two of them: the first relates to convergent validity, the second relates to discriminant validity.</p>
 <p>Here’s the first example: imagine I have a theory where there’s a thing called ‘exceptional leadership’, and it is made up of 3 unobservable features, like ‘self-confidence’, ‘oratorical skill’, and ‘robust compassionateness’. So I make up a survey where I ask 12 questions total, 4 per imagined factor. Then I fit a CFA model and find that it does a great job recreating the empirical variance-covariance matrix. There’s lots of great convergent validity between the questions I imagine to define the 3 factors. So I get published! But there’s a first problem: what if my within-factor variables are correlated not because they are cleanly confounded by ‘self-confidence’ (which is what I’m trying to convince you of), but instead because the within-factor survey questions are just worded in a really similar way, IE they are confounded by a latent factor we might call ‘wording similarity’? This possibility undermines my case for clean confounding.</p>
@@ -2344,10 +2345,203 @@ Correlated Uniqueness Model
 </table>
 </div>
 </div>
-<p>Under the basic model we have a correlation</p>
-<p>… We also could have controlled for the measurement effects by including measurement factors, but I actually I couldn’t get this model to converge, regardless of whether its method factors were correlated or uncorrelated (or uncorrelated). I think <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> actually mentions this as a common issue, and favours the Correlated Uniqueness Model for that reason FIND THE QUOTE</p>
-<p>Getting on to MTMM…I think the idea is t</p>
-<p>One situation where I may want to do this do this is when .</p>
+<p>CLEAN UP THESE OUTPUTS! Here we see that under the basic model we have some moderate correlation between the <code>happy</code> and <code>sad</code> factors, which is a bit of a murky result: it doesn’t tell us one way or the other whether happiness and sadness are separate constructs I can feel together or two extremes of the same feeling. But under the correlated uniqueness model this correlation evaporates because we’ve controlled for the measurement effects, closing the backdoor path between <code>happy</code> and <code>sad</code>. This model also greatly improves goodness-of-fit, which makes sense because it better reflects the true data-generating process we coded up.</p>
+<p>We also could have controlled for the measurement effects by including measurement factors, IE by adopting a ‘Correlated Methods Model’. I tried this but I actually I couldn’t get this model to converge, regardless of whether its method factors were correlated or uncorrelated (an ‘Uncorrelated Methods Model’. <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> actually mentions this as a common issue, and favours the Correlated Uniqueness Model for that reason. In his words:</p>
+<blockquote class="blockquote">
+<p>“an overriding drawback of the correlated methods model is that it is usually empirically underidentified. Consequently, a correlated methods solution will typically fail to converge. If it does converge, the solution will usually be associated with Heywood cases [negative variance estimates] and large standard errors”</p>
+</blockquote>
+<p>Now let’s consider the other case in which measurement effects might be hurting us: the case in which <em>within</em>-factor measurements are confounded by measurement effects. Here’s the DAG:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">c</span>(</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">F1 =</span> <span class="dv">1</span>, </span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">F2 =</span> <span class="dv">1</span>,</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">H1 =</span> <span class="dv">2</span>,</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">H2 =</span> <span class="dv">2</span>,</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">H3 =</span> <span class="dv">2</span>,</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">S1 =</span> <span class="dv">2</span>,</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">S2 =</span> <span class="dv">2</span>,</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">S3 =</span> <span class="dv">2</span>,</span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">M1 =</span> <span class="dv">3</span>,</span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">M2 =</span> <span class="dv">3</span>),</span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">c</span>(</span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">F1 =</span> <span class="fl">2.5</span>,</span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">F2 =</span> <span class="fl">1.5</span>,</span>
+<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">H1 =</span> <span class="fl">2.8</span>,</span>
+<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">H2 =</span> <span class="fl">2.5</span>,</span>
+<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">H3 =</span> <span class="fl">2.2</span>,</span>
+<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">S1 =</span> <span class="fl">1.8</span>,</span>
+<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">S2 =</span> <span class="fl">1.5</span>,</span>
+<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">S3 =</span> <span class="fl">1.2</span>,</span>
+<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">M1 =</span> <span class="fl">2.5</span>,</span>
+<span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">M2 =</span> <span class="fl">1.5</span></span>
+<span id="cb44-24"><a href="#cb44-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb44-25"><a href="#cb44-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb44-26"><a href="#cb44-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-27"><a href="#cb44-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Set DAG relationships and aesthetics</span></span>
+<span id="cb44-28"><a href="#cb44-28" aria-hidden="true" tabindex="-1"></a>measurement_confounding_dag <span class="ot">&lt;-</span> ggdag<span class="sc">::</span><span class="fu">dagify</span>(</span>
+<span id="cb44-29"><a href="#cb44-29" aria-hidden="true" tabindex="-1"></a>  H3 <span class="sc">~</span> F1,</span>
+<span id="cb44-30"><a href="#cb44-30" aria-hidden="true" tabindex="-1"></a>  S2 <span class="sc">~</span> F2,</span>
+<span id="cb44-31"><a href="#cb44-31" aria-hidden="true" tabindex="-1"></a>  H1 <span class="sc">~</span> M1,</span>
+<span id="cb44-32"><a href="#cb44-32" aria-hidden="true" tabindex="-1"></a>  H2 <span class="sc">~</span> M1,</span>
+<span id="cb44-33"><a href="#cb44-33" aria-hidden="true" tabindex="-1"></a>  H3 <span class="sc">~</span> M1,</span>
+<span id="cb44-34"><a href="#cb44-34" aria-hidden="true" tabindex="-1"></a>  S1 <span class="sc">~</span> M2,</span>
+<span id="cb44-35"><a href="#cb44-35" aria-hidden="true" tabindex="-1"></a>  S2 <span class="sc">~</span> M2,</span>
+<span id="cb44-36"><a href="#cb44-36" aria-hidden="true" tabindex="-1"></a>  S3 <span class="sc">~</span> M2,</span>
+<span id="cb44-37"><a href="#cb44-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">coords =</span> dag_coords</span>
+<span id="cb44-38"><a href="#cb44-38" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-39"><a href="#cb44-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb44-40"><a href="#cb44-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tidy_dagitty</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb44-41"><a href="#cb44-41" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb44-42"><a href="#cb44-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb44-43"><a href="#cb44-43" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb44-44"><a href="#cb44-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">node_colour =</span> <span class="fu">case_when</span>(</span>
+<span id="cb44-45"><a href="#cb44-45" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"^F|M"</span>, name) <span class="sc">~</span> <span class="st">"latent"</span>,</span>
+<span id="cb44-46"><a href="#cb44-46" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"^H|S"</span>, name) <span class="sc">~</span> <span class="st">"observed"</span></span>
+<span id="cb44-47"><a href="#cb44-47" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb44-48"><a href="#cb44-48" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb44-49"><a href="#cb44-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">edge_colour =</span> <span class="fu">case_when</span>(</span>
+<span id="cb44-50"><a href="#cb44-50" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"M1"</span>, name)  <span class="sc">~</span> <span class="st">"cornflower blue"</span>,</span>
+<span id="cb44-51"><a href="#cb44-51" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"M2"</span>, name) <span class="sc">~</span> <span class="st">"#ed7864"</span>,</span>
+<span id="cb44-52"><a href="#cb44-52" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"^XX"</span>, name) <span class="sc">&amp;</span> <span class="fu">grepl</span>(<span class="st">"3$"</span>, to) <span class="sc">~</span> <span class="st">"#ed7864"</span>,</span>
+<span id="cb44-53"><a href="#cb44-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"^F"</span>, name)                   <span class="sc">~</span> <span class="st">"black"</span></span>
+<span id="cb44-54"><a href="#cb44-54" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb44-55"><a href="#cb44-55" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb44-56"><a href="#cb44-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-57"><a href="#cb44-57" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the DAG</span></span>
+<span id="cb44-58"><a href="#cb44-58" aria-hidden="true" tabindex="-1"></a>measurement_confounding_dag <span class="sc">%&gt;%</span></span>
+<span id="cb44-59"><a href="#cb44-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">xend =</span> xend, <span class="at">yend =</span> yend)) <span class="sc">+</span></span>
+<span id="cb44-60"><a href="#cb44-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_point</span>(<span class="fu">aes</span>(<span class="at">colour =</span> node_colour)) <span class="sc">+</span></span>
+<span id="cb44-61"><a href="#cb44-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"dark blue"</span>, <span class="st">"#edbc64"</span>)) <span class="sc">+</span> </span>
+<span id="cb44-62"><a href="#cb44-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_edges</span>(<span class="fu">aes</span>(<span class="at">edge_colour =</span> edge_colour)) <span class="sc">+</span></span>
+<span id="cb44-63"><a href="#cb44-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_text</span>() <span class="sc">+</span></span>
+<span id="cb44-64"><a href="#cb44-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="cfa_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This is the ‘true’ data-generating process we’ll be simulating data from in a moment. Notice that even though the researcher (who can’t see this DAG) might think that the unobseved factor causally influences all 3 measured variables, the reality is that each factor only influences one of the measured variables. However, the purported within-factor variables are confounded by measurement method.</p>
+<p>Let’s simulate the data and analyze:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set seed for replicable results</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">233</span>)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Set sample size</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>N <span class="ot">&lt;-</span> <span class="dv">30000</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the dataset</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>dat_fake <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create some uncorrelated factors</span></span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">F1 =</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">F2 =</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create some measurement effects</span></span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">M1 =</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">M2 =</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The DAG says only H3 and S2 are influenced by the factors, but all variables are influenced by a measurement effect.</span></span>
+<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">H1 =</span> <span class="fl">0.7</span><span class="sc">*</span>M1 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
+<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">H2 =</span> <span class="fl">0.8</span><span class="sc">*</span>M1 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
+<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">H3 =</span> <span class="fl">0.9</span><span class="sc">*</span>F1 <span class="sc">+</span> <span class="fl">0.8</span><span class="sc">*</span>M1 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
+<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">S1 =</span> <span class="fl">0.7</span><span class="sc">*</span>M2 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
+<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">S2 =</span> <span class="fl">0.7</span><span class="sc">*</span>F2 <span class="sc">+</span> <span class="fl">0.8</span><span class="sc">*</span>M2 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
+<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">S3 =</span> <span class="fl">0.7</span><span class="sc">*</span>M2 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>) </span>
+<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First let’s fit a basic naive CFA model that does the standard thing of keeping the covariances between variables fixed at 0. Based on the DAG, we should expect this model to return a strong (publishable) but misleading answer – it will notice the correlation between variables that are considered within-factor under our hypothesis, and say ‘wow so correlated, that’s consistent with them being <em>caused</em> by that factor’. But we know this is wrong: their correlation is simply driven by the shared measurement method:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>basic.definition <span class="ot">&lt;-</span> </span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'happy =~ H1 + H2 + H3</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="st">   sad =~ S1 + S2 + S3</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="st">   '</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>basic.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_fake,</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> basic.definition</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(basic.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>lavaan 0.6-12 ended normally after 25 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        13
+
+  Number of observations                         30000
+
+Model Test User Model:
+                                                      
+  Test statistic                                 7.086
+  Degrees of freedom                                 8
+  P-value (Chi-square)                           0.527
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  happy =~                                                              
+    H1                1.000                               0.705    0.920
+    H2                1.141    0.006  196.951    0.000    0.804    0.936
+    H3                1.142    0.009  129.172    0.000    0.805    0.646
+  sad =~                                                                
+    S1                1.000                               0.696    0.917
+    S2                1.142    0.008  151.721    0.000    0.795    0.722
+    S3                1.004    0.005  206.981    0.000    0.699    0.922
+
+Covariances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  happy ~~                                                              
+    sad              -0.002    0.003   -0.765    0.444   -0.005   -0.005
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .H1                0.090    0.002   42.749    0.000    0.090    0.154
+   .H2                0.091    0.003   34.103    0.000    0.091    0.124
+   .H3                0.903    0.008  115.595    0.000    0.903    0.582
+   .S1                0.091    0.002   49.153    0.000    0.091    0.158
+   .S2                0.581    0.005  110.971    0.000    0.581    0.479
+   .S3                0.086    0.002   46.614    0.000    0.086    0.150
+    happy             0.497    0.005   96.783    0.000    1.000    1.000
+    sad               0.484    0.005   98.040    0.000    1.000    1.000</code></pre>
+</div>
+</div>
+<p>And there you have it – just as foretold, we have super strong factor loadings for all the variables, even those that are not actually causally influenced by the factor! So it may <em>look</em> like I have strong convergent validity, but hopefully if we try to publish this, a reviewer will raise the possibility that these correlations are confounded by measurement effects.</p>
+<p>Now I’m going to try closing the backdoor paths between the non-factor-caused variables by allowing the model to learn the covariances, thereby hopefully controlling for unobserved sources of confounding (like the measurement effect). If the loadings stay strong, then my claims to convergent validity are more reasonable.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>correlated_uniqueness.definition <span class="ot">&lt;-</span> </span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'happy =~ H1 + H2 + H3</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="st">   sad   =~ S1 + S2 + S3</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="st">   </span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="st">   H1 ~~ H2</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="st">   H1 ~~ H3</span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="st">   H2 ~~ H3</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="st">   S1 ~~ S2</span></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="st">   S1 ~~ S3</span></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a><span class="st">   S2 ~~ S3</span></span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a><span class="st">   '</span></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>correlated_uniqueness.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_fake,</span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> correlated_uniqueness.definition</span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in lav_model_vcov(lavmodel = lavmodel, lavsamplestats = lavsamplestats, : lavaan WARNING:
+    Could not compute standard errors! The information matrix could
+    not be inverted. This may be a symptom that the model is not
+    identified.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in lav_object_post_check(object): lavaan WARNING: some estimated ov
+variances are negative</code></pre>
+</div>
+</div>
+<p>Uh-oh…the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables – the parameters are non-identified because you’re asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. <a href="https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r">This Stack Exchange thread</a> explains it nicely.</p>
 </section>
 </section>
 <section id="cool-ecology-example-i-should-do-instead" class="level2 unnumbered">
@@ -2356,7 +2550,7 @@ Correlated Uniqueness Model
 <p>Now we’ll look at an example from <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, chapter 13.</p>
 <p>Load the data:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>dat_kline <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/kline/kabc-amos.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>dat_kline <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/kline/kabc-amos.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
 e.g.:
@@ -2382,7 +2576,7 @@ dbl (8): HM, NR, WO, GC, Tr, SM, MA, PS
 <section id="session-info" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="session-info"><span class="header-section-number">2.2</span> Session Info</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.2.1 (2022-06-23 ucrt)
 Platform: x86_64-w64-mingw32/x64 (64-bit)

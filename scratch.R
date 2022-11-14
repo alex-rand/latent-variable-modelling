@@ -17,70 +17,7 @@ h1.summary <- summary(h1.fit, fit.measures = TRUE, standardized = TRUE)
 
 h1.summary
 
-dag_coords <- list(
-  x = c(
-    F1 = 1, 
-    F2 = 1,
-    H1 = 2,
-    H2 = 2,
-    H3 = 2,
-    S1 = 2,
-    S2 = 2,
-    S3 = 2,
-    M1 = 3,
-    M2 = 3),
-  y = c(
-    F1 = 2.5,
-    F2 = 1.5,
-    H1 = 2.8,
-    H2 = 2.5,
-    H3 = 2.2,
-    S1 = 1.8,
-    S2 = 1.5,
-    S3 = 1.2,
-    M1 = 2.5,
-    M2 = 1.5
-  )
-)
 
-# Set DAG relationships and aesthetics
-measurement_confounding_dag <- ggdag::dagify(
-  H3 ~ F1,
-  S2 ~ F2,
-  H1 ~ M1,
-  H2 ~ M1,
-  H3 ~ M1,
-  S1 ~ M2,
-  S2 ~ M2,
-  S3 ~ M2,
-  coords = dag_coords
-) %>% 
-  
-  tidy_dagitty() %>% 
-  
-  mutate(
-    
-    node_colour = case_when(
-      grepl("^F|M", name) ~ "latent",
-      grepl("^H|S", name) ~ "observed"
-    ),
-    
-    edge_colour = case_when(
-      grepl("M1", name)  ~ "cornflower blue",
-      grepl("M2", name) ~ "#ed7864",
-      grepl("^XX", name) & grepl("3$", to) ~ "#ed7864",
-      grepl("^F", name)                   ~ "black"
-    )
-  )
-
-# Plot the DAG
-measurement_confounding_dag %>%
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_point(aes(colour = node_colour)) +
-  scale_colour_manual(values = c("dark blue", "#edbc64")) + 
-  geom_dag_edges(aes(edge_colour = edge_colour)) +
-  geom_dag_text() +
-  theme_void()
 
 
 
@@ -119,7 +56,7 @@ dat_fake <- tibble(
 cor(dat_fake)
 
 
-dumb.definition <- 
+basic.definition <- 
   'happy =~ H1 + H2 + H3
    sad =~ S1 + S2 + S3
    '
@@ -136,21 +73,32 @@ correlated_uniqueness.definition <-
    S2 ~~ S3
    '
 
+correlated_methods.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad   =~ S1 + S2 + S3
+   Method1    =~ H1 + S1 
+   '
 
-dumb.fit <- cfa(
+
+basic.fit <- cfa(
   data = dat_fake,
-  model = dumb.definition
+  model = basic.definition
 )
-
-summary(dumb.fit, standardized = TRUE)
 
 correlated_uniqueness.fit <- cfa(
   data = dat_fake,
   model = correlated_uniqueness.definition
 )
 
-summary(correlated_uniqueness.fit, standardized = TRUE)
+correlated_methods.fit <- cfa(
+  data = dat_fake,
+  model = correlated_methods.definition
+)
 
+
+summary(dumb.fit, standardized = TRUE)
+
+summary(correlated_uniqueness.fit, standardized = TRUE)
 
 summary(dumb.fit, standardized = TRUE)
 summary(correlated_uniqueness.fit, standardized = TRUE)

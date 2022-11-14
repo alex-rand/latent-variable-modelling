@@ -213,7 +213,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, enhanced, breakable, borderline west={3pt}{0pt}{shadecolor}, sharp corners, frame hidden, boxrule=0pt]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, borderline west={3pt}{0pt}{shadecolor}, interior hidden, breakable, enhanced, frame hidden, sharp corners]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -2226,6 +2226,8 @@ right now. Onwards to another example!
 \subsection*{MTMM and `Error Theory'}\label{mtmm-and-error-theory}}
 \addcontentsline{toc}{subsection}{MTMM and `Error Theory'}
 
+``multitrait--multimethod''
+
 In the previous example we saw how we can sometimes improve model fit by
 freeing-up some of the residual covariance terms, rather than doing the
 typical thing of fixing them at 0. But this feels a bit icky to me --
@@ -2817,18 +2819,280 @@ tli & 0.9800485\\
 \end{tabular}
 \end{table}
 
-Under the basic model we have a correlation
+CLEAN UP THESE OUTPUTS! Here we see that under the basic model we have
+some moderate correlation between the \texttt{happy} and \texttt{sad}
+factors, which is a bit of a murky result: it doesn't tell us one way or
+the other whether happiness and sadness are separate constructs I can
+feel together or two extremes of the same feeling. But under the
+correlated uniqueness model this correlation evaporates because we've
+controlled for the measurement effects, closing the backdoor path
+between \texttt{happy} and \texttt{sad}. This model also greatly
+improves goodness-of-fit, which makes sense because it better reflects
+the true data-generating process we coded up.
 
-\ldots{} We also could have controlled for the measurement effects by
-including measurement factors, but I actually I couldn't get this model
-to converge, regardless of whether its method factors were correlated or
-uncorrelated (or uncorrelated). I think Brown (2006) actually mentions
-this as a common issue, and favours the Correlated Uniqueness Model for
-that reason FIND THE QUOTE
+We also could have controlled for the measurement effects by including
+measurement factors, IE by adopting a `Correlated Methods Model'. I
+tried this but I actually I couldn't get this model to converge,
+regardless of whether its method factors were correlated or uncorrelated
+(an `Uncorrelated Methods Model'. Brown (2006) actually mentions this as
+a common issue, and favours the Correlated Uniqueness Model for that
+reason. In his words:
 
-Getting on to MTMM\ldots I think the idea is t
+\begin{quote}
+``an overriding drawback of the correlated methods model is that it is
+usually empirically underidentified. Consequently, a correlated methods
+solution will typically fail to converge. If it does converge, the
+solution will usually be associated with Heywood cases {[}negative
+variance estimates{]} and large standard errors''
+\end{quote}
 
-One situation where I may want to do this do this is when .
+Now let's consider the other case in which measurement effects might be
+hurting us: the case in which \emph{within}-factor measurements are
+confounded by measurement effects. Here's the DAG:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dag\_coords }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{x =} \FunctionTok{c}\NormalTok{(}
+    \AttributeTok{F1 =} \DecValTok{1}\NormalTok{, }
+    \AttributeTok{F2 =} \DecValTok{1}\NormalTok{,}
+    \AttributeTok{H1 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{H2 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{H3 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{S1 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{S2 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{S3 =} \DecValTok{2}\NormalTok{,}
+    \AttributeTok{M1 =} \DecValTok{3}\NormalTok{,}
+    \AttributeTok{M2 =} \DecValTok{3}\NormalTok{),}
+  \AttributeTok{y =} \FunctionTok{c}\NormalTok{(}
+    \AttributeTok{F1 =} \FloatTok{2.5}\NormalTok{,}
+    \AttributeTok{F2 =} \FloatTok{1.5}\NormalTok{,}
+    \AttributeTok{H1 =} \FloatTok{2.8}\NormalTok{,}
+    \AttributeTok{H2 =} \FloatTok{2.5}\NormalTok{,}
+    \AttributeTok{H3 =} \FloatTok{2.2}\NormalTok{,}
+    \AttributeTok{S1 =} \FloatTok{1.8}\NormalTok{,}
+    \AttributeTok{S2 =} \FloatTok{1.5}\NormalTok{,}
+    \AttributeTok{S3 =} \FloatTok{1.2}\NormalTok{,}
+    \AttributeTok{M1 =} \FloatTok{2.5}\NormalTok{,}
+    \AttributeTok{M2 =} \FloatTok{1.5}
+\NormalTok{  )}
+\NormalTok{)}
+
+\CommentTok{\# Set DAG relationships and aesthetics}
+\NormalTok{measurement\_confounding\_dag }\OtherTok{\textless{}{-}}\NormalTok{ ggdag}\SpecialCharTok{::}\FunctionTok{dagify}\NormalTok{(}
+\NormalTok{  H3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F1,}
+\NormalTok{  S2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ F2,}
+\NormalTok{  H1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M1,}
+\NormalTok{  H2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M1,}
+\NormalTok{  H3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M1,}
+\NormalTok{  S1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M2,}
+\NormalTok{  S2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M2,}
+\NormalTok{  S3 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ M2,}
+  \AttributeTok{coords =}\NormalTok{ dag\_coords}
+\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{tidy\_dagitty}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} 
+  
+  \FunctionTok{mutate}\NormalTok{(}
+    
+    \AttributeTok{node\_colour =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}F|M"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"latent"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}H|S"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"observed"}
+\NormalTok{    ),}
+    
+    \AttributeTok{edge\_colour =} \FunctionTok{case\_when}\NormalTok{(}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"M1"}\NormalTok{, name)  }\SpecialCharTok{\textasciitilde{}} \StringTok{"cornflower blue"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"M2"}\NormalTok{, name) }\SpecialCharTok{\textasciitilde{}} \StringTok{"\#ed7864"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}XX"}\NormalTok{, name) }\SpecialCharTok{\&} \FunctionTok{grepl}\NormalTok{(}\StringTok{"3$"}\NormalTok{, to) }\SpecialCharTok{\textasciitilde{}} \StringTok{"\#ed7864"}\NormalTok{,}
+      \FunctionTok{grepl}\NormalTok{(}\StringTok{"\^{}F"}\NormalTok{, name)                   }\SpecialCharTok{\textasciitilde{}} \StringTok{"black"}
+\NormalTok{    )}
+\NormalTok{  )}
+
+\CommentTok{\# Plot the DAG}
+\NormalTok{measurement\_confounding\_dag }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ x, }\AttributeTok{y =}\NormalTok{ y, }\AttributeTok{xend =}\NormalTok{ xend, }\AttributeTok{yend =}\NormalTok{ yend)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_dag\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{colour =}\NormalTok{ node\_colour)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_colour\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"dark blue"}\NormalTok{, }\StringTok{"\#edbc64"}\NormalTok{)) }\SpecialCharTok{+} 
+  \FunctionTok{geom\_dag\_edges}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{edge\_colour =}\NormalTok{ edge\_colour)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_dag\_text}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme\_void}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{./cfa_files/figure-pdf/unnamed-chunk-29-1.pdf}
+
+}
+
+\end{figure}
+
+This is the `true' data-generating process we'll be simulating data from
+in a moment. Notice that even though the researcher (who can't see this
+DAG) might think that the unobseved factor causally influences all 3
+measured variables, the reality is that each factor only influences one
+of the measured variables. However, the purported within-factor
+variables are confounded by measurement method.
+
+Let's simulate the data and analyze:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Set seed for replicable results}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{233}\NormalTok{)}
+
+\CommentTok{\# Set sample size}
+\NormalTok{N }\OtherTok{\textless{}{-}} \DecValTok{30000}
+
+\CommentTok{\# Create the dataset}
+\NormalTok{dat\_fake }\OtherTok{\textless{}{-}} \FunctionTok{tibble}\NormalTok{(}
+  
+  \CommentTok{\# Create some uncorrelated factors}
+  \AttributeTok{F1 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  \AttributeTok{F2 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  
+  \CommentTok{\# Create some measurement effects}
+  \AttributeTok{M1 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  \AttributeTok{M2 =} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  
+  \CommentTok{\# The DAG says only H3 and S2 are influenced by the factors, but all variables are influenced by a measurement effect.}
+  \AttributeTok{H1 =} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M1 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{H2 =} \FloatTok{0.8}\SpecialCharTok{*}\NormalTok{M1 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{H3 =} \FloatTok{0.9}\SpecialCharTok{*}\NormalTok{F1 }\SpecialCharTok{+} \FloatTok{0.8}\SpecialCharTok{*}\NormalTok{M1 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{S1 =} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M2 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{S2 =} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{F2 }\SpecialCharTok{+} \FloatTok{0.8}\SpecialCharTok{*}\NormalTok{M2 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{),}
+  \AttributeTok{S3 =} \FloatTok{0.7}\SpecialCharTok{*}\NormalTok{M2 }\SpecialCharTok{+} \FunctionTok{rnorm}\NormalTok{(N, }\DecValTok{0}\NormalTok{, .}\DecValTok{3}\NormalTok{) }
+\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+First let's fit a basic naive CFA model that does the standard thing of
+keeping the covariances between variables fixed at 0. Based on the DAG,
+we should expect this model to return a strong (publishable) but
+misleading answer -- it will notice the correlation between variables
+that are considered within-factor under our hypothesis, and say `wow so
+correlated, that's consistent with them being \emph{caused} by that
+factor'. But we know this is wrong: their correlation is simply driven
+by the shared measurement method:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{basic.definition }\OtherTok{\textless{}{-}} 
+  \StringTok{\textquotesingle{}happy =\textasciitilde{} H1 + H2 + H3}
+\StringTok{   sad =\textasciitilde{} S1 + S2 + S3}
+\StringTok{   \textquotesingle{}}
+
+\NormalTok{basic.fit }\OtherTok{\textless{}{-}} \FunctionTok{cfa}\NormalTok{(}
+  \AttributeTok{data =}\NormalTok{ dat\_fake,}
+  \AttributeTok{model =}\NormalTok{ basic.definition}
+\NormalTok{)}
+
+\FunctionTok{summary}\NormalTok{(basic.fit, }\AttributeTok{standardized =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+lavaan 0.6-12 ended normally after 25 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        13
+
+  Number of observations                         30000
+
+Model Test User Model:
+                                                      
+  Test statistic                                 7.086
+  Degrees of freedom                                 8
+  P-value (Chi-square)                           0.527
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+  happy =~                                                              
+    H1                1.000                               0.705    0.920
+    H2                1.141    0.006  196.951    0.000    0.804    0.936
+    H3                1.142    0.009  129.172    0.000    0.805    0.646
+  sad =~                                                                
+    S1                1.000                               0.696    0.917
+    S2                1.142    0.008  151.721    0.000    0.795    0.722
+    S3                1.004    0.005  206.981    0.000    0.699    0.922
+
+Covariances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+  happy ~~                                                              
+    sad              -0.002    0.003   -0.765    0.444   -0.005   -0.005
+
+Variances:
+                   Estimate  Std.Err  z-value  P(>|z|)   Std.lv  Std.all
+   .H1                0.090    0.002   42.749    0.000    0.090    0.154
+   .H2                0.091    0.003   34.103    0.000    0.091    0.124
+   .H3                0.903    0.008  115.595    0.000    0.903    0.582
+   .S1                0.091    0.002   49.153    0.000    0.091    0.158
+   .S2                0.581    0.005  110.971    0.000    0.581    0.479
+   .S3                0.086    0.002   46.614    0.000    0.086    0.150
+    happy             0.497    0.005   96.783    0.000    1.000    1.000
+    sad               0.484    0.005   98.040    0.000    1.000    1.000
+\end{verbatim}
+
+And there you have it -- just as foretold, we have super strong factor
+loadings for all the variables, even those that are not actually
+causally influenced by the factor! So it may \emph{look} like I have
+strong convergent validity, but hopefully if we try to publish this, a
+reviewer will raise the possibility that these correlations are
+confounded by measurement effects.
+
+Now I'm going to try closing the backdoor paths between the
+non-factor-caused variables by allowing the model to learn the
+covariances, thereby hopefully controlling for unobserved sources of
+confounding (like the measurement effect). If the loadings stay strong,
+then my claims to convergent validity are more reasonable.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{correlated\_uniqueness.definition }\OtherTok{\textless{}{-}} 
+  \StringTok{\textquotesingle{}happy =\textasciitilde{} H1 + H2 + H3}
+\StringTok{   sad   =\textasciitilde{} S1 + S2 + S3}
+\StringTok{   }
+\StringTok{   H1 \textasciitilde{}\textasciitilde{} H2}
+\StringTok{   H1 \textasciitilde{}\textasciitilde{} H3}
+\StringTok{   H2 \textasciitilde{}\textasciitilde{} H3}
+\StringTok{   S1 \textasciitilde{}\textasciitilde{} S2}
+\StringTok{   S1 \textasciitilde{}\textasciitilde{} S3}
+\StringTok{   S2 \textasciitilde{}\textasciitilde{} S3}
+\StringTok{   \textquotesingle{}}
+
+\NormalTok{correlated\_uniqueness.fit }\OtherTok{\textless{}{-}} \FunctionTok{cfa}\NormalTok{(}
+  \AttributeTok{data =}\NormalTok{ dat\_fake,}
+  \AttributeTok{model =}\NormalTok{ correlated\_uniqueness.definition}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+Warning in lav_model_vcov(lavmodel = lavmodel, lavsamplestats = lavsamplestats, : lavaan WARNING:
+    Could not compute standard errors! The information matrix could
+    not be inverted. This may be a symptom that the model is not
+    identified.
+\end{verbatim}
+
+\begin{verbatim}
+Warning in lav_object_post_check(object): lavaan WARNING: some estimated ov
+variances are negative
+\end{verbatim}
+
+Uh-oh\ldots the model failed to converge :(. Apparently this is a common
+thing with CFA models that try to learn the correlation between
+within-factor variables -- the parameters are non-identified because
+you're asking the model to learn their correlation simultaneously in two
+different parameters: the factor loading and the covariance parameter.
+\href{https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r}{This
+Stack Exchange thread} explains it nicely.
 
 \hypertarget{cool-ecology-example-i-should-do-instead}{%
 \section*{Cool ecology example I should do

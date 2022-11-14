@@ -1051,13 +1051,162 @@ fit_measures(correlated_uniqueness.fit) %>%
 
 CLEAN UP THESE OUTPUTS! Here we see that under the basic model we have some moderate correlation between the `happy` and `sad` factors, which is a bit of a murky result: it doesn't tell us one way or the other whether happiness and sadness are separate constructs I can feel together or two extremes of the same feeling. But under the correlated uniqueness model this correlation evaporates because we've controlled for the measurement effects, closing the backdoor path between `happy` and `sad`. This model also greatly improves goodness-of-fit, which makes sense because it better reflects the true data-generating process we coded up. 
 
-Now let's consider the other case in which measurement effects might be hurting us: the case in which _within_-factor measurements are confounded by measurement effects. Here's the DAG. 
-
-
-
 We also could have controlled for the measurement effects by including measurement factors, IE by adopting a 'Correlated Methods Model'. I tried this but I actually I couldn't get this model to converge, regardless of whether its method factors were correlated or uncorrelated (an 'Uncorrelated Methods Model'. @Brown2006 actually mentions this as a common issue, and favours the Correlated Uniqueness Model for that reason. In his words:
 
 > "an overriding drawback of the correlated methods model is that it is usually empirically underidentified. Consequently, a correlated methods solution will typically fail to converge. If it does converge, the solution will usually be associated with Heywood cases [negative variance estimates] and large standard errors"
+
+
+Now let's consider the other case in which measurement effects might be hurting us: the case in which _within_-factor measurements are confounded by measurement effects. Here's the DAG: 
+
+```{r}
+
+dag_coords <- list(
+  x = c(
+    F1 = 1, 
+    F2 = 1,
+    H1 = 2,
+    H2 = 2,
+    H3 = 2,
+    S1 = 2,
+    S2 = 2,
+    S3 = 2,
+    M1 = 3,
+    M2 = 3),
+  y = c(
+    F1 = 2.5,
+    F2 = 1.5,
+    H1 = 2.8,
+    H2 = 2.5,
+    H3 = 2.2,
+    S1 = 1.8,
+    S2 = 1.5,
+    S3 = 1.2,
+    M1 = 2.5,
+    M2 = 1.5
+  )
+)
+
+# Set DAG relationships and aesthetics
+measurement_confounding_dag <- ggdag::dagify(
+  H3 ~ F1,
+  S2 ~ F2,
+  H1 ~ M1,
+  H2 ~ M1,
+  H3 ~ M1,
+  S1 ~ M2,
+  S2 ~ M2,
+  S3 ~ M2,
+  coords = dag_coords
+) %>% 
+  
+  tidy_dagitty() %>% 
+  
+  mutate(
+    
+    node_colour = case_when(
+      grepl("^F|M", name) ~ "latent",
+      grepl("^H|S", name) ~ "observed"
+    ),
+    
+    edge_colour = case_when(
+      grepl("M1", name)  ~ "cornflower blue",
+      grepl("M2", name) ~ "#ed7864",
+      grepl("^XX", name) & grepl("3$", to) ~ "#ed7864",
+      grepl("^F", name)                   ~ "black"
+    )
+  )
+
+# Plot the DAG
+measurement_confounding_dag %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(aes(colour = node_colour)) +
+  scale_colour_manual(values = c("dark blue", "#edbc64")) + 
+  geom_dag_edges(aes(edge_colour = edge_colour)) +
+  geom_dag_text() +
+  theme_void()
+
+```
+
+This is the 'true' data-generating process we'll be simulating data from in a moment. Notice that even though the researcher (who can't see this DAG) might think that the unobseved factor causally influences all 3 measured variables, the reality is that each factor only influences one of the measured variables. However, the purported within-factor variables are confounded by measurement method. 
+
+Let's simulate the data and analyze:
+
+```{r}
+
+# Set seed for replicable results
+set.seed(233)
+
+# Set sample size
+N <- 30000
+
+# Create the dataset
+dat_fake <- tibble(
+  
+  # Create some uncorrelated factors
+  F1 = rnorm(N, 0, 1),
+  F2 = rnorm(N, 0, 1),
+  
+  # Create some measurement effects
+  M1 = rnorm(N, 0, 1),
+  M2 = rnorm(N, 0, 1),
+  
+  # The DAG says only H3 and S2 are influenced by the factors, but all variables are influenced by a measurement effect.
+  H1 = 0.7*M1 + rnorm(N, 0, .3),
+  H2 = 0.8*M1 + rnorm(N, 0, .3),
+  H3 = 0.9*F1 + 0.8*M1 + rnorm(N, 0, .3),
+  S1 = 0.7*M2 + rnorm(N, 0, .3),
+  S2 = 0.7*F2 + 0.8*M2 + rnorm(N, 0, .3),
+  S3 = 0.7*M2 + rnorm(N, 0, .3) 
+) 
+
+```
+
+First let's fit a basic naive CFA model that does the standard thing of keeping the covariances between variables fixed at 0. Based on the DAG, we should expect this model to return a strong (publishable) but misleading answer -- it will notice the correlation between variables that are considered within-factor under our hypothesis, and say 'wow so correlated, that's consistent with them being _caused_ by that factor'. But we know this is wrong: their correlation is simply driven by the shared measurement method:
+
+```{r}
+
+basic.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad =~ S1 + S2 + S3
+   '
+
+basic.fit <- cfa(
+  data = dat_fake,
+  model = basic.definition
+)
+
+summary(basic.fit, standardized = TRUE)
+
+```
+
+And there you have it -- just as foretold, we have super strong factor loadings for all the variables, even those that are not actually causally influenced by the factor! So it may _look_ like I have strong convergent validity, but hopefully if we try to publish this, a reviewer will raise the possibility that these correlations are confounded by measurement effects. 
+
+Now I'm going to try closing the backdoor paths between the non-factor-caused variables by allowing the model to learn the covariances, thereby hopefully controlling for unobserved sources of confounding (like the measurement effect). If the loadings stay strong, then my claims to convergent validity are more reasonable. 
+
+```{r}
+
+correlated_uniqueness.definition <- 
+  'happy =~ H1 + H2 + H3
+   sad   =~ S1 + S2 + S3
+   
+   H1 ~~ H2
+   H1 ~~ H3
+   H2 ~~ H3
+   S1 ~~ S2
+   S1 ~~ S3
+   S2 ~~ S3
+   '
+
+correlated_uniqueness.fit <- cfa(
+  data = dat_fake,
+  model = correlated_uniqueness.definition
+)
+
+summary(correlated_uniqueness.fit, standardized = TRUE)
+
+```
+
+Uh-oh...the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables -- the parameters are non-identified because you're asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. [This Stack Exchange thread](https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r) explains it nicely. 
 
 
 ## Cool ecology example I should do instead: {-}
