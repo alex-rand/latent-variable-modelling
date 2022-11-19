@@ -13,11 +13,11 @@ library(ggdag)
 
 ```
 
-## The Whole Game {-}
+## The Whole Game {.unnumbered}
 
 I think it is safe to say that The Whole Game of Confirmatory Factor Analysis (CFA) is that I'm trying to convince my colleagues that my observed variables are confounded by some unmeasured variables. Usually I'm trying to show that the variables are confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.
 
-So here's the architypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am imagining to exist. 
+So here's the architypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am imagining to exist.
 
 ```{r}
 
@@ -66,17 +66,17 @@ measurement_confounding_dag %>%
 
 ```
 
-The Whole Game of CFA is to convince your reader that the patterns of variance and covariance in your data are consistent with the above DAG (or some other version of it). 
+The Whole Game of CFA is to convince your reader that the patterns of variance and covariance in your data are consistent with the above DAG (or some other version of it).
 
 The classic way of testing whether your data are consistent with a DAG is to condition on some of the variables, perhaps by including it as a predictor in a linear regression model, and see whether the patterns of correlation change in the ways the DAG expects based on the rules of d-separation. For the above DAG, this would mean controlling for F1 and seeing whether the correlations between X1, X2, and X3 decrease as a result.
 
-But in CFA we always assume the confounder is unmeasured, so we can't directly control for it. Instead, we can only try to argue for our DAG in a more hand-wavy sort of way: we expect confounded variables to be correlated with each other, and uncounfounded variables to _not_ be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is *consistent* with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.
+But in CFA we always assume the confounder is unmeasured, so we can't directly control for it. Instead, we can only try to argue for our DAG in a more hand-wavy sort of way: we expect confounded variables to be correlated with each other, and uncounfounded variables to *not* be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is *consistent* with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.
 
 So interpreting a CFA model is all about checking to see whether the correlations between the variables are consistent with what we would expect to see under the DAG where each group of variables is confounded by a single unmeasured variable.
 
 Let's look at some examples of how people have liked to make the case for their missing-confounder DAG.
 
-## Example 1: Toxic Striving Energy {-}
+## Example 1: Toxic Striving Energy {.unnumbered}
 
 The first example we'll look at is from @Finch2015, chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the 'Achievement Goal Scale' (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we're probably good to just keep the columns with responses to the AGS questionnaire:
 
@@ -96,7 +96,7 @@ dat_ags <- dat_raw %>%
 
 ```
 
-### Data Exploration {-}
+### Data Exploration {.unnumbered}
 
 We don't want to do too much exploration before fitting our factor models, because the whole game of CFA is to commit to our hypotheses before checking what the data looks like, so we don't mislead ourselves with [forking paths](http://www.stat.columbia.edu/~gelman/research/unpublished/p_hacking.pdf). But just for fun, we can explore the distributions of the answers to each of the 12 questions:
 
@@ -172,7 +172,7 @@ The authors proceed with it anyway for pedogogical reasons, because they want to
 
 > "In actual practice, given the lack of multivariate normality that seems apparent in the previous results, we would likely not use ML and instead rely on the alternative estimation approach."
 
-### Model Fitting {-}
+### Model Fitting {.unnumbered}
 
 The researchers who collected the data do what good factor analysts do: they look to the literature to set up some clear and specific candidate hypotheses, and see the degree to which this new data is compatible with each of them.
 
@@ -216,9 +216,9 @@ semPlot::semPaths(h1.fit)
 
 That's a lot of outputs. Let's break down the output into smaller bite-sized chunks.
 
-### Goodness of Fit Statistics {-}
+### Goodness of Fit Statistics {.unnumbered}
 
-#### Chi-Squared Statistic {-}
+#### Chi-Squared Statistic {.unnumbered}
 
 The first thing to look at is the chi-squared statistic from the 'User Model', IE the model I, the user, have just fit. I like to think of this as a measure of how different the model's reconstructed correlation matrix looks compared to the actual empirical correlation matrix of the data. So we use this statistic to test the null hypothesis "there is no significant difference between model's reconstructed correlation matrix and the empirical one". So, confusingly, we're actually hoping to *accept* the null hypothesis here. This model returns a value of 328.312 with a vanishingly small p-value, so we reject the null hypothesis, which is bad: it suggests our model isn't doing a good job replicating the empirical correlation matrix.
 
@@ -252,7 +252,7 @@ tibble(
 
 It takes lots of skill and experience to have a sense of whether a test statistic is big or small given the degrees of freedom at play, but we can see from the p-value that we reject the null hypothesis in a big way. This is bad -- it suggests that, given our assumptions, there's a big difference between our model and the data.
 
-#### Root Mean Squared Error Approximation (RMSEA) {-}
+#### Root Mean Squared Error Approximation (RMSEA) {.unnumbered}
 
 Another one people like to go with is the Root Mean Squared Error Approximation (RMSEA). This statistic takes some math and background to understand, which I'm not going to go over here. I found [this document](http://www.statpower.net/Content/312/Handout/Measures%20of%20Fit%20in%20Structural%20Equation%20Modeling.pdf) to be the clearest (but also pretty mathy) explanation.
 
@@ -287,7 +287,7 @@ h1.summary$fit %>%
 
 Yikes -- looks like our whole RMSEA, as well as its confidence interval, are above the 'bad fit' conventional threshold of .08. This corroborates what we saw with the chi-squared statistic above.
 
-#### Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI) {-}
+#### Comparative Fit Index (CFI) and Tucker-Lewis Index (TLI) {.unnumbered}
 
 CFI seems to be the most trusted and widely-used tool for assessing goodness of fit in a CFA. Basically the idea is that we ask: "how much does the chi-squared statistic of my model differ from the chi-squared statistic of the worst model I can think of?", where the conventional "worst model I can think of" is the model where I assume all of my observed variables are totally uncorrelated. This sort of has the opposite flavour of the deviance statistic I'm already familiar with, which compares the current model with "the best model I can think of."
 
@@ -316,7 +316,7 @@ h1.summary$fit %>%
 
 Looks like the CFI and TLI look ok, but don't meet the conventional .95 cutoff. So they are in line with the chi-squared and RMSEA in suggesting that our goodness-of-fit isn't so good.
 
-### Convergent Validty {-}
+### Convergent Validty {.unnumbered}
 
 Like I said before: when I'm doing factor analysis, my goal is to convince my research peers that my observed variables are confounded by an unobserved variable, and that therefore they provide a way of 'measuring' that unobserved variable. This seems like an ontologically dubious framing, and it also seems impossible to prove. But people who do research have settled on a few ways of trying to make this case.
 
@@ -378,68 +378,6 @@ Next, @Kline2011 says that we can start assessing convergent validity by just lo
 
 To my eye it looks like some of the standardized loadings on the 'mav' factor are pretty low. Also, it seems like only 'pap' has really consistent loadings across all of its measured variables: the other three factors all have a bunch of variance between their loadings. So this all seems like a bit of a red flag.
 
-Next we can look at measures of **reliability,** which neither @gorsuch1983 nor @Finch2015 mention. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a 'true' score and 'noise', where the 'true' score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the 'true' score as opposed to noise, and when they do these things they say they are estimating 'reliability'. Ok.
-
-The all-time classic 'reliability' measure is called **Cronbach's Alpha.** Cronbach didn't actually invent it, so hello [Stigler's Law](https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy). Here's what it looks like:
-
-$\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})$
-
-The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we're asking: 'is the variance of the *sums* larger than the variance of the individual columns?' This will be true if the columns are generally pretty correlated, because the sums will *stack up* the raw values, instead of them cancelling each other out. So really we're just asking: are the columns generally pretty correlated?'. If my columns are pretty correlated and I make the standard assumption that *no other latent factors are influencing my observed values* (an insane assumption), then I can feel comfortable saying that Cronbach's Alpha is useful for figuring out whether my measurements are all loading on the same 'latent' variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach's Alpha gives a picture of **'Internal Consistency Reliability'.**
-
-As with everything related to convergent validity, this is just another way of asking how correlated my measured variables are.
-
-Let's calculate Cronbach's Alpha for each of the subscales I've used to define my supposed factors:
-
-```{r}
-
-### Split the dataset into the subscales assumed by my factor model
-subscales <- list(
-  map = dat_ags %>% select(ags1, ags5, ags7),
-  mav = dat_ags %>% select(ags2, ags6, ags12),
-  pap = dat_ags %>% select(ags3, ags9, ags11),
-  pav = dat_ags %>% select(ags4, ags8, ags10)
-)
-
-### Calculate Chronbach's Alpha for each subscale, then analyze.
-alphas <- subscales %>% 
-  
-  map(psych::alpha) %>% 
-  
-  map(summary) %>% 
-  
-  knitr::kable() 
-```
-
-According to @Kline2011, these all look like good results, so they help me feel good about claiming convergent validity:
-
-> "Generally, coefficients around .90 are considered "excellent," values around .80 as "very good," and values about .70 as "adequate.""
-
-Cronbach's Alpha has some drawbacks as a measure of 'reliability', so @Kline2011 says to also calculate the **Average Variance Extracted (AVE)**, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE \> 0.5, then you can feel good about claiming convergent validity. I guess this makes sense -- seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I'm at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves -- no need to look at an average here.
-
-But just for fun, let's calculate the AVE. Rather than doing it manually, we can use a ready-made function from the **semTools** package
-
-```{r}
-
-semTools::AVE(h1.fit) %>% 
-  
-  knitr::kable()
-
-```
-
-Based on the rule-of-thumb that we want the AVE to be at least .50, it seems like the 'mav' factor is having some trouble. It also had the lowest Cronbach Alpha. So maybe the observed variables I'm using to measure it aren't actually doing a great job? This hurts convergent validity for that factor.
-
-Lastly, we can also try to measure this unicorn of 'reliability' by just directly asking "what proportion of the total variance is explained by the factor model?". People like to do this by summing all the factor loadings, squaring that sum, and dividing it by itself plus the sum of the residual variances of the variables (IE dividing it by the total empirical variance of the variable). They call this one the **Composite Reliability (CR).**
-
-```{r}
-
-semTools::compRelSEM(h1.fit) %>% 
-  
-  knitr::kable()
-
-```
-
-Apparently the rule of thumb for this one is the same as for Cronbach's Alpha. So we can feel good about all of them except for 'mav', which has taken a beating via these 3 checks.
-
 @Kline2011, on page 307, gives yet another way of assessing convergent validity: he fits a CFA, then asks whether "the majority" of the variances of the observed variables have been explained, IE whether the standardized residual variances are \<50. I guess the idea is that the amount of variance explained for a variable by a factor depends on how correlated In his words:
 
 > "\[in reference to one of his models:\] \[the\] model fails to explain the majority (> .50) of variance for a total of four out of eight indicators, which indicates poor convergent validity."
@@ -475,7 +413,83 @@ Looks like the model has mostly done a good job for the 'Performance' factors, w
 
 Let's try this out: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.\~\~
 
-### Discriminant Validity {-}
+### Reliability {-}
+
+In looking for Convergent Validity we were mostly just comparing the parameter estimates (loadings) and residual variances of individual variables. We were trying to figure out whether these variables belong together. But in addition to tests of validity to decide which columns belong in the scale, people like to test the overall scale itself by invoking the terrible concept named **'Reliability'**. Reliability purports to be 'true variance in the underlying construct' as a proportion of 'total variance in the scores of a subscale'. This seems to me like an ontologically dubious concept, but it's what we're working with.
+
+This all feels pretty similar to Convergent Validity to me. We're just trying to show that the data are consistent with all of the factor-level columns being confounded by the same variable.
+
+The all-time classic 'reliability' measure is called **Cronbach's Alpha.** Cronbach didn't actually invent it, so hello [Stigler's Law](https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy). Here's what it looks like:
+
+$\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})$
+
+The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we're asking: 'is the variance of the *sums* larger than the variance of the individual columns?' This will be true if the columns are generally pretty correlated, because the sums will *stack up* the raw values, instead of them cancelling each other out. So really we're just asking: are the columns generally pretty correlated?'. If my columns are pretty correlated and I make the standard assumption that *no other latent factors are influencing my observed values* (an insane assumption), then I can feel comfortable saying that Cronbach's Alpha is useful for figuring out whether my measurements are all loading on the same 'latent' variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach's Alpha gives a picture of **'Internal Consistency Reliability'.**
+
+Like with Convergent Validity, this is all just another way of asking how correlated my within-factor measured variables are with each other.
+
+Let's calculate Cronbach's Alpha for each of the subscales I've used to define my supposed factors:
+
+```{r}
+
+### Split the dataset into the subscales assumed by my factor model
+subscales <- list(
+  map = dat_ags %>% select(ags1, ags5, ags7),
+  mav = dat_ags %>% select(ags2, ags6, ags12),
+  pap = dat_ags %>% select(ags3, ags9, ags11),
+  pav = dat_ags %>% select(ags4, ags8, ags10)
+)
+
+### Calculate Chronbach's Alpha for each subscale, then analyze.
+alphas <- subscales %>% 
+  
+  map(psych::alpha) %>% 
+  
+  map(summary) %>% 
+  
+  knitr::kable() 
+```
+
+According to @Kline2011, these all look like good results, so they help me feel good about claiming convergent validity:
+
+> "Generally, coefficients around .90 are considered "excellent," values around .80 as "very good," and values about .70 as "adequate.""
+
+Cronbach's Alpha has some drawbacks as a measure of 'reliability', which seem pretty clear to me. For example, as @Brown explains:
+
+-   What if some of the items in my subscale are confounded by something other than our latent factor? That could make things crazy, IE it could overstate or understate the 'true' Cronbach Alpha.
+
+-   Even if there's no other confounding at all, my Cronbach Alpha is going to be understated if my variables are all influenced by the factor to different degrees, IE if the loadings are different, IE if the variables are not 'Tau-Equivalent'. And this will almost always be the case"
+
+    > *"The condition of tau equivalence is frequently not realized in actual data sets, in part because the units of measurement are often arbitrary."*
+
+so @Kline2011 says to also calculate the **Average Variance Extracted (AVE)**, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE \> 0.5, then you can feel good about claiming convergent validity. I guess this makes sense -- seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I'm at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves -- no need to look at an average here.
+
+But just for fun, let's calculate the AVE. Rather than doing it manually, we can use a ready-made function from the **semTools** package
+
+```{r}
+
+semTools::AVE(h1.fit) %>% 
+  
+  knitr::kable()
+
+```
+
+Based on the rule-of-thumb that we want the AVE to be at least .50, it seems like the 'mav' factor is having some trouble. It also had the lowest Cronbach Alpha. So maybe the observed variables I'm using to measure it aren't actually doing a great job? This hurts convergent validity for that factor.
+
+Lastly, we can also try to measure this unicorn of 'reliability' by just directly asking "what proportion of the total variance is explained by the factor model?". People like to do this by summing all the factor loadings, squaring that sum, and dividing it by itself plus the sum of the residual variances of the variables (IE dividing it by the total empirical variance of the variable). They call this one the **Composite Reliability (CR).** It is the one that @Brown2006 says to use.
+
+```{r}
+
+semTools::compRelSEM(h1.fit) %>% 
+  
+  knitr::kable()
+
+```
+
+Apparently the rule of thumb for this one is the same as for Cronbach's Alpha. So we can feel good about all of them except for 'mav', which has taken a beating via these 3 checks.
+
+
+
+### Discriminant Validity {.unnumbered}
 
 Next let's look at the estimated correlations between the factors. If my hypothesis H1 is true then we should expect all of the factors to be pretty uncorrelated from each other, but if H2 is true then we should expect MAP and MAV to be super correlated with each other, because H2 thinks there's no such thing as MAP and MAV -- there's just one big 'Mastery' factor:
 
@@ -553,7 +567,7 @@ Looks like the reduction in chi-squared goodness-of-fit is statistically signifi
 
 Actually, I think another way we could have done this would be to just fit the model where we just define one big factor for 'Mastery' and one big factor for 'Performance'. I tried this and it returned even worse fit, which means the extra parameters (the correlation parameters) are significantly improving fit in the pure h1 model.
 
-### Conclusion {-}
+### Conclusion {.unnumbered}
 
 All-in-all it seems like neither of these hypotheses do a great job. Sure, the 'Performance' factors have good convergent validity, and we see good discriminant validity between the 'Performance' and 'Mastery' factors, but the 'Mastery' factors don't have great convergent validity and fitting a single monolithic 'Mastery' factor doesn't improve things.
 
@@ -561,7 +575,7 @@ I can make a better model by dropping the measured 'Mastery' variables that aren
 
 For a nice template of a more formal presentation of the results of a CFA, see @Brown2006 chapter 4 appendix 3.
 
-## Example 2: Biodiversity {-}
+## Example 2: Biodiversity {.unnumbered}
 
 Here's [a fun example from the Wetland and Aquatic Research Center of the U.S. Geological Survey](https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/SEM_09_2-Ex1_CFA_exercise.pdf): given counts of different types of animals, can we fit a convincing CFA model for 'diversity'? In other words: is the correlation structure of all my counts of various types of animals consistent with the possibility that those counts are confounded by a single unobserved thing called 'diversity'?
 
@@ -575,7 +589,7 @@ dat_clean <- dat_raw %>%
 
 ```
 
-### Data Exploration {-}
+### Data Exploration {.unnumbered}
 
 Just for fun let's see if the relative proportions of the different animals varies between countries:
 
@@ -607,7 +621,7 @@ dat_clean %>%
 
 The proportions are pretty stable. Finland seems like the weirdest one, and it isn't even that weird.
 
-### Model Fitting {-}
+### Model Fitting {.unnumbered}
 
 The hypothesis we want to test here is simply that all of these counts are confounded by a single unmeasured 'biodiversity' variable. This is straightforward to fit:
 
@@ -678,6 +692,8 @@ fit_measures(h1.fit) %>%
 ```
 
 The model isn't fitting very well -- Chi-Squared is highly statistically significant (we fail to reject the null hypothesis that there is residual variance left to explain), RMSEA is well above its conventional threshold, and CFI and TLI are both well below their conventional thresholds.
+
+### Modification Indexes
 
 Here @Grace introduces a new method for tweaking our CFA model to improve goodness of fit. The idea is that we can use fancy math to ask "if I took a certain fixed parameter from my model definition and allowed it to be freely estimated, how much would my model's chi-squared goodness of fit change?" People like to take this estimated change in goodness-of-fit and call it a **modification index.** As @Brown2006 puts it:
 
@@ -791,7 +807,7 @@ anova(h1.fit, h3.fit)
 
 Looks like model H3 has the lowest AIC and the more significant improvement in chi-squared fit. So let's continue working with that one in the following sections.
 
-### Validity {-}
+### Validity {.unnumbered}
 
 We can do the same 5 checks of validity we used in the previous 'Mastery and Performance' example. Let's start with the big summary printout:
 
@@ -810,11 +826,11 @@ Next we can look at the standardized residual variances. Some of them look great
 
 I could look at the 'reliability' statistics too, but can't be bothered right now. Onwards to another example!
 
-## Example 3: Happy and Sad {-}
+## Example 3: Happy and Sad {.unnumbered}
 
-### MTMM and 'Error Theory' {-}
+### MTMM and 'Error Theory' {.unnumbered}
 
-"multitrait–multimethod"
+"multitrait--multimethod"
 
 In the previous example we saw how we can sometimes improve model fit by freeing-up some of the residual covariance terms, rather than doing the typical thing of fixing them at 0. But this feels a bit icky to me -- just pumping out some modification indexes and using that as a basis for opening up some free parameters feels pretty overfitty, because we don't have a strong theory-driven reason for changing the model in that way.
 
@@ -847,7 +863,7 @@ Here's how these approaches can improve convergent or divergent validity:
 
 **Divergent validity:** Maybe I can get better discriminant validity, IE reduce the between-factor correlations, by adding those method effects to the linear models, thereby controlling for them. I can do this either by literally adding in some new factors to represent each method, or just by allowing the residual covariances of like-method variables to be freely estimated.
 
-### Simulating Data Based on a DAG {-}
+### Simulating Data Based on a DAG {.unnumbered}
 
 Now let's look at an example in detail. This example is taken from @Brown2006, chapter 6.
 
@@ -935,7 +951,7 @@ measurement_confounding_dag %>%
 
 ```
 
-See how the measurment effects M1, M2, and M3 each create a backdoor path between the two factors F1 and F2. So if I want to get better-seeming (and, under the DAG, more accurate) estimate of between-factor correlation, then I need to find a way to close those backdoor paths. The classic way to close these paths would be to condition on the measurement effects by adding them to the linear model, but I can't directly do this because they are unmeasured. But, as discussed above, I can still sort of do it by adding them as factors to my CFA model, or by freely estimating residual correlation between the observed variables that share a measurement approach, which should work if my DAG is mostly accurate. 
+See how the measurment effects M1, M2, and M3 each create a backdoor path between the two factors F1 and F2. So if I want to get better-seeming (and, under the DAG, more accurate) estimate of between-factor correlation, then I need to find a way to close those backdoor paths. The classic way to close these paths would be to condition on the measurement effects by adding them to the linear model, but I can't directly do this because they are unmeasured. But, as discussed above, I can still sort of do it by adding them as factors to my CFA model, or by freely estimating residual correlation between the observed variables that share a measurement approach, which should work if my DAG is mostly accurate.
 
 Unfortunately, the authors of this paper haven't published their data. But we can take this as an opportunity to practice simulating a dataset with relationships implied by a DAG.
 
@@ -973,7 +989,7 @@ dat_fake <- tibble(
 
 ```
 
-Fun! Now we have our fake data to play with. For starters, since we actually _do_ have the values of the latent variables in our dataset, we can demonstrate how directly controlling for the measurement effects in a regression model can close the backdoor path between the factors.  
+Fun! Now we have our fake data to play with. For starters, since we actually *do* have the values of the latent variables in our dataset, we can demonstrate how directly controlling for the measurement effects in a regression model can close the backdoor path between the factors.
 
 ```{r}
 
@@ -988,24 +1004,19 @@ list(
 
 ```
 
-When we just do the simple regression of H1 on S1 we get a big effect with a highly statistically significant p-value, despite the fact that we _know_ there's no causal relationship there! But then when we include the confounding measurement effect in the model this effect vanishes in smoke. 
+When we just do the simple regression of H1 on S1 we get a big effect with a highly statistically significant p-value, despite the fact that we *know* there's no causal relationship there! But then when we include the confounding measurement effect in the model this effect vanishes in smoke.
 
 That's all well and good. But in reality we won't have measurements of the latent variables, so we won't be able to directly control for them. Thankfully, we have Factor Analysis. We can control for the measurement effects by estimating the residual correlation between each pair of variables that share a measurement effect. Since, under the DAG, the measurement effects are the only source of correlation between these variables, this should close the backdoor path, IE we should get unbiased estimates of the factor loadings.
 
-BUT WHEN I REGRESS F1 ~ F2 I GET NO EFFECT, EVEN THOUGH THE DUMB VERSION OF THE CFA FINDS THEM TO BE CORRELATED. THIS PROBABLY REVEALS SOMETHING DEEP ABOUT FACTOR ANALYSIS THAT I DONT UNDERSTAND?
+BUT WHEN I REGRESS F1 \~ F2 I GET NO EFFECT, EVEN THOUGH THE DUMB VERSION OF THE CFA FINDS THEM TO BE CORRELATED. THIS PROBABLY REVEALS SOMETHING DEEP ABOUT FACTOR ANALYSIS THAT I DONT UNDERSTAND?
 
-
-
-
-
-....@Brown2006 calls this an "error theory".....
-
+....\@Brown2006 calls this an "error theory".....
 
 ....
 
-### Correlated Uniqueness Model {-}
+### Correlated Uniqueness Model {.unnumbered}
 
-To illustrate, we'll fit 2 models: The first is a basic CFA model that just loads each measured variable on its corresponding factor. The second specifies that the residual correlation between the measurement-confounded variables should be freely estimated, IE not fixed at 0. 
+To illustrate, we'll fit 2 models: The first is a basic CFA model that just loads each measured variable on its corresponding factor. The second specifies that the residual correlation between the measurement-confounded variables should be freely estimated, IE not fixed at 0.
 
 ```{r}
 
@@ -1049,14 +1060,13 @@ fit_measures(correlated_uniqueness.fit) %>%
 
 ```
 
-CLEAN UP THESE OUTPUTS! Here we see that under the basic model we have some moderate correlation between the `happy` and `sad` factors, which is a bit of a murky result: it doesn't tell us one way or the other whether happiness and sadness are separate constructs I can feel together or two extremes of the same feeling. But under the correlated uniqueness model this correlation evaporates because we've controlled for the measurement effects, closing the backdoor path between `happy` and `sad`. This model also greatly improves goodness-of-fit, which makes sense because it better reflects the true data-generating process we coded up. 
+CLEAN UP THESE OUTPUTS! Here we see that under the basic model we have some moderate correlation between the `happy` and `sad` factors, which is a bit of a murky result: it doesn't tell us one way or the other whether happiness and sadness are separate constructs I can feel together or two extremes of the same feeling. But under the correlated uniqueness model this correlation evaporates because we've controlled for the measurement effects, closing the backdoor path between `happy` and `sad`. This model also greatly improves goodness-of-fit, which makes sense because it better reflects the true data-generating process we coded up.
 
 We also could have controlled for the measurement effects by including measurement factors, IE by adopting a 'Correlated Methods Model'. I tried this but I actually I couldn't get this model to converge, regardless of whether its method factors were correlated or uncorrelated (an 'Uncorrelated Methods Model'. @Brown2006 actually mentions this as a common issue, and favours the Correlated Uniqueness Model for that reason. In his words:
 
-> "an overriding drawback of the correlated methods model is that it is usually empirically underidentified. Consequently, a correlated methods solution will typically fail to converge. If it does converge, the solution will usually be associated with Heywood cases [negative variance estimates] and large standard errors"
+> "an overriding drawback of the correlated methods model is that it is usually empirically underidentified. Consequently, a correlated methods solution will typically fail to converge. If it does converge, the solution will usually be associated with Heywood cases \[negative variance estimates\] and large standard errors"
 
-
-Now let's consider the other case in which measurement effects might be hurting us: the case in which _within_-factor measurements are confounded by measurement effects. Here's the DAG: 
+Now let's consider the other case in which measurement effects might be hurting us: the case in which *within*-factor measurements are confounded by measurement effects. Here's the DAG:
 
 ```{r}
 
@@ -1127,7 +1137,7 @@ measurement_confounding_dag %>%
 
 ```
 
-This is the 'true' data-generating process we'll be simulating data from in a moment. Notice that even though the researcher (who can't see this DAG) might think that the unobseved factor causally influences all 3 measured variables, the reality is that each factor only influences one of the measured variables. However, the purported within-factor variables are confounded by measurement method. 
+This is the 'true' data-generating process we'll be simulating data from in a moment. Notice that even though the researcher (who can't see this DAG) might think that the unobseved factor causally influences all 3 measured variables, the reality is that each factor only influences one of the measured variables. However, the purported within-factor variables are confounded by measurement method.
 
 Let's simulate the data and analyze:
 
@@ -1161,7 +1171,7 @@ dat_fake <- tibble(
 
 ```
 
-First let's fit a basic naive CFA model that does the standard thing of keeping the covariances between variables fixed at 0. Based on the DAG, we should expect this model to return a strong (publishable) but misleading answer -- it will notice the correlation between variables that are considered within-factor under our hypothesis, and say 'wow so correlated, that's consistent with them being _caused_ by that factor'. But we know this is wrong: their correlation is simply driven by the shared measurement method:
+First let's fit a basic naive CFA model that does the standard thing of keeping the covariances between variables fixed at 0. Based on the DAG, we should expect this model to return a strong (publishable) but misleading answer -- it will notice the correlation between variables that are considered within-factor under our hypothesis, and say 'wow so correlated, that's consistent with them being *caused* by that factor'. But we know this is wrong: their correlation is simply driven by the shared measurement method:
 
 ```{r}
 
@@ -1179,9 +1189,9 @@ summary(basic.fit, standardized = TRUE)
 
 ```
 
-And there you have it -- just as foretold, we have super strong factor loadings for all the variables, even those that are not actually causally influenced by the factor! So it may _look_ like I have strong convergent validity, but hopefully if we try to publish this, a reviewer will raise the possibility that these correlations are confounded by measurement effects. 
+And there you have it -- just as foretold, we have super strong factor loadings for all the variables, even those that are not actually causally influenced by the factor! So it may *look* like I have strong convergent validity, but hopefully if we try to publish this, a reviewer will raise the possibility that these correlations are confounded by measurement effects.
 
-Now I'm going to try closing the backdoor paths between the non-factor-caused variables by allowing the model to learn the covariances, thereby hopefully controlling for unobserved sources of confounding (like the measurement effect). If the loadings stay strong, then my claims to convergent validity are more reasonable. 
+Now I'm going to try closing the backdoor paths between the non-factor-caused variables by allowing the model to learn the covariances, thereby hopefully controlling for unobserved sources of confounding (like the measurement effect). If the loadings stay strong, then my claims to convergent validity are more reasonable.
 
 ```{r}
 
@@ -1206,17 +1216,13 @@ summary(correlated_uniqueness.fit, standardized = TRUE)
 
 ```
 
-Uh-oh...the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables -- the parameters are non-identified because you're asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. [This Stack Exchange thread](https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r) explains it nicely. 
+Uh-oh...the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables -- the parameters are non-identified because you're asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. [This Stack Exchange thread](https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r) explains it nicely.
 
+## Example 4:
 
-## Cool ecology example I should do instead: {-}
+Do the measurement invariance example from here: https://stats.oarc.ucla.edu/r/seminars/lgm/#s2a
 
-
-Do an example from here, or possibly from the linked 3rd lecture that covers more advanced CFA topics https://stats.oarc.ucla.edu/r/seminars/rcfa/ but read the corresponding Brown chapter first.
-
-Now we'll look at an example from @Kline2011, chapter 13.
-
-Load the data:
+Also do a longitudinal measurement invariance model. Maybe simulate it? Load the data:
 
 ```{r}
 
