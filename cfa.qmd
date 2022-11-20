@@ -413,7 +413,7 @@ Looks like the model has mostly done a good job for the 'Performance' factors, w
 
 Let's try this out: we'll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.\~\~
 
-### Reliability {-}
+### Reliability {.unnumbered}
 
 In looking for Convergent Validity we were mostly just comparing the parameter estimates (loadings) and residual variances of individual variables. We were trying to figure out whether these variables belong together. But in addition to tests of validity to decide which columns belong in the scale, people like to test the overall scale itself by invoking the terrible concept named **'Reliability'**. Reliability purports to be 'true variance in the underlying construct' as a proportion of 'total variance in the scores of a subscale'. This seems to me like an ontologically dubious concept, but it's what we're working with.
 
@@ -486,8 +486,6 @@ semTools::compRelSEM(h1.fit) %>%
 ```
 
 Apparently the rule of thumb for this one is the same as for Cronbach's Alpha. So we can feel good about all of them except for 'mav', which has taken a beating via these 3 checks.
-
-
 
 ### Discriminant Validity {.unnumbered}
 
@@ -1218,20 +1216,89 @@ summary(correlated_uniqueness.fit, standardized = TRUE)
 
 Uh-oh...the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables -- the parameters are non-identified because you're asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. [This Stack Exchange thread](https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r) explains it nicely.
 
-## Example 4:
+## Example 4: School Grades
 
-Do the measurement invariance example from here: https://stats.oarc.ucla.edu/r/seminars/lgm/#s2a
+Now let's see an example taken from the Advanced Statistical Computing people at UCLA. The dataset comes from the High School and Beyond project, which tracks academic performance in the US along with some data about students.
 
-Also do a longitudinal measurement invariance model. Maybe simulate it? Load the data:
+As usual with CFA, my goal here is to convince somebody that certain of my variables are strongly confounded by a shared unmeasured (and unmeasurable) variable. Specifically, I want to convince them that four student grades, namely reading, writing, mathematics and science, are confounded by a shared unmeasurable variable called 'academic performance'. Great.
+
+### Measurement Invariance
+
+But there's a problem: a reviewer might ask if it really makes sense to think of 'academic performance' as being the same thing for boy-labelled and girl-labelled people. So if I want to convince that reviewer of my usual 'simple confounding' DAG structure, then I'll need to answer a few extra questions:
+
+1.  Does the model fit equally well when I fit it on the group-level sub-datasets in isolation?
+2.  Are the data consistent with the idea that the different groups are actually confounded by the same latent thing? People like to test this by making sure the loadings are pretty similar across the models for the different groups. If the loadings are similar then I can can say they are 'invariant'.
+3.  Do the data themselves actually have stable properties across groups? If not, then even if the model fits the data equally well for different groups or at different times, and even if the loadings are pretty similar across groups, then that's actually a bad thing if I want to convince you that the factor is the same thing for different groups! People generally just like to check this by including an intercept term in the linear regression for each variable in the CFA model. If these intercepts are pretty similar across groups or across timepoints then we can say they are 'invariant'.
+
+When I'm worrying about these sorts of things, I am worrying about what people like to call **measurement invariance.** As @Brown2006 puts it, the big idea with 'Measurement Invariance' is the worry that:
+
+> "if either the loading or the intercept \[of a variable across groups\] is noninvariant, \[then the model thinks\] the observed values of the indicator will differ between groups at a given level of the latent variable."
+
+We definitely don't want a model that thinks that, because it is not consistent with what I'm trying to convince my reviewers of: that the observed variables are merely puppets, confounded by the same unmeasured variable in the same way across all groups or timepoints.
+
+### Multigroup CFA  {-}
+
+There are a few classical workflows for dealing with measurement invariance, which \@Brown2006 details in chapter 7 of his book. But he recommends something called 'Multigroup CFA', so let's go with that. We'll be following the workflow for this type of model as presented in that chapter.
+
+#### 'Configural' Invariance
+The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let's split the data into two subsets based on the group we're interested in, and then define the **lavaan** models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:
+
+```{r}
+### Load the data
+dat <- read_csv('data/ucla/hsbdemo.csv')
+
+### Load the data again but in split format, for what is to come.
+dat_split <- list(
+  boys  = dat %>% filter(female == "female"),
+  girls = dat %>% filter(female == "male")
+)
+
+### Define the basic CFA model
+onefac <- 'f1  =~ read + write + math + science'
+
+### Fit the model separately for each group
+onefac_models <- list(
+  onefac_boys  = cfa(onefac, data = dat_split$boys, meanstructure = TRUE),
+  onefac_girls = cfa(onefac, data = dat_split$girls, meanstructure = TRUE) 
+)
+
+### Gaze at the parameter estimates
+onefac_models %>% map(summary, standardized = TRUE, fit.measures = TRUE)
+
+```
+
+The first thing I notice is that the models don't fit great. Indeed, these are the first significant chi-squared test p-values I've ever seen in all of these examples, indicating that the results are consistent with there being lots of residual variance the model hasn't accounted for. But the UCLA people don't comment on this, so I guess neither will I.
+
+Next I notice that the factor loadings and residual variances look pretty good and consistent across the groups. This is suggestive of what people unfortunately like to call **Configural Invariance**, which just means the model fits to the groups pretty much the same in isolation. The main exception I notice is that there's a bunch more residual variance in 'math' for boys than for girls. So maybe that's something to look out for.
+
+The next thing to do is fit the exact same model as above, but in a slightly fancier syntax. Specifically, we're gonna fit it with a single command so that it can serve as the best-fitting big daddy model when we start constraining parameters to be equal across groups and doing the nested likelihood ratio test stuff we'll be doing later. I think this is literally the exact same thing as the previous model but it serves that LRT-daddy role by giving us a single chi-squared goodness-of-fit statistic for the whole dataset, rather than one for each group in isolation. Honestly I'm not sure why both @Brown and UCLA have us fit the previous model at all. 
 
 ```{r}
 
-dat_kline <- read_csv('data/kline/kabc-amos.csv')
+configural.fit <- cfa(onefac, data = dat, group = "female", meanstructure = TRUE)
+
+```
+
+Notice how we just did the exact same thing as before, but we used the full dataset instead of the spit sub-datasets, and we used `cfa()`'s `group` parameter to tell the model we're interested in group stuff. I'm not actually gonna print the outputs for this model because the loadings and residual variances are the exact same for the previous model, and the single chi-squared statistic is simply the sum of the chi-squared statistics from the previous model. 
+
+```{r}
+
+dat <- read_csv('data/ucla/hsbdemo.csv')
 
 
 ```
 
-## Example 4:
+
+## Example 5: Something Longitudinal
+
+Also do a longitudinal measurement invariance model, since this is what OLES is. Maybe simulate it? Load the data:
+
+```{r}
+
+dat <- read_csv('data/ucla/hsbdemo.csv')
+
+
+```
 
 Lastly, let's walk through [an example from the lavaan documentation](https://www.lavaan.ugent.be/tutorial/cfa.html)
 
