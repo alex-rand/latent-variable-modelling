@@ -217,6 +217,7 @@ div.csl-indent {
   <li><a href="#model-fitting" id="toc-model-fitting" class="nav-link" data-scroll-target="#model-fitting">Model Fitting</a></li>
   <li><a href="#goodness-of-fit-statistics" id="toc-goodness-of-fit-statistics" class="nav-link" data-scroll-target="#goodness-of-fit-statistics">Goodness of Fit Statistics</a></li>
   <li><a href="#convergent-validty" id="toc-convergent-validty" class="nav-link" data-scroll-target="#convergent-validty">Convergent Validty</a></li>
+  <li><a href="#reliability" id="toc-reliability" class="nav-link" data-scroll-target="#reliability">Reliability</a></li>
   <li><a href="#discriminant-validity" id="toc-discriminant-validity" class="nav-link" data-scroll-target="#discriminant-validity">Discriminant Validity</a></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   </ul></li>
@@ -224,6 +225,7 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#data-exploration-1" id="toc-data-exploration-1" class="nav-link" data-scroll-target="#data-exploration-1">Data Exploration</a></li>
   <li><a href="#model-fitting-1" id="toc-model-fitting-1" class="nav-link" data-scroll-target="#model-fitting-1">Model Fitting</a></li>
+  <li><a href="#modification-indexes" id="toc-modification-indexes" class="nav-link" data-scroll-target="#modification-indexes"><span class="toc-section-number">2.0.1</span>  Modification Indexes</a></li>
   <li><a href="#validity" id="toc-validity" class="nav-link" data-scroll-target="#validity">Validity</a></li>
   </ul></li>
   <li><a href="#example-3-happy-and-sad" id="toc-example-3-happy-and-sad" class="nav-link" data-scroll-target="#example-3-happy-and-sad">Example 3: Happy and Sad</a>
@@ -232,9 +234,13 @@ div.csl-indent {
   <li><a href="#simulating-data-based-on-a-dag" id="toc-simulating-data-based-on-a-dag" class="nav-link" data-scroll-target="#simulating-data-based-on-a-dag">Simulating Data Based on a DAG</a></li>
   <li><a href="#correlated-uniqueness-model" id="toc-correlated-uniqueness-model" class="nav-link" data-scroll-target="#correlated-uniqueness-model">Correlated Uniqueness Model</a></li>
   </ul></li>
-  <li><a href="#cool-ecology-example-i-should-do-instead" id="toc-cool-ecology-example-i-should-do-instead" class="nav-link" data-scroll-target="#cool-ecology-example-i-should-do-instead">Cool ecology example I should do instead:</a></li>
-  <li><a href="#example-4" id="toc-example-4" class="nav-link" data-scroll-target="#example-4"><span class="toc-section-number">2.1</span>  Example 4:</a></li>
-  <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info"><span class="toc-section-number">2.2</span>  Session Info</a></li>
+  <li><a href="#example-4-school-grades" id="toc-example-4-school-grades" class="nav-link" data-scroll-target="#example-4-school-grades"><span class="toc-section-number">2.1</span>  Example 4: School Grades</a>
+  <ul class="collapse">
+  <li><a href="#measurement-invariance" id="toc-measurement-invariance" class="nav-link" data-scroll-target="#measurement-invariance"><span class="toc-section-number">2.1.1</span>  Measurement Invariance</a></li>
+  <li><a href="#multigroup-cfa" id="toc-multigroup-cfa" class="nav-link" data-scroll-target="#multigroup-cfa">Multigroup CFA</a></li>
+  </ul></li>
+  <li><a href="#example-5-longitudinal-measurement-invariance" id="toc-example-5-longitudinal-measurement-invariance" class="nav-link" data-scroll-target="#example-5-longitudinal-measurement-invariance"><span class="toc-section-number">2.2</span>  Example 5: Longitudinal Measurement Invariance</a></li>
+  <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info"><span class="toc-section-number">2.3</span>  Session Info</a></li>
   </ul>
 </nav>
     </div>
@@ -925,145 +931,28 @@ Variances:
 <p><em>“[with reference to a CFA model he has fit]: A few other standardized coefficients are rather low, such as .433 for the self-talk indicator of constructive thinking, so evidence for convergent validity is mixed.”</em></p>
 </blockquote>
 <p>To my eye it looks like some of the standardized loadings on the ‘mav’ factor are pretty low. Also, it seems like only ‘pap’ has really consistent loadings across all of its measured variables: the other three factors all have a bunch of variance between their loadings. So this all seems like a bit of a red flag.</p>
-<p>Next we can look at measures of <strong>reliability,</strong> which neither <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span> nor <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span> mention. This is a concept based on the assumption from classical test theory that every datapoint is the sum of a ‘true’ score and ‘noise’, where the ‘true’ score is the value of the latent variable. This is an ontologically dubious framing, but I guess a useful or at least traditional one. Anyway, people like to do things in hopes of estimating the proportion of the variance explained by the ‘true’ score as opposed to noise, and when they do these things they say they are estimating ‘reliability’. Ok.</p>
-<p>The all-time classic ‘reliability’ measure is called <strong>Cronbach’s Alpha.</strong> Cronbach didn’t actually invent it, so hello <a href="https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy">Stigler’s Law</a>. Here’s what it looks like:</p>
-<p><span class="math inline">\(\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})\)</span></p>
-<p>The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we’re asking: ‘is the variance of the <em>sums</em> larger than the variance of the individual columns?’ This will be true if the columns are generally pretty correlated, because the sums will <em>stack up</em> the raw values, instead of them cancelling each other out. So really we’re just asking: are the columns generally pretty correlated?‘. If my columns are pretty correlated and I make the standard assumption that <em>no other latent factors are influencing my observed values</em> (an insane assumption), then I can feel comfortable saying that Cronbach’s Alpha is useful for figuring out whether my measurements are all loading on the same ’latent’ variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach’s Alpha gives a picture of <strong>‘Internal Consistency Reliability’.</strong></p>
-<p>As with everything related to convergent validity, this is just another way of asking how correlated my measured variables are.</p>
-<p>Let’s calculate Cronbach’s Alpha for each of the subscales I’ve used to define my supposed factors:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Split the dataset into the subscales assumed by my factor model</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>subscales <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">map =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags1, ags5, ags7),</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mav =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags2, ags6, ags12),</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">pap =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags3, ags9, ags11),</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">pav =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags4, ags8, ags10)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="do">### Calculate Chronbach's Alpha for each subscale, then analyze.</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>alphas <span class="ot">&lt;-</span> subscales <span class="sc">%&gt;%</span> </span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(psych<span class="sc">::</span>alpha) <span class="sc">%&gt;%</span> </span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(summary) <span class="sc">%&gt;%</span> </span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>() </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Reliability analysis   
- raw_alpha std.alpha G6(smc) average_r S/N   ase mean  sd median_r
-      0.82      0.82    0.76       0.6 4.6 0.015  5.9 0.9      0.6
-
-Reliability analysis   
- raw_alpha std.alpha G6(smc) average_r S/N   ase mean  sd median_r
-      0.77      0.77    0.71      0.52 3.3 0.018  5.3 1.2     0.45
-
-Reliability analysis   
- raw_alpha std.alpha G6(smc) average_r S/N    ase mean  sd median_r
-      0.88      0.89    0.84      0.73 7.9 0.0095  5.4 1.3     0.74
-
-Reliability analysis   
- raw_alpha std.alpha G6(smc) average_r S/N  ase mean  sd median_r
-      0.87      0.88    0.85       0.7 7.1 0.01  5.6 1.3     0.72</code></pre>
-</div>
-</div>
-<p>According to <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, these all look like good results, so they help me feel good about claiming convergent validity:</p>
-<blockquote class="blockquote">
-<p>“Generally, coefficients around .90 are considered”excellent,” values around .80 as “very good,” and values about .70 as “adequate.””</p>
-</blockquote>
-<p>Cronbach’s Alpha has some drawbacks as a measure of ‘reliability’, so <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span> says to also calculate the <strong>Average Variance Extracted (AVE)</strong>, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE &gt; 0.5, then you can feel good about claiming convergent validity. I guess this makes sense – seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I’m at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves – no need to look at an average here.</p>
-<p>But just for fun, let’s calculate the AVE. Rather than doing it manually, we can use a ready-made function from the <strong>semTools</strong> package</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>semTools<span class="sc">::</span><span class="fu">AVE</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="table table-sm table-striped">
-<thead>
-<tr class="header">
-<th style="text-align: left;"></th>
-<th style="text-align: right;">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">map</td>
-<td style="text-align: right;">0.6115914</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mav</td>
-<td style="text-align: right;">0.4556936</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pap</td>
-<td style="text-align: right;">0.7179750</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">pav</td>
-<td style="text-align: right;">0.7422385</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<p>Based on the rule-of-thumb that we want the AVE to be at least .50, it seems like the ‘mav’ factor is having some trouble. It also had the lowest Cronbach Alpha. So maybe the observed variables I’m using to measure it aren’t actually doing a great job? This hurts convergent validity for that factor.</p>
-<p>Lastly, we can also try to measure this unicorn of ‘reliability’ by just directly asking “what proportion of the total variance is explained by the factor model?”. People like to do this by summing all the factor loadings, squaring that sum, and dividing it by itself plus the sum of the residual variances of the variables (IE dividing it by the total empirical variance of the variable). They call this one the <strong>Composite Reliability (CR).</strong></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>semTools<span class="sc">::</span><span class="fu">compRelSEM</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="table table-sm table-striped">
-<thead>
-<tr class="header">
-<th style="text-align: left;"></th>
-<th style="text-align: right;">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: left;">map</td>
-<td style="text-align: right;">0.8164263</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">mav</td>
-<td style="text-align: right;">0.6689921</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">pap</td>
-<td style="text-align: right;">0.8803380</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">pav</td>
-<td style="text-align: right;">0.9016062</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<p>Apparently the rule of thumb for this one is the same as for Cronbach’s Alpha. So we can feel good about all of them except for ‘mav’, which has taken a beating via these 3 checks.</p>
 <p><span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, on page 307, gives yet another way of assessing convergent validity: he fits a CFA, then asks whether “the majority” of the variances of the observed variables have been explained, IE whether the standardized residual variances are &lt;50. I guess the idea is that the amount of variance explained for a variable by a factor depends on how correlated In his words:</p>
 <blockquote class="blockquote">
 <p>“[in reference to one of his models:] [the] model fails to explain the majority (&gt; .50) of variance for a total of four out of eight indicators, which indicates poor convergent validity.”</p>
 </blockquote>
 <p>Let’s have a look at the residual variances. These are just the proportion of the empirical variance of each measured variable that is left unexplained by the linear models that make up the factor analysis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>h1.summary<span class="sc">$</span>pe <span class="sc">%&gt;%</span> </span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"ags</span><span class="sc">\\</span><span class="st">d"</span>, lhs)) <span class="sc">%&gt;%</span> </span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">factor =</span> <span class="fu">case_when</span>(</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags1"</span>, <span class="st">"ags5"</span>, <span class="st">"ags7"</span>) <span class="sc">~</span> <span class="st">"map"</span>,</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags2"</span>, <span class="st">"ags6"</span>, <span class="st">"ags12"</span>) <span class="sc">~</span> <span class="st">"mav"</span>,</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags3"</span>, <span class="st">"ags9"</span>, <span class="st">"ags11"</span>) <span class="sc">~</span> <span class="st">"pap"</span>,</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags4"</span>, <span class="st">"ags8"</span>, <span class="st">"ags10"</span>) <span class="sc">~</span> <span class="st">"pav"</span>,</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span> </span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(factor, <span class="st">"var"</span> <span class="ot">=</span> lhs, std.all) <span class="sc">%&gt;%</span> </span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>h1.summary<span class="sc">$</span>pe <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"ags</span><span class="sc">\\</span><span class="st">d"</span>, lhs)) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">factor =</span> <span class="fu">case_when</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags1"</span>, <span class="st">"ags5"</span>, <span class="st">"ags7"</span>) <span class="sc">~</span> <span class="st">"map"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags2"</span>, <span class="st">"ags6"</span>, <span class="st">"ags12"</span>) <span class="sc">~</span> <span class="st">"mav"</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags3"</span>, <span class="st">"ags9"</span>, <span class="st">"ags11"</span>) <span class="sc">~</span> <span class="st">"pap"</span>,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    lhs <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ags4"</span>, <span class="st">"ags8"</span>, <span class="st">"ags10"</span>) <span class="sc">~</span> <span class="st">"pav"</span>,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(factor, <span class="st">"var"</span> <span class="ot">=</span> lhs, std.all) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
@@ -1144,6 +1033,135 @@ Reliability analysis
 <p><em>factor loadings of several variables hypothesized to relate to the construct can also be tested for significance. They could be specified as equal for the one model and the chi-square for that model subtracted from another hypothesized factor structure where they are allowed to vary. If the two differ significantly from each other, then one or more of the variables is more related to the construct than one or more of the other variables.”</em></p>
 </blockquote>
 <p>Let’s try this out: we’ll fit another model that assumes all of the within-factor loadings are equal, and see if that results in a statistically significant reduction in goodness-of-fit. If it does, then we lose some evidence of convergent validity.~~</p>
+</section>
+<section id="reliability" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="reliability">Reliability</h3>
+<p>In looking for Convergent Validity we were mostly just comparing the parameter estimates (loadings) and residual variances of individual variables. We were trying to figure out whether these variables belong together. But in addition to tests of validity to decide which columns belong in the scale, people like to test the overall scale itself by invoking the terrible concept named <strong>‘Reliability’</strong>. Reliability purports to be ‘true variance in the underlying construct’ as a proportion of ‘total variance in the scores of a subscale’. This seems to me like an ontologically dubious concept, but it’s what we’re working with.</p>
+<p>This all feels pretty similar to Convergent Validity to me. We’re just trying to show that the data are consistent with all of the factor-level columns being confounded by the same variable.</p>
+<p>The all-time classic ‘reliability’ measure is called <strong>Cronbach’s Alpha.</strong> Cronbach didn’t actually invent it, so hello <a href="https://en.wikipedia.org/wiki/Stigler%27s_law_of_eponymy">Stigler’s Law</a>. Here’s what it looks like:</p>
+<p><span class="math inline">\(\alpha = (\dfrac{k}{1-k}) (1 - \dfrac{\sum\sigma_y^2}{\sigma_T^2})\)</span></p>
+<p>The term on the right is doing most of the work: its denominator is the variance of the column that contains the rowwise sums of my dataset. Its numerator is the sum of the variances of each column. So we’re asking: ‘is the variance of the <em>sums</em> larger than the variance of the individual columns?’ This will be true if the columns are generally pretty correlated, because the sums will <em>stack up</em> the raw values, instead of them cancelling each other out. So really we’re just asking: are the columns generally pretty correlated?‘. If my columns are pretty correlated and I make the standard assumption that <em>no other latent factors are influencing my observed values</em> (an insane assumption), then I can feel comfortable saying that Cronbach’s Alpha is useful for figuring out whether my measurements are all loading on the same ’latent’ variable. Since the observed values are gonna be consistent with each other if this is true, people like to say that Cronbach’s Alpha gives a picture of <strong>‘Internal Consistency Reliability’.</strong></p>
+<p>Like with Convergent Validity, this is all just another way of asking how correlated my within-factor measured variables are with each other.</p>
+<p>Let’s calculate Cronbach’s Alpha for each of the subscales I’ve used to define my supposed factors:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Split the dataset into the subscales assumed by my factor model</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>subscales <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">map =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags1, ags5, ags7),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mav =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags2, ags6, ags12),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">pap =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags3, ags9, ags11),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">pav =</span> dat_ags <span class="sc">%&gt;%</span> <span class="fu">select</span>(ags4, ags8, ags10)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="do">### Calculate Chronbach's Alpha for each subscale, then analyze.</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>alphas <span class="ot">&lt;-</span> subscales <span class="sc">%&gt;%</span> </span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(psych<span class="sc">::</span>alpha) <span class="sc">%&gt;%</span> </span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(summary) <span class="sc">%&gt;%</span> </span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>() </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Reliability analysis   
+ raw_alpha std.alpha G6(smc) average_r S/N   ase mean  sd median_r
+      0.82      0.82    0.76       0.6 4.6 0.015  5.9 0.9      0.6
+
+Reliability analysis   
+ raw_alpha std.alpha G6(smc) average_r S/N   ase mean  sd median_r
+      0.77      0.77    0.71      0.52 3.3 0.018  5.3 1.2     0.45
+
+Reliability analysis   
+ raw_alpha std.alpha G6(smc) average_r S/N    ase mean  sd median_r
+      0.88      0.89    0.84      0.73 7.9 0.0095  5.4 1.3     0.74
+
+Reliability analysis   
+ raw_alpha std.alpha G6(smc) average_r S/N  ase mean  sd median_r
+      0.87      0.88    0.85       0.7 7.1 0.01  5.6 1.3     0.72</code></pre>
+</div>
+</div>
+<p>According to <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, these all look like good results, so they help me feel good about claiming convergent validity:</p>
+<blockquote class="blockquote">
+<p>“Generally, coefficients around .90 are considered”excellent,” values around .80 as “very good,” and values about .70 as “adequate.””</p>
+</blockquote>
+<p>Cronbach’s Alpha has some drawbacks as a measure of ‘reliability’, which seem pretty clear to me. For example, as <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> explains:</p>
+<ul>
+<li><p>What if some of the items in my subscale are confounded by something other than our latent factor? That could make things crazy, IE it could overstate or understate the ‘true’ Cronbach Alpha.</p></li>
+<li><p>Even if there’s no other confounding at all, my Cronbach Alpha is going to be understated if my variables are all influenced by the factor to different degrees, IE if the loadings are different, IE if the variables are not ‘Tau-Equivalent’. And this will almost always be the case”</p>
+<blockquote class="blockquote">
+<p><em>“The condition of tau equivalence is frequently not realized in actual data sets, in part because the units of measurement are often arbitrary.”</em></p>
+</blockquote></li>
+</ul>
+<p>so <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span> says to also calculate the <strong>Average Variance Extracted (AVE)</strong>, which is simply the average of the within-factor squared factor loadings. This is based on the idea that a squared factor loading is the variance explained of the variable by that factor. The convention is that if the AVE &gt; 0.5, then you can feel good about claiming convergent validity. I guess this makes sense – seems like a pretty simple and ad-hoc way of asking whether your loadings are generally on the same page. But obviously if I have lots of observed variables defining the factor then I’m at risk of having a bunch of high loadings and a bunch of low loadings, resulting in a misleadingly moderate average? To me it seems like we might as well just look at the raw loadings themselves – no need to look at an average here.</p>
+<p>But just for fun, let’s calculate the AVE. Rather than doing it manually, we can use a ready-made function from the <strong>semTools</strong> package</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>semTools<span class="sc">::</span><span class="fu">AVE</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">x</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">map</td>
+<td style="text-align: right;">0.6115914</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mav</td>
+<td style="text-align: right;">0.4556936</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pap</td>
+<td style="text-align: right;">0.7179750</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">pav</td>
+<td style="text-align: right;">0.7422385</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Based on the rule-of-thumb that we want the AVE to be at least .50, it seems like the ‘mav’ factor is having some trouble. It also had the lowest Cronbach Alpha. So maybe the observed variables I’m using to measure it aren’t actually doing a great job? This hurts convergent validity for that factor.</p>
+<p>Lastly, we can also try to measure this unicorn of ‘reliability’ by just directly asking “what proportion of the total variance is explained by the factor model?”. People like to do this by summing all the factor loadings, squaring that sum, and dividing it by itself plus the sum of the residual variances of the variables (IE dividing it by the total empirical variance of the variable). They call this one the <strong>Composite Reliability (CR).</strong> It is the one that <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> says to use.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>semTools<span class="sc">::</span><span class="fu">compRelSEM</span>(h1.fit) <span class="sc">%&gt;%</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">x</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">map</td>
+<td style="text-align: right;">0.8164263</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mav</td>
+<td style="text-align: right;">0.6689921</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pap</td>
+<td style="text-align: right;">0.8803380</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">pav</td>
+<td style="text-align: right;">0.9016062</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Apparently the rule of thumb for this one is the same as for Cronbach’s Alpha. So we can feel good about all of them except for ‘mav’, which has taken a beating via these 3 checks.</p>
 </section>
 <section id="discriminant-validity" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="discriminant-validity">Discriminant Validity</h3>
@@ -1483,6 +1501,9 @@ $cfi_tli
 </div>
 </div>
 <p>The model isn’t fitting very well – Chi-Squared is highly statistically significant (we fail to reject the null hypothesis that there is residual variance left to explain), RMSEA is well above its conventional threshold, and CFI and TLI are both well below their conventional thresholds.</p>
+</section>
+<section id="modification-indexes" class="level3" data-number="2.0.1">
+<h3 data-number="2.0.1" class="anchored" data-anchor-id="modification-indexes"><span class="header-section-number">2.0.1</span> Modification Indexes</h3>
 <p>Here <span class="citation" data-cites="Grace">(<a href="#ref-Grace" role="doc-biblioref"><strong>Grace?</strong></a>)</span> introduces a new method for tweaking our CFA model to improve goodness of fit. The idea is that we can use fancy math to ask “if I took a certain fixed parameter from my model definition and allowed it to be freely estimated, how much would my model’s chi-squared goodness of fit change?” People like to take this estimated change in goodness-of-fit and call it a <strong>modification index.</strong> As <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> puts it:</p>
 <blockquote class="blockquote">
 <p>“The modification index reflects an approximation of how much the overall model <span class="math inline">\(χ^2\)</span> would decrease if the fixed or constrained parameter was freely estimated.”</p>
@@ -2540,43 +2561,649 @@ Variances:
 <pre><code>Warning in lav_object_post_check(object): lavaan WARNING: some estimated ov
 variances are negative</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(correlated_uniqueness.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>lavaan 0.6-12 ended normally after 593 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        19
+
+  Number of observations                         30000
+
+Model Test User Model:
+                                                      
+  Test statistic                                 0.453
+  Degrees of freedom                                 2
+  P-value (Chi-square)                           0.797
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  happy =~                                                              
+    H1                1.000                               0.922    1.203
+    H2                0.712       NA                      0.656    0.764
+    H3               -2.144       NA                     -1.976   -1.587
+  sad =~                                                                
+    S1                1.000                               0.571    0.752
+    S2                0.393       NA                      0.224    0.204
+    S3                2.194       NA                      1.252    1.653
+
+Covariances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+ .H1 ~~                                                                 
+   .H2               -0.038       NA                     -0.038   -0.135
+   .H3                2.388       NA                      2.388    3.038
+ .H2 ~~                                                                 
+   .H3                1.944       NA                      1.944    2.288
+ .S1 ~~                                                                 
+   .S2                0.425       NA                      0.425    0.789
+   .S3               -0.228       NA                     -0.228   -0.459
+ .S2 ~~                                                                 
+   .S3                0.274       NA                      0.274    0.255
+  happy ~~                                                              
+    sad              -0.001       NA                     -0.002   -0.002
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .H1               -0.263       NA                     -0.263   -0.447
+   .H2                0.307       NA                      0.307    0.416
+   .H3               -2.353       NA                     -2.353   -1.517
+   .S1                0.250       NA                      0.250    0.434
+   .S2                1.162       NA                      1.162    0.958
+   .S3               -0.994       NA                     -0.994   -1.731
+    happy             0.850       NA                      1.000    1.000
+    sad               0.326       NA                      1.000    1.000</code></pre>
+</div>
 </div>
 <p>Uh-oh…the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables – the parameters are non-identified because you’re asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. <a href="https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r">This Stack Exchange thread</a> explains it nicely.</p>
 </section>
 </section>
-<section id="cool-ecology-example-i-should-do-instead" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="cool-ecology-example-i-should-do-instead">Cool ecology example I should do instead:</h2>
-<p>Do an example from here, or possibly from the linked 3rd lecture that covers more advanced CFA topics https://stats.oarc.ucla.edu/r/seminars/rcfa/ but read the corresponding Brown chapter first.</p>
-<p>Now we’ll look at an example from <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>, chapter 13.</p>
-<p>Load the data:</p>
+<section id="example-4-school-grades" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="example-4-school-grades"><span class="header-section-number">2.1</span> Example 4: School Grades</h2>
+<p>Now let’s see an example taken from the Advanced Statistical Computing people at UCLA. The dataset comes from the High School and Beyond project, which tracks academic performance in the US along with some data about students.</p>
+<p>As usual with CFA, my goal here is to convince somebody that certain of my variables are strongly confounded by a shared unmeasured (and unmeasurable) variable. Specifically, I want to convince them that four student grades, namely reading, writing, mathematics and science, are confounded by a shared unmeasurable variable called ‘academic performance’. Great.</p>
+<section id="measurement-invariance" class="level3" data-number="2.1.1">
+<h3 data-number="2.1.1" class="anchored" data-anchor-id="measurement-invariance"><span class="header-section-number">2.1.1</span> Measurement Invariance</h3>
+<p>But there’s a problem: a reviewer might ask if it really makes sense to think of ‘academic performance’ as being the same thing for boy-labelled and girl-labelled people. So if I want to convince that reviewer of my usual ‘simple confounding’ DAG structure, then I’ll need to answer a few extra questions:</p>
+<ol type="1">
+<li>Does the model fit equally well when I fit it on the group-level sub-datasets in isolation?</li>
+<li>Are the data consistent with the idea that the different groups are actually confounded by the same latent thing? People like to test this by making sure the loadings are pretty similar across the models for the different groups. If the loadings are similar then I can can say they are ‘invariant’.</li>
+<li>Do the data themselves actually have stable properties across groups? If not, then even if the model fits the data equally well for different groups or at different times, and even if the loadings are pretty similar across groups, then that’s actually a bad thing if I want to convince you that the factor is the same thing for different groups! People generally just like to check this by including an intercept term in the linear regression for each variable in the CFA model. If these intercepts are pretty similar across groups or across timepoints then we can say they are ‘invariant’.</li>
+</ol>
+<p>When I’m worrying about these sorts of things, I am worrying about what people like to call <strong>measurement invariance.</strong> As <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> puts it, the big idea with ‘Measurement Invariance’ is the worry that:</p>
+<blockquote class="blockquote">
+<p>“if either the loading or the intercept [of a variable across groups] is noninvariant, [then the model thinks] the observed values of the indicator will differ between groups at a given level of the latent variable.”</p>
+</blockquote>
+<p>We definitely don’t want a model that thinks that, because it is not consistent with what I’m trying to convince my reviewers of: that the observed variables are merely puppets, confounded by the same unmeasured variable in the same way across all groups or timepoints.</p>
+</section>
+<section id="multigroup-cfa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="multigroup-cfa">Multigroup CFA</h3>
+<p>There are a few classical workflows for dealing with measurement invariance, which @Brown2006 details in chapter 7 of his book. But he recommends something called ‘Multigroup CFA’, so let’s go with that. We’ll be following the workflow for this type of model as presented in that chapter.</p>
+<section id="configural-invariance" class="level4" data-number="2.1.1.1">
+<h4 data-number="2.1.1.1" class="anchored" data-anchor-id="configural-invariance"><span class="header-section-number">2.1.1.1</span> ‘Configural’ Invariance</h4>
+<p>The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let’s split the data into two subsets based on the group we’re interested in, and then define the <strong>lavaan</strong> models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>dat_kline <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/kline/kabc-amos.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/ucla/hsbdemo.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 11 Columns: 10
+<pre><code>Rows: 200 Columns: 13
 ── Column specification ────────────────────────────────────────────────────────
 Delimiter: ","
-chr (2): rowtype_, varname_
-dbl (8): HM, NR, WO, GC, Tr, SM, MA, PS
+chr (5): female, ses, schtyp, prog, honors
+dbl (8): id, read, write, math, science, socst, awards, cid
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data again but in split format, for what is to come.</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>dat_split <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">boys  =</span> dat <span class="sc">%&gt;%</span> <span class="fu">filter</span>(female <span class="sc">==</span> <span class="st">"female"</span>),</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">girls =</span> dat <span class="sc">%&gt;%</span> <span class="fu">filter</span>(female <span class="sc">==</span> <span class="st">"male"</span>)</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a><span class="do">### Define the basic CFA model</span></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>onefac <span class="ot">&lt;-</span> <span class="st">'f1  =~ read + write + math + science'</span></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a><span class="do">### Fit the model separately for each group</span></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>onefac_models <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">onefac_boys  =</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat_split<span class="sc">$</span>boys, <span class="at">meanstructure =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">onefac_girls =</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat_split<span class="sc">$</span>girls, <span class="at">meanstructure =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a><span class="do">### Gaze at the parameter estimates</span></span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>onefac_models <span class="sc">%&gt;%</span> <span class="fu">map</span>(summary, <span class="at">standardized =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$onefac_boys
+lavaan 0.6-12 ended normally after 46 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        12
+
+  Number of observations                           109
+
+Model Test User Model:
+                                                      
+  Test statistic                                 1.903
+  Degrees of freedom                                 2
+  P-value (Chi-square)                           0.386
+
+Model Test Baseline Model:
+
+  Test statistic                               230.890
+  Degrees of freedom                                 6
+  P-value                                        0.000
+
+User Model versus Baseline Model:
+
+  Comparative Fit Index (CFI)                    1.000
+  Tucker-Lewis Index (TLI)                       1.001
+
+Loglikelihood and Information Criteria:
+
+  Loglikelihood user model (H0)              -1463.504
+  Loglikelihood unrestricted model (H1)      -1462.553
+                                                      
+  Akaike (AIC)                                2951.009
+  Bayesian (BIC)                              2983.305
+  Sample-size adjusted Bayesian (BIC)         2945.387
+
+Root Mean Square Error of Approximation:
+
+  RMSEA                                          0.000
+  90 Percent confidence interval - lower         0.000
+  90 Percent confidence interval - upper         0.187
+  P-value RMSEA &lt;= 0.05                          0.479
+
+Standardized Root Mean Square Residual:
+
+  SRMR                                           0.013
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  f1 =~                                                                 
+    read              1.000                               8.006    0.800
+    write             0.801    0.091    8.769    0.000    6.414    0.792
+    math              0.985    0.102    9.621    0.000    7.889    0.866
+    science           0.863    0.102    8.453    0.000    6.912    0.768
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             51.734    0.959   53.949    0.000   51.734    5.167
+   .write            54.991    0.775   70.911    0.000   54.991    6.792
+   .math             52.394    0.872   60.052    0.000   52.394    5.752
+   .science          50.697    0.862   58.830    0.000   50.697    5.635
+    f1                0.000                               0.000    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             36.133    6.426    5.623    0.000   36.133    0.360
+   .write            24.410    4.271    5.716    0.000   24.410    0.372
+   .math             20.736    4.693    4.419    0.000   20.736    0.250
+   .science          33.165    5.555    5.971    0.000   33.165    0.410
+    f1               64.099   13.331    4.808    0.000    1.000    1.000
+
+
+$onefac_girls
+lavaan 0.6-12 ended normally after 44 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        12
+
+  Number of observations                            91
+
+Model Test User Model:
+                                                      
+  Test statistic                                 0.719
+  Degrees of freedom                                 2
+  P-value (Chi-square)                           0.698
+
+Model Test Baseline Model:
+
+  Test statistic                               176.055
+  Degrees of freedom                                 6
+  P-value                                        0.000
+
+User Model versus Baseline Model:
+
+  Comparative Fit Index (CFI)                    1.000
+  Tucker-Lewis Index (TLI)                       1.023
+
+Loglikelihood and Information Criteria:
+
+  Loglikelihood user model (H0)              -1275.517
+  Loglikelihood unrestricted model (H1)      -1275.157
+                                                      
+  Akaike (AIC)                                2575.033
+  Bayesian (BIC)                              2605.164
+  Sample-size adjusted Bayesian (BIC)         2567.288
+
+Root Mean Square Error of Approximation:
+
+  RMSEA                                          0.000
+  90 Percent confidence interval - lower         0.000
+  90 Percent confidence interval - upper         0.153
+  P-value RMSEA &lt;= 0.05                          0.750
+
+Standardized Root Mean Square Residual:
+
+  SRMR                                           0.009
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  f1 =~                                                                 
+    read              1.000                               8.531    0.816
+    write             0.954    0.119    7.983    0.000    8.137    0.794
+    math              0.863    0.113    7.663    0.000    7.361    0.766
+    science           0.999    0.124    8.031    0.000    8.521    0.798
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             52.824    1.095   48.227    0.000   52.824    5.056
+   .write            50.121    1.074   46.653    0.000   50.121    4.891
+   .math             52.945    1.008   52.548    0.000   52.945    5.508
+   .science          53.231    1.119   47.577    0.000   53.231    4.987
+    f1                0.000                               0.000    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             36.404    7.769    4.686    0.000   36.404    0.333
+   .write            38.825    7.775    4.993    0.000   38.825    0.370
+   .math             38.197    7.210    5.298    0.000   38.197    0.413
+   .science          41.300    8.365    4.937    0.000   41.300    0.363
+    f1               72.774   16.251    4.478    0.000    1.000    1.000</code></pre>
+</div>
+</div>
+<p>The first thing I notice is that the models don’t fit great. Indeed, these are the first significant chi-squared test p-values I’ve ever seen in all of these examples, indicating that the results are consistent with there being lots of residual variance the model hasn’t accounted for. But the UCLA people don’t comment on this, so I guess neither will I.</p>
+<p>Next I notice that the factor loadings and residual variances look pretty good and consistent across the groups. This is suggestive of what people unfortunately like to call <strong>Configural Invariance</strong>, which just means the same model fits to the groups pretty much the same in isolation. As <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> puts it:</p>
+<blockquote class="blockquote">
+<p>“equal form [aka ‘configural invariance’ is when] the number of factors and pattern of indicator–factor loadings are identical across groups)”</p>
+</blockquote>
+<p>The main exception to this I notice in the above model is that there’s a bunch more residual variance in ‘math’ for boys than for girls. So maybe that’s something to look out for.</p>
+<p>The next thing to do is fit the exact same model as above, but in a slightly fancier syntax. Specifically, we’re gonna fit it with a single command so that it can serve as the best-fitting big daddy model when we start constraining parameters to be equal across groups and doing the nested likelihood ratio test stuff we’ll be doing later. I think this is literally the exact same thing as the previous model but it serves that LRT-daddy role by giving us a single chi-squared goodness-of-fit statistic for the whole dataset, rather than one for each group in isolation. Honestly I’m not sure why both <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> and UCLA have us fit the previous model at all.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>configural.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, <span class="at">meanstructure =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Notice how we just did the exact same thing as before, but we used the full dataset instead of the split sub-datasets, and we used <code>cfa()</code> function’s <code>group</code> parameter to tell the model we’re interested in group stuff. I’m not actually gonna print the outputs for this model because the loadings and residual variances are the exact same for the previous model, and the single chi-squared statistic is simply the sum of the chi-squared statistics from the previous model.</p>
+</section>
+<section id="metric-weak-invariance" class="level4" data-number="2.1.1.2">
+<h4 data-number="2.1.1.2" class="anchored" data-anchor-id="metric-weak-invariance"><span class="header-section-number">2.1.1.2</span> ‘Metric’ / ‘Weak’ Invariance</h4>
+<p>Next we’re gonna want to see if goodness-of-fit isn’t significantly reduced when we constrain the loading for each variable to be equal in both models. The idea is that if the loadings are pretty much equal then that’s consistent with the variables all being confounded <em>to the same degree</em> by the same unmeasured thing for both boys and girls. The conventional terrible name for this is ‘Metric’ invariance or ‘Weak’ invariance, but <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> just calls it ‘equal loadings’, which seems fine to me.</p>
+<p>We can fit this model in **lavaan* using the <code>cfa()</code> function’s <code>group.equal</code> argument.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>equal.loadings.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, </span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">group.equal =</span> <span class="fu">c</span>(<span class="st">"loadings"</span>), <span class="at">meanstructure =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(equal.loadings.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>lavaan 0.6-12 ended normally after 74 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        24
+  Number of equality constraints                     3
+
+  Number of observations per group:                   
+    female                                         109
+    male                                            91
+
+Model Test User Model:
+                                                      
+  Test statistic                                 6.801
+  Degrees of freedom                                 7
+  P-value (Chi-square)                           0.450
+  Test statistic for each group:
+    female                                       3.692
+    male                                         3.109
+
+Model Test Baseline Model:
+
+  Test statistic                               406.945
+  Degrees of freedom                                12
+  P-value                                        0.000
+
+User Model versus Baseline Model:
+
+  Comparative Fit Index (CFI)                    1.000
+  Tucker-Lewis Index (TLI)                       1.001
+
+Loglikelihood and Information Criteria:
+
+  Loglikelihood user model (H0)              -2741.111
+  Loglikelihood unrestricted model (H1)      -2737.710
+                                                      
+  Akaike (AIC)                                5524.221
+  Bayesian (BIC)                              5593.486
+  Sample-size adjusted Bayesian (BIC)         5526.956
+
+Root Mean Square Error of Approximation:
+
+  RMSEA                                          0.000
+  90 Percent confidence interval - lower         0.000
+  90 Percent confidence interval - upper         0.121
+  P-value RMSEA &lt;= 0.05                          0.612
+
+Standardized Root Mean Square Residual:
+
+  SRMR                                           0.044
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+
+Group 1 [female]:
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  f1 =~                                                                 
+    read              1.000                               7.844    0.790
+    write   (.p2.)    0.866    0.074   11.744    0.000    6.789    0.816
+    math    (.p3.)    0.939    0.077   12.214    0.000    7.365    0.836
+    science (.p4.)    0.928    0.080   11.590    0.000    7.277    0.790
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             51.734    0.951   54.410    0.000   51.734    5.212
+   .write            54.991    0.797   69.011    0.000   54.991    6.610
+   .math             52.394    0.843   62.128    0.000   52.394    5.951
+   .science          50.697    0.882   57.472    0.000   50.697    5.505
+    f1                0.000                               0.000    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             37.013    6.379    5.802    0.000   37.013    0.376
+   .write            23.119    4.238    5.455    0.000   23.119    0.334
+   .math             23.282    4.536    5.133    0.000   23.282    0.300
+   .science          31.858    5.499    5.794    0.000   31.858    0.376
+    f1               61.530   11.526    5.338    0.000    1.000    1.000
+
+
+Group 2 [male]:
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  f1 =~                                                                 
+    read              1.000                               8.664    0.822
+    write   (.p2.)    0.866    0.074   11.744    0.000    7.498    0.760
+    math    (.p3.)    0.939    0.077   12.214    0.000    8.134    0.803
+    science (.p4.)    0.928    0.080   11.590    0.000    8.037    0.775
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             52.824    1.105   47.796    0.000   52.824    5.010
+   .write            50.121    1.034   48.484    0.000   50.121    5.082
+   .math             52.945    1.062   49.862    0.000   52.945    5.227
+   .science          53.231    1.088   48.942    0.000   53.231    5.130
+    f1                0.000                               0.000    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             36.095    7.641    4.724    0.000   36.095    0.325
+   .write            41.025    7.538    5.442    0.000   41.025    0.422
+   .math             36.439    7.293    4.996    0.000   36.439    0.355
+   .science          43.048    8.114    5.305    0.000   43.048    0.400
+    f1               75.057   14.697    5.107    0.000    1.000    1.000</code></pre>
+</div>
+</div>
+<p>Notice how in this output the unstandardized loadings are the same in each group, except for the loading for the first variable, which we sacrificed to define the scale of the factor like we usually do. But notice how the standardized loadings are still different.</p>
+<p>The loadings and residual variances still look pretty good in this model, but let’s do the likelihood ratio test to see if people will believe me when I tell them I have solid ‘metric’ invariance</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(configural.fit, equal.loadings.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Chi-Squared Difference Test
+
+                   Df    AIC    BIC Chisq Chisq diff Df diff Pr(&gt;Chisq)
+configural.fit      4 5526.0 5605.2 2.622                              
+equal.loadings.fit  7 5524.2 5593.5 6.801      4.179       3     0.2428</code></pre>
+</div>
+</div>
+<p>That p-value isn’t significant, so we’re off to the races. So far so good.</p>
+</section>
+<section id="scalar-strong-invariance" class="level4" data-number="2.1.1.3">
+<h4 data-number="2.1.1.3" class="anchored" data-anchor-id="scalar-strong-invariance"><span class="header-section-number">2.1.1.3</span> ‘Scalar’ / ‘Strong’ Invariance</h4>
+<p>Moving on now to test whether the goodness of fit is still ok when we constrain the variable-level <em>means</em> to be equal:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>equal.intercepts.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, </span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">group.equal =</span> <span class="fu">c</span>(<span class="st">"loadings"</span>,<span class="st">"intercepts"</span>), <span class="at">meanstructure =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(equal.intercepts.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>lavaan 0.6-12 ended normally after 108 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        25
+  Number of equality constraints                     7
+
+  Number of observations per group:                   
+    female                                         109
+    male                                            91
+
+Model Test User Model:
+                                                      
+  Test statistic                                47.779
+  Degrees of freedom                                10
+  P-value (Chi-square)                           0.000
+  Test statistic for each group:
+    female                                      14.313
+    male                                        33.466
+
+Model Test Baseline Model:
+
+  Test statistic                               406.945
+  Degrees of freedom                                12
+  P-value                                        0.000
+
+User Model versus Baseline Model:
+
+  Comparative Fit Index (CFI)                    0.904
+  Tucker-Lewis Index (TLI)                       0.885
+
+Loglikelihood and Information Criteria:
+
+  Loglikelihood user model (H0)              -2761.600
+  Loglikelihood unrestricted model (H1)      -2737.710
+                                                      
+  Akaike (AIC)                                5559.200
+  Bayesian (BIC)                              5618.569
+  Sample-size adjusted Bayesian (BIC)         5561.543
+
+Root Mean Square Error of Approximation:
+
+  RMSEA                                          0.194
+  90 Percent confidence interval - lower         0.141
+  90 Percent confidence interval - upper         0.251
+  P-value RMSEA &lt;= 0.05                          0.000
+
+Standardized Root Mean Square Residual:
+
+  SRMR                                           0.089
+
+Parameter Estimates:
+
+  Standard errors                             Standard
+  Information                                 Expected
+  Information saturated (h1) model          Structured
+
+
+Group 1 [female]:
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  f1 =~                                                                 
+    read              1.000                               7.961    0.797
+    write   (.p2.)    0.828    0.076   10.884    0.000    6.592    0.788
+    math    (.p3.)    0.940    0.077   12.151    0.000    7.479    0.846
+    science (.p4.)    0.915    0.081   11.318    0.000    7.288    0.784
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read    (.10.)   52.164    0.898   58.065    0.000   52.164    5.224
+   .write   (.11.)   53.633    0.766   70.021    0.000   53.633    6.412
+   .math    (.12.)   52.534    0.818   64.187    0.000   52.534    5.941
+   .science (.13.)   51.595    0.839   61.520    0.000   51.595    5.552
+    f1                0.000                               0.000    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             36.315    6.399    5.675    0.000   36.315    0.364
+   .write            26.507    4.602    5.759    0.000   26.507    0.379
+   .math             22.251    4.545    4.896    0.000   22.251    0.285
+   .science          33.247    5.715    5.818    0.000   33.247    0.385
+    f1               63.376   11.894    5.328    0.000    1.000    1.000
+
+
+Group 2 [male]:
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  f1 =~                                                                 
+    read              1.000                               8.640    0.822
+    write   (.p2.)    0.828    0.076   10.884    0.000    7.155    0.681
+    math    (.p3.)    0.940    0.077   12.151    0.000    8.117    0.804
+    science (.p4.)    0.915    0.081   11.318    0.000    7.910    0.758
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read    (.10.)   52.164    0.898   58.065    0.000   52.164    4.964
+   .write   (.11.)   53.633    0.766   70.021    0.000   53.633    5.103
+   .math    (.12.)   52.534    0.818   64.187    0.000   52.534    5.206
+   .science (.13.)   51.595    0.839   61.520    0.000   51.595    4.945
+    f1                0.152    1.272    0.119    0.905    0.018    0.018
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .read             35.798    7.935    4.512    0.000   35.798    0.324
+   .write            59.273   10.111    5.862    0.000   59.273    0.537
+   .math             35.924    7.495    4.793    0.000   35.924    0.353
+   .science          46.310    8.702    5.322    0.000   46.310    0.425
+    f1               74.649   14.704    5.077    0.000    1.000    1.000</code></pre>
+</div>
+</div>
+<p>Yup, as expected, each variable mean is constrained to be the same across groups. And how about that likelihood ratio test?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(configural.fit, equal.loadings.fit, equal.intercepts.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Chi-Squared Difference Test
+
+                     Df    AIC    BIC  Chisq Chisq diff Df diff Pr(&gt;Chisq)    
+configural.fit        4 5526.0 5605.2  2.622                                  
+equal.loadings.fit    7 5524.2 5593.5  6.801      4.179       3     0.2428    
+equal.intercepts.fit 10 5559.2 5618.6 47.779     40.978       3  6.609e-09 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>Oh no! The p-value is highly significant, so nobody will believe me if I tell them I have ‘strong’ invariance. In other words, my data are consistent with the possibility that even though the variables all load on the factor to the same extent across groups, they still have different values at the same level of each variable. Going back to our primordial DAG of simple confounding, I think this is just another way of saying that the data are consistent with there being secret confounders influencing the variables in one group but not the other. So nobody is gonna believe my DAG.</p>
+<p>This opens the door to what <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> calls ‘Partial Invariance’. He encourages us to look at modification indexes like we saw in Example 2 above, and see if freeing up a couple of the fixed parameters would improve goodness of fit. He says this is a fine thing to do, while exposing us to the ever-present risk of noise-mining. As he puts it:</p>
+<blockquote class="blockquote">
+<p>“[Once you’ve freed a parameter from needing to be equal across groups and the LRT no longer returns a significant p-value], the invariance evaluation may proceed [in accordance with the usual workflow]. The researcher will freely estimate the [now free parameter] in both groups in subsequent [steps of the usual analysis]. Indeed, Byrne et al.&nbsp;(1989) note that such analyses may proceed as long as there exists at least one noninvariant parameter other than the marker indicator”.</p>
+</blockquote>
+<p>Personally yeah this seems like noise-mining, but let’s give it a try just for fun.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">modindices</span>(equal.intercepts.fit, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Arrange them in order of modification index</span></span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mi)) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(lhs, op, rhs, mi)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     lhs op     rhs    mi
+1   read ~~    math 3.396
+2   read ~~    math 2.805
+3   read ~~ science 1.670
+4   read ~~ science 0.741
+5   read ~~   write 0.585
+6  write ~~    math 0.497
+7  write ~~ science 0.375
+8  write ~~ science 0.240
+9   read ~~   write 0.210
+10  math ~~ science 0.154
+11 write ~~    math 0.085
+12    f1 =~    read 0.024
+13    f1 =~    read 0.024
+14  math ~~ science 0.007</code></pre>
+</div>
+</div>
+<p>Hmm, looks like our old friend <code>modindices()</code> doesn’t return estimates for parameters constrained to be equal across groups. But it is showing some interesting stuff. Like maybe instead of freeing up a group-constrained parameter, I could just free up that reading &lt;–&gt; math residual correlation. It feels like a real education researcher could whip up a path diagram that makes this seem justified, and I just tested it and it makes it so that the measurement invariance actually works for the intercepts, even when they are still constrained across groups! So maybe I would just proceed that way.</p>
+<p>But just for posterity, here’s how you can look at the modification indexes for the group-constrained parameters:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lavTestScore</span>(equal.intercepts.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$test
+
+total score test:
+
+   test     X2 df p.value
+1 score 40.018  7       0
+
+$uni
+
+univariate score tests:
+
+    lhs op   rhs     X2 df p.value
+1  .p2. == .p16.  0.766  1   0.381
+2  .p3. == .p17.  2.674  1   0.102
+3  .p4. == .p18.  1.308  1   0.253
+4 .p10. == .p24.  1.722  1   0.189
+5 .p11. == .p25. 33.415  1   0.000
+6 .p12. == .p26.  0.407  1   0.524
+7 .p13. == .p27.  9.051  1   0.003</code></pre>
+</div>
+</div>
+<p>Annoyingly, it doesn’t tell you the variable names. So you’ll need to check and see what they are called in the model output. Also I think these aren’t technically ‘modification indexes’ per se, but they are analogoes.</p>
+<p>Looks like that .p11 == .p25 constraint is a juicy one to free up – this corresponds to the reading variable. To free it up I’ll need to refit the model with more explicit syntax:</p>
+<div class="cell">
+
+</div>
+<p>I actually think that to do this I would need to respecify the model</p>
+</section>
+</section>
+</section>
+<section id="example-5-longitudinal-measurement-invariance" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="example-5-longitudinal-measurement-invariance"><span class="header-section-number">2.2</span> Example 5: Longitudinal Measurement Invariance</h2>
+<p>Also do a longitudinal measurement invariance model, since this is what OLES is. Maybe simulate it? Load the data:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/ucla/hsbdemo.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 200 Columns: 13
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (5): female, ses, schtyp, prog, honors
+dbl (8): id, read, write, math, science, socst, awards, cid
 
 ℹ Use `spec()` to retrieve the full column specification for this data.
 ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 </div>
 </div>
-</section>
-<section id="example-4" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="example-4"><span class="header-section-number">2.1</span> Example 4:</h2>
 <p>Lastly, let’s walk through <a href="https://www.lavaan.ugent.be/tutorial/cfa.html">an example from the lavaan documentation</a></p>
 </section>
-<section id="session-info" class="level2" data-number="2.2">
-<h2 data-number="2.2" class="anchored" data-anchor-id="session-info"><span class="header-section-number">2.2</span> Session Info</h2>
+<section id="session-info" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="session-info"><span class="header-section-number">2.3</span> Session Info</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.2.1 (2022-06-23 ucrt)
 Platform: x86_64-w64-mingw32/x64 (64-bit)

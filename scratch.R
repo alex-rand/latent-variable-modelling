@@ -8,40 +8,32 @@ library(ggdag)
 
 dat <- read_csv('data/ucla/hsbdemo.csv')
 
-dat_split <- list(
-  boys  = read_csv('data/ucla/hsbdemo.csv') %>% filter(female == "female"),
-  girls = read_csv('data/ucla/hsbdemo.csv') %>% filter(female == "male")
-)
-
-dat$girls
-
 onefac <- 'f1  =~ read + write + math + science'
 
-onefac_models <- list(
-  onefac_boys  = cfa(onefac, data = dat$boys, meanstructure = TRUE),
-  onefac_girls = cfa(onefac, data = dat$girls, meanstructure = TRUE) 
-)
 
-onefac_models %>% map(summary, standardized = TRUE, fit.measures = TRUE)
+
 
 configural.fit <- cfa(onefac, data = dat, group = "female", meanstructure = TRUE)
-summary()
-cfa(onefac, data = femaledat, meanstructure = TRUE, fit.measures = TRUE) 
 
-fit.configural <- cfa(onefac, data = hsbdemo, group = "female", meanstructure = TRUE)
+equal.loadings.fit <- cfa(onefac, data = dat, group = "female", 
+                          group.equal = c("loadings"), meanstructure = TRUE) 
 
-summary(configural.fit, standardized=TRUE)
+equal.intercepts.fit <- cfa(onefac, data = dat, group = "female", 
+                            group.equal = c("loadings","intercepts"), meanstructure = TRUE)
 
-dat$boys
+equal.residuals.fit <- cfa(onefac, data = dat, group = "female", 
+                            group.equal = c("loadings","intercepts", "residuals"), meanstructure = TRUE)
 
-dat[[1]]
+
+modindices(equal.intercepts.fit, sort = TRUE) %>% 
   
+  # Arrange them in order of modification index
+  arrange(desc(mi)) %>% 
   
+  select(lhs, op, rhs, mi)
 
-dat %>% 
-  
-  ggplot(aes(x = write, y = math)) +
-  geom_point() +
-  geom_smooth(formula = "lm")
-  
-  view()
+
+lavTestScore(equal.intercepts.fit)
+
+anova(configural.fit, equal.loadings.fit, equal.intercepts.fit)
+summary(equal.intercepts.fit, standardized = TRUE, fit.measures = TRUE)
