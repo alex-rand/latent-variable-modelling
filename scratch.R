@@ -32,8 +32,11 @@ modindices(equal.intercepts.fit, sort = TRUE) %>%
   
   select(lhs, op, rhs, mi)
 
-
 lavTestScore(equal.intercepts.fit)
+
+what$uni
+  
+  arrange(X2)
 
 anova(configural.fit, equal.loadings.fit, equal.intercepts.fit)
 summary(equal.intercepts.fit, standardized = TRUE, fit.measures = TRUE)

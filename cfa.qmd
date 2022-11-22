@@ -1216,13 +1216,13 @@ summary(correlated_uniqueness.fit, standardized = TRUE)
 
 Uh-oh...the model failed to converge :(. Apparently this is a common thing with CFA models that try to learn the correlation between within-factor variables -- the parameters are non-identified because you're asking the model to learn their correlation simultaneously in two different parameters: the factor loading and the covariance parameter. [This Stack Exchange thread](https://stackoverflow.com/questions/44114501/model-identification-in-lavaan-for-r) explains it nicely.
 
-## Example 4: School Grades
+## Example 4: School Grades {-}
 
-Now let's see an example taken from the Advanced Statistical Computing people at UCLA. The dataset comes from the High School and Beyond project, which tracks academic performance in the US along with some data about students.
+Now let's do [an example taken from the Advanced Statistical Computing people at UCLA](https://stats.oarc.ucla.edu/r/seminars/lgm/). The dataset comes from the High School and Beyond project, which tracks academic performance in the US along with some data about students.
 
-As usual with CFA, my goal here is to convince somebody that certain of my variables are strongly confounded by a shared unmeasured (and unmeasurable) variable. Specifically, I want to convince them that four student grades, namely reading, writing, mathematics and science, are confounded by a shared unmeasurable variable called 'academic performance'. Great.
+As usual with CFA, my goal here is to convince somebody that some of my variables are confounded by a shared unmeasured (and unmeasurable) variable, and not by other unmeasured things in different ways from each other. Specifically, I want to convince you that four student grades, namely reading, writing, mathematics and science, are confounded by a shared unmeasurable variable called 'academic performance'. Great.
 
-### Measurement Invariance
+### Measurement Invariance {-}
 
 But there's a problem: a reviewer might ask if it really makes sense to think of 'academic performance' as being the same thing for boy-labelled and girl-labelled people. So if I want to convince that reviewer of my usual 'simple confounding' DAG structure, then I'll need to answer a few extra questions:
 
@@ -1243,7 +1243,7 @@ There are a few classical workflows for dealing with measurement invariance, whi
 #### 'Configural' Invariance
 The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let's split the data into two subsets based on the group we're interested in, and then define the **lavaan** models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 ### Load the data
 dat <- read_csv('data/ucla/hsbdemo.csv')
 
@@ -1368,24 +1368,34 @@ Looks like that .p11 == .p25 constraint is a juicy one to free up -- this corres
 
 ```{r}
 
-```
-
-
-
-I actually think that to do this I would need to respecify the model 
-
-## Example 5: Longitudinal Measurement Invariance
-
-Also do a longitudinal measurement invariance model, since this is what OLES is. Maybe simulate it? Load the data:
-
-```{r}
-
-dat <- read_csv('data/ucla/hsbdemo.csv')
-
+# Copy-pasted from the UCLA page -- I think this is right?
+onefac_d <- 'f1  =~ read + write + c(a,b)*math + science
+        read ~ 1
+        write ~ 1
+        math ~ 1
+        science ~ 1'
+fit.Partial <- cfa(onefac_d, data = hsbdemo, group = "female", 
+  group.equal = c("loadings"), meanstructure = TRUE)
+summary(fit.Partial, standardized=TRUE)
 
 ```
 
-Lastly, let's walk through [an example from the lavaan documentation](https://www.lavaan.ugent.be/tutorial/cfa.html)
+
+
+
+## Example 5: Longitudinal Measurement Invariance {-}
+
+Also do a longitudinal measurement invariance model, since this is what OLES is. Maybe simulate it? 
+
+## Example 6: Multilevel CFA {-}
+
+Brown has an example    
+
+## Example 7: Going Bayesian? {-}
+
+Could be brms or blavaan. I'd prefer brms. Brown has a worked example it could be fun to replicate.
+
+Cool paper with Bayesian CFA with ordinal variables, open data. https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1335&context=pare
 
 ## Session Info
 
