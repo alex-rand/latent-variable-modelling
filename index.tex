@@ -213,7 +213,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, frame hidden, borderline west={3pt}{0pt}{shadecolor}, sharp corners, breakable, enhanced, interior hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, sharp corners, boxrule=0pt, interior hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, frame hidden]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -340,7 +340,7 @@ I'm trying to show that the variables are confounded in a very
 particular way, where a few small groups of variables are confounded
 only by one unmeasured variable per group.
 
-So here's the architypal DAG of a CFA, where the Xs are observed
+So here's the archetypal DAG of a CFA, where the Xs are observed
 variables, and F1 is an unmeasured variable I am imagining to exist.
 
 \begin{Shaded}
@@ -3194,22 +3194,26 @@ different parameters: the factor loading and the covariance parameter.
 Stack Exchange thread} explains it nicely.
 
 \hypertarget{example-4-school-grades}{%
-\section{Example 4: School Grades}\label{example-4-school-grades}}
+\section*{Example 4: School Grades}\label{example-4-school-grades}}
+\addcontentsline{toc}{section}{Example 4: School Grades}
 
-Now let's see an example taken from the Advanced Statistical Computing
-people at UCLA. The dataset comes from the High School and Beyond
-project, which tracks academic performance in the US along with some
-data about students.
+\markright{Example 4: School Grades}
 
-As usual with CFA, my goal here is to convince somebody that certain of
-my variables are strongly confounded by a shared unmeasured (and
-unmeasurable) variable. Specifically, I want to convince them that four
-student grades, namely reading, writing, mathematics and science, are
-confounded by a shared unmeasurable variable called `academic
-performance'. Great.
+Now let's do \href{https://stats.oarc.ucla.edu/r/seminars/lgm/}{an
+example taken from the Advanced Statistical Computing people at UCLA}.
+The dataset comes from the High School and Beyond project, which tracks
+academic performance in the US along with some data about students.
+
+As usual with CFA, my goal here is to convince somebody that some of my
+variables are confounded by a shared unmeasured (and unmeasurable)
+variable, and not by other unmeasured things in different ways from each
+other. Specifically, I want to convince you that four student grades,
+namely reading, writing, mathematics and science, are confounded by a
+shared unmeasurable variable called `academic performance'. Great.
 
 \hypertarget{measurement-invariance}{%
-\subsection{Measurement Invariance}\label{measurement-invariance}}
+\subsection*{Measurement Invariance}\label{measurement-invariance}}
+\addcontentsline{toc}{subsection}{Measurement Invariance}
 
 But there's a problem: a reviewer might ask if it really makes sense to
 think of `academic performance' as being the same thing for boy-labelled
@@ -3281,22 +3285,7 @@ intercept, as explained above:
 \begin{Highlighting}[]
 \DocumentationTok{\#\#\# Load the data}
 \NormalTok{dat }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{\textquotesingle{}data/ucla/hsbdemo.csv\textquotesingle{}}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
 
-\begin{verbatim}
-Rows: 200 Columns: 13
--- Column specification --------------------------------------------------------
-Delimiter: ","
-chr (5): female, ses, schtyp, prog, honors
-dbl (8): id, read, write, math, science, socst, awards, cid
-
-i Use `spec()` to retrieve the full column specification for this data.
-i Specify the column types or set `show_col_types = FALSE` to quiet this message.
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \DocumentationTok{\#\#\# Load the data again but in split format, for what is to come.}
 \NormalTok{dat\_split }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
   \AttributeTok{boys  =}\NormalTok{ dat }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(female }\SpecialCharTok{==} \StringTok{"female"}\NormalTok{),}
@@ -3939,41 +3928,90 @@ univariate score tests:
 Annoyingly, it doesn't tell you the variable names. So you'll need to
 check and see what they are called in the model output. Also I think
 these aren't technically `modification indexes' per se, but they are
-analogoes.
+analogous.
 
 Looks like that .p11 == .p25 constraint is a juicy one to free up --
 this corresponds to the reading variable. To free it up I'll need to
-refit the model with more explicit syntax:
-
-I actually think that to do this I would need to respecify the model
-
-\hypertarget{example-5-longitudinal-measurement-invariance}{%
-\section{Example 5: Longitudinal Measurement
-Invariance}\label{example-5-longitudinal-measurement-invariance}}
-
-Also do a longitudinal measurement invariance model, since this is what
-OLES is. Maybe simulate it? Load the data:
+refit the model with more explicit syntax. Specifically, I'll need to
+use the \texttt{group.partial()} argument to override the fixedness
+introduced in the \texttt{group.equal()} argument:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{dat }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\StringTok{\textquotesingle{}data/ucla/hsbdemo.csv\textquotesingle{}}\NormalTok{)}
+\DocumentationTok{\#\#\# Partial invariance model}
+\NormalTok{partial.invariance.fit }\OtherTok{\textless{}{-}} \FunctionTok{cfa}\NormalTok{(}
+\NormalTok{  onefac, }
+\NormalTok{  dat, }
+  \AttributeTok{group =} \StringTok{"female"}\NormalTok{, }
+  \AttributeTok{group.equal =} \FunctionTok{c}\NormalTok{(}\StringTok{"loadings"}\NormalTok{, }\StringTok{"intercepts"}\NormalTok{), }
+  \AttributeTok{group.partial=}\FunctionTok{c}\NormalTok{(}\StringTok{"read\textasciitilde{}1"}\NormalTok{), }\CommentTok{\# This frees up the desired intercepts}
+  \AttributeTok{meanstructure =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Now we can re-run the likelihood ratio test and see if we're good to
+proceed to testing for invariance of the residual variance terms:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{anova}\NormalTok{(configural.fit, equal.loadings.fit, partial.invariance.fit)}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-Rows: 200 Columns: 13
--- Column specification --------------------------------------------------------
-Delimiter: ","
-chr (5): female, ses, schtyp, prog, honors
-dbl (8): id, read, write, math, science, socst, awards, cid
+Chi-Squared Difference Test
 
-i Use `spec()` to retrieve the full column specification for this data.
-i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+                       Df    AIC    BIC  Chisq Chisq diff Df diff Pr(>Chisq)
+configural.fit          4 5526.0 5605.2  2.622                              
+equal.loadings.fit      7 5524.2 5593.5  6.801      4.179       3     0.2428
+partial.invariance.fit  9 5559.3 5622.0 45.885     39.084       2  3.259e-09
+                          
+configural.fit            
+equal.loadings.fit        
+partial.invariance.fit ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 \end{verbatim}
 
-Lastly, let's walk through
-\href{https://www.lavaan.ugent.be/tutorial/cfa.html}{an example from the
-lavaan documentation}
+Gah, allowing the intercept to be freely estimated has improved the
+p-value, but it still looks like the data are consistent with the idea
+that the observed variables have different values across groups for the
+same value of the latent variable. Darn! We could keep going, IE
+checking the modification indexes and freeing up parameters until we
+pass the likelihood ratio test, but that doesn't feel so good to me.
+These data just aren't consistent with the theory offered by the
+primordial DAG of simple confounding.
+
+\hypertarget{example-5-longitudinal-measurement-invariance}{%
+\section*{Example 5: Longitudinal Measurement
+Invariance}\label{example-5-longitudinal-measurement-invariance}}
+\addcontentsline{toc}{section}{Example 5: Longitudinal Measurement
+Invariance}
+
+\markright{Example 5: Longitudinal Measurement Invariance}
+
+Also do a longitudinal measurement invariance model, since this is what
+OLES is. Maybe simulate it?
+
+\hypertarget{example-6-multilevel-cfa}{%
+\section*{Example 6: Multilevel CFA}\label{example-6-multilevel-cfa}}
+\addcontentsline{toc}{section}{Example 6: Multilevel CFA}
+
+\markright{Example 6: Multilevel CFA}
+
+Brown has an example
+
+\hypertarget{example-7-going-bayesian}{%
+\section*{Example 7: Going Bayesian?}\label{example-7-going-bayesian}}
+\addcontentsline{toc}{section}{Example 7: Going Bayesian?}
+
+\markright{Example 7: Going Bayesian?}
+
+Could be brms or blavaan. I'd prefer brms. Brown has a worked example it
+could be fun to replicate.
+
+Cool paper with Bayesian CFA with ordinal variables, open data.
+https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1335\&context=pare
 
 \hypertarget{session-info}{%
 \section{Session Info}\label{session-info}}
