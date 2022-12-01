@@ -295,7 +295,7 @@ $\text{CFI} = 1 - \dfrac{\text{max}(χ^2_T - \text{df}_T, 0)}{\text{max}(χ^2_0 
 
 Actually, the numerator and denominator are both equal to the 'non-centrality parameter' of their respective candidate distributions. I'm not gonna get into this, but this is an idea that also shows up in power analysis as a way of comparing the null and candidate hypotheses.
 
-We want to end up with a CFI as close to 1 as possible, because that suggests a big difference between my model and the worst possible model. So people say we can sort of think of this as analogous to $R^2$ from linear regression. People seem to have adopted 0.95 as am arbitrary cutoff for 'good fit' for the CFI.
+We want to end up with a CFI as close to 1 as possible, because that suggests a big difference between my model and the worst possible model. So people say we can sort of think of this as analogous to $R^2$ from linear regression. People seem to have adopted 0.95 as an arbitrary cutoff for 'good fit' for the CFI.
 
 If you want to learn more about the CFI, I found [this article](https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1561&context=pare) a well-written resource.
 
@@ -1240,7 +1240,7 @@ We definitely don't want a model that thinks that, because it is not consistent 
 
 There are a few classical workflows for dealing with measurement invariance, which \@Brown2006 details in chapter 7 of his book. But he recommends something called 'Multigroup CFA', so let's go with that. We'll be following the workflow for this type of model as presented in that chapter.
 
-#### 'Configural' Invariance
+#### 'Configural' Invariance {-}
 
 The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let's split the data into two subsets based on the group we're interested in, and then define the **lavaan** models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:
 
