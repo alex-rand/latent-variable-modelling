@@ -257,7 +257,7 @@ div.csl-indent {
 <p>The first example we’ll look at is from <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span>, chapter 3. The practice dataset is introduced on page 10. It is from a study about human motivation. The dataset is a weird questionnaire called the ‘Achievement Goal Scale’ (AGS), which asks people 12 questions about how much toxic striving energy they have. The dataset provided seems to have lots of mysterious columns in it, but we’re probably good to just keep the columns with responses to the AGS questionnaire:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat_raw <span class="ot">&lt;-</span> foreign<span class="sc">::</span><span class="fu">read.spss</span>(<span class="st">'data/finch-and-french/edps744.sav'</span>) </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat_raw <span class="ot">&lt;-</span> foreign<span class="sc">::</span><span class="fu">read.spss</span>(<span class="st">'../data/finch-and-french/edps744.sav'</span>) </span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="do">### Clean the data</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>dat_ags <span class="ot">&lt;-</span> dat_raw <span class="sc">%&gt;%</span> </span>

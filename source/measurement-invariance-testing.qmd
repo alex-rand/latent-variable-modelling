@@ -40,7 +40,7 @@ The first step is to fit the model separately for the two groups in isolation an
 
 ```{r warning = FALSE, message = FALSE}
 ### Load the data
-dat <- read_csv('data/ucla/hsbdemo.csv')
+dat <- read_csv('../data/ucla/hsbdemo.csv')
 
 ### Load the data again but in split format, for what is to come.
 dat_split <- list(

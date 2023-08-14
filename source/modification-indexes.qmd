@@ -16,7 +16,7 @@ Here's [a fun example from the Wetland and Aquatic Research Center of the U.S. G
 
 ```{r message=FALSE, warning=FALSE}
 
-dat_raw <- read.csv('data/grace/SEM_09_2-Ex1_CFA_exercise_data.csv')
+dat_raw <- read.csv('../data/grace/SEM_09_2-Ex1_CFA_exercise_data.csv')
 
 dat_clean <- dat_raw %>%  
   

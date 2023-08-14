@@ -15,7 +15,7 @@ The first example we'll look at is from @Finch2015, chapter 3. The practice data
 ```{r message=FALSE, warning=FALSE}
 
 ### Load the data
-dat_raw <- foreign::read.spss('data/finch-and-french/edps744.sav') 
+dat_raw <- foreign::read.spss('../data/finch-and-french/edps744.sav') 
   
 ### Clean the data
 dat_ags <- dat_raw %>% 

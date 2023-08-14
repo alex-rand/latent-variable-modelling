@@ -254,7 +254,7 @@ div.csl-indent {
 <h2 class="unnumbered anchored" data-anchor-id="example-2-biodiversity">Example 2: Biodiversity</h2>
 <p>Here’s <a href="https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/atoms/files/SEM_09_2-Ex1_CFA_exercise.pdf">a fun example from the Wetland and Aquatic Research Center of the U.S. Geological Survey</a>: given counts of different types of animals, can we fit a convincing CFA model for ‘diversity’? In other words: is the correlation structure of all my counts of various types of animals consistent with the possibility that those counts are confounded by a single unobserved thing called ‘diversity’?</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat_raw <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'data/grace/SEM_09_2-Ex1_CFA_exercise_data.csv'</span>)</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat_raw <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">'../data/grace/SEM_09_2-Ex1_CFA_exercise_data.csv'</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>dat_clean <span class="ot">&lt;-</span> dat_raw <span class="sc">%&gt;%</span>  </span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  </span>

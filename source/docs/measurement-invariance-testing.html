@@ -272,7 +272,7 @@ div.csl-indent {
 <p>The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let’s split the data into two subsets based on the group we’re interested in, and then define the <strong>lavaan</strong> models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'data/ucla/hsbdemo.csv'</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'../data/ucla/hsbdemo.csv'</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data again but in split format, for what is to come.</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>dat_split <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
