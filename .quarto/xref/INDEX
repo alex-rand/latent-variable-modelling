@@ -1,0 +1,29 @@
+{
+  "index.qmd": {
+    "index.html": "466a6cb2"
+  },
+  "intro.qmd": {
+    "intro.html": "23eabee8"
+  },
+  "cfa.qmd": {
+    "cfa.html": "dc701314"
+  },
+  "sem.qmd": {
+    "sem.html": "2e241902"
+  },
+  "references.qmd": {
+    "references.html": "3c856d20"
+  },
+  "traditional-cfa-workflow.qmd": {
+    "traditional-cfa-workflow.html": "b653fd53"
+  },
+  "modification-indexes.qmd": {
+    "modification-indexes.html": "a876ab0d"
+  },
+  "mtmm-and-error-structure-modelling.qmd": {
+    "mtmm-and-error-structure-modelling.html": "81b49349"
+  },
+  "measurement-invariance-testing.qmd": {
+    "measurement-invariance-testing.html": "89523bd9"
+  }
+}
