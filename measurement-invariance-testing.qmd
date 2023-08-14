@@ -1,0 +1,186 @@
+# MTMM and Error Structure Modelling
+
+In this chapter we'll work through another example of the Traditional CFA Workflow to get more practice. We'll also introduce the concept of 'Modification Indexes', which researchers often use to improve their model goodness of fit in a way that seems a bit suss to me. Probably a good thing to know about. 
+
+```{r message = FALSE, results = FALSE, warning = FALSE}
+
+library(tidyverse)
+library(lavaan)
+library(ggdag)
+
+```
+
+## Example 4: School Grades {.unnumbered}
+
+Now let's do [an example taken from the Advanced Statistical Computing people at UCLA](https://stats.oarc.ucla.edu/r/seminars/lgm/). The dataset comes from the High School and Beyond project, which tracks academic performance in the US along with some data about students.
+
+As usual with CFA, my goal here is to convince somebody that some of my variables are confounded by a shared unmeasured (and unmeasurable) variable, and not by other unmeasured things in different ways from each other. Specifically, I want to convince you that four student grades, namely reading, writing, mathematics and science, are confounded by a shared unmeasurable variable called 'academic performance'. Great.
+
+### Measurement Invariance {.unnumbered}
+
+But there's a problem: a reviewer might ask if it really makes sense to think of 'academic performance' as being the same thing for boy-labelled and girl-labelled people. So if I want to convince that reviewer of my usual 'simple confounding' DAG structure, then I'll need to answer a few extra questions:
+
+1.  Does the model fit equally well when I fit it on the group-level sub-datasets in isolation?
+2.  Are the data consistent with the idea that the different groups are actually confounded by the same latent thing? People like to test this by making sure the loadings are pretty similar across the models for the different groups. If the loadings are similar then I can can say they are 'invariant'.
+3.  Do the data themselves actually have stable properties across groups? If not, then even if the model fits the data equally well for different groups or at different times, and even if the loadings are pretty similar across groups, then that's actually a bad thing if I want to convince you that the factor is the same thing for different groups! People generally just like to check this by including an intercept term in the linear regression for each variable in the CFA model. If these intercepts are pretty similar across groups or across timepoints then we can say they are 'invariant'.
+
+When I'm worrying about these sorts of things, I am worrying about what people like to call **measurement invariance.** As @Brown2006 puts it, the big idea with 'Measurement Invariance' is the worry that:
+
+> "if either the loading or the intercept \[of a variable across groups\] is noninvariant, \[then the model thinks\] the observed values of the indicator will differ between groups at a given level of the latent variable."
+
+We definitely don't want a model that thinks that, because it is not consistent with what I'm trying to convince my reviewers of: that the observed variables are merely puppets, confounded by the same unmeasured variable in the same way across all groups or timepoints.
+
+### Multigroup CFA {.unnumbered}
+
+There are a few classical workflows for dealing with measurement invariance, which \@Brown2006 details in chapter 7 of his book. But he recommends something called 'Multigroup CFA', so let's go with that. We'll be following the workflow for this type of model as presented in that chapter.
+
+#### 'Configural' Invariance {-}
+
+The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let's split the data into two subsets based on the group we're interested in, and then define the **lavaan** models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:
+
+```{r warning = FALSE, message = FALSE}
+### Load the data
+dat <- read_csv('data/ucla/hsbdemo.csv')
+
+### Load the data again but in split format, for what is to come.
+dat_split <- list(
+  boys  = dat %>% filter(female == "female"),
+  girls = dat %>% filter(female == "male")
+)
+
+### Define the basic CFA model
+onefac <- 'f1  =~ read + write + math + science'
+
+### Fit the model separately for each group
+onefac_models <- list(
+  onefac_boys  = cfa(onefac, data = dat_split$boys, meanstructure = TRUE),
+  onefac_girls = cfa(onefac, data = dat_split$girls, meanstructure = TRUE) 
+)
+
+### Gaze at the parameter estimates
+onefac_models %>% map(summary, standardized = TRUE, fit.measures = TRUE)
+
+```
+
+The first thing I notice is that the models don't fit great. Indeed, these are the first significant chi-squared test p-values I've ever seen in all of these examples, indicating that the results are consistent with there being lots of residual variance the model hasn't accounted for. But the UCLA people don't comment on this, so I guess neither will I.
+
+Next I notice that the factor loadings and residual variances look pretty good and consistent across the groups. This is suggestive of what people unfortunately like to call **Configural Invariance**, which just means the same model fits to the groups pretty much the same in isolation. As @Brown puts it:
+
+> "equal form \[aka 'configural invariance' is when\] the number of factors and pattern of indicator--factor loadings are identical across groups)"
+
+The main exception to this I notice in the above model is that there's a bunch more residual variance in 'math' for boys than for girls. So maybe that's something to look out for.
+
+The next thing to do is fit the exact same model as above, but in a slightly fancier syntax. Specifically, we're gonna fit it with a single command so that it can serve as the best-fitting big daddy model when we start constraining parameters to be equal across groups and doing the nested likelihood ratio test stuff we'll be doing later. I think this is literally the exact same thing as the previous model but it serves that LRT-daddy role by giving us a single chi-squared goodness-of-fit statistic for the whole dataset, rather than one for each group in isolation. Honestly I'm not sure why both @Brown and UCLA have us fit the previous model at all.
+
+```{r}
+
+configural.fit <- cfa(onefac, data = dat, group = "female", meanstructure = TRUE)
+
+```
+
+Notice how we just did the exact same thing as before, but we used the full dataset instead of the split sub-datasets, and we used `cfa()` function's `group` parameter to tell the model we're interested in group stuff. I'm not actually gonna print the outputs for this model because the loadings and residual variances are the exact same for the previous model, and the single chi-squared statistic is simply the sum of the chi-squared statistics from the previous model.
+
+#### 'Metric' / 'Weak' Invariance
+
+Next we're gonna want to see if goodness-of-fit isn't significantly reduced when we constrain the loading for each variable to be equal in both models. The idea is that if the loadings are pretty much equal then that's consistent with the variables all being confounded *to the same degree* by the same unmeasured thing for both boys and girls. The conventional terrible name for this is 'Metric' invariance or 'Weak' invariance, but @Brown just calls it 'equal loadings', which seems fine to me.
+
+We can fit this model in \*\*lavaan\* using the `cfa()` function's `group.equal` argument.
+
+```{r}
+
+equal.loadings.fit <- cfa(onefac, data = dat, group = "female", 
+  group.equal = c("loadings"), meanstructure = TRUE) 
+
+summary(equal.loadings.fit, standardized = TRUE, fit.measures = TRUE)
+
+```
+
+Notice how in this output the unstandardized loadings are the same in each group, except for the loading for the first variable, which we sacrificed to define the scale of the factor like we usually do. But notice how the standardized loadings are still different.
+
+The loadings and residual variances still look pretty good in this model, but let's do the likelihood ratio test to see if people will believe me when I tell them I have solid 'metric' invariance
+
+```{r}
+
+anova(configural.fit, equal.loadings.fit)
+
+```
+
+That p-value isn't significant, so we're off to the races. So far so good.
+
+#### 'Scalar' / 'Strong' Invariance
+
+Moving on now to test whether the goodness of fit is still ok when we constrain the variable-level *means* to be equal:
+
+```{r}
+
+equal.intercepts.fit <- cfa(onefac, data = dat, group = "female", 
+                            group.equal = c("loadings","intercepts"), meanstructure = TRUE)
+
+summary(equal.intercepts.fit, standardized = TRUE, fit.measures = TRUE)
+
+```
+
+Yup, as expected, each variable mean is constrained to be the same across groups. And how about that likelihood ratio test?
+
+```{r}
+
+anova(configural.fit, equal.loadings.fit, equal.intercepts.fit)
+
+```
+
+Oh no! The p-value is highly significant, so nobody will believe me if I tell them I have 'strong' invariance. In other words, my data are consistent with the possibility that even though the variables all load on the factor to the same extent across groups, they still have different values at the same level of each variable. Going back to our primordial DAG of simple confounding, I think this is just another way of saying that the data are consistent with there being secret confounders influencing the variables in one group but not the other. So nobody is gonna believe my DAG.
+
+This opens the door to what @Brown calls 'Partial Invariance'. He encourages us to look at modification indexes like we saw in Example 2 above, and see if freeing up a couple of the fixed parameters would improve goodness of fit. He says this is a fine thing to do, while exposing us to the ever-present risk of noise-mining. As he puts it:
+
+> "\[Once you've freed a parameter from needing to be equal across groups and the LRT no longer returns a significant p-value\], the invariance evaluation may proceed \[in accordance with the usual workflow\]. The researcher will freely estimate the \[now free parameter\] in both groups in subsequent \[steps of the usual analysis\]. Indeed, Byrne et al. (1989) note that such analyses may proceed as long as there exists at least one noninvariant parameter other than the marker indicator".
+
+Personally yeah this seems like noise-mining, but let's give it a try just for fun.
+
+```{r}
+
+modindices(equal.intercepts.fit, sort = TRUE) %>% 
+  
+  # Arrange them in order of modification index
+  arrange(desc(mi)) %>% 
+  
+  select(lhs, op, rhs, mi)
+
+```
+
+Hmm, looks like our old friend `modindices()` doesn't return estimates for parameters constrained to be equal across groups. But it is showing some interesting stuff. Like maybe instead of freeing up a group-constrained parameter, I could just free up that reading \<--> math residual correlation. It feels like a real education researcher could whip up a path diagram that makes this seem justified, and I just tested it and it makes it so that the measurement invariance actually works for the intercepts, even when they are still constrained across groups! So maybe I would just proceed that way.
+
+But just for posterity, here's how you can look at the modification indexes for the group-constrained parameters:
+
+```{r}
+
+lavTestScore(equal.intercepts.fit)
+
+```
+
+Annoyingly, it doesn't tell you the variable names. So you'll need to check and see what they are called in the model output. Also I think these aren't technically 'modification indexes' per se, but they are analogous.
+
+Looks like that .p11 == .p25 constraint is a juicy one to free up -- this corresponds to the reading variable. To free it up I'll need to refit the model with more explicit syntax. Specifically, I'll need to use the `group.partial()` argument to override the fixedness introduced in the `group.equal()` argument:
+
+```{r}
+
+### Partial invariance model
+partial.invariance.fit <- cfa(
+  onefac, 
+  dat, 
+  group = "female", 
+  group.equal = c("loadings", "intercepts"), 
+  group.partial=c("read~1"), # This frees up the desired intercepts
+  meanstructure = TRUE)
+
+
+```
+
+Now we can re-run the likelihood ratio test and see if we're good to proceed to testing for invariance of the residual variance terms:
+
+```{r}
+
+anova(configural.fit, equal.loadings.fit, partial.invariance.fit)
+
+```
+
+Gah, allowing the intercept to be freely estimated has improved the p-value, but it still looks like the data are consistent with the idea that the observed variables have different values across groups for the same value of the latent variable. Darn! We could keep going, IE checking the modification indexes and freeing up parameters until we pass the likelihood ratio test, but that doesn't feel so good to me. These data just aren't consistent with the theory offered by the primordial DAG of simple confounding. 

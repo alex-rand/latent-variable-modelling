@@ -691,7 +691,7 @@ fit_measures(h1.fit) %>%
 
 The model isn't fitting very well -- Chi-Squared is highly statistically significant (we fail to reject the null hypothesis that there is residual variance left to explain), RMSEA is well above its conventional threshold, and CFI and TLI are both well below their conventional thresholds.
 
-### Modification Indexes
+### Modification Indexes {-}
 
 Here @Grace introduces a new method for tweaking our CFA model to improve goodness of fit. The idea is that we can use fancy math to ask "if I took a certain fixed parameter from my model definition and allowed it to be freely estimated, how much would my model's chi-squared goodness of fit change?" People like to take this estimated change in goodness-of-fit and call it a **modification index.** As @Brown2006 puts it:
 

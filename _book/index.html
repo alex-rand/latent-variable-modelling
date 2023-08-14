@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.2.242">
+<meta name="generator" content="quarto-1.1.251">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -120,22 +120,27 @@ div.csl-indent {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./intro.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></a>
+  <a href="./intro.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Whole Game</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./cfa.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">CFA</span></a>
+  <a href="./traditional-cfa-workflow.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Traditional CFA Workflow</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./sem.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">SEM</span></a>
+  <a href="./modification-indexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Modification Indexes</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./references.html" class="sidebar-item-text sidebar-link">References</a>
+  <a href="./mtmm-and-error-structure-modelling.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./measurement-invariance-testing.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
   </div>
 </li>
     </ul>
@@ -180,7 +185,6 @@ div.csl-indent {
       <p class="date">October 25, 2022</p>
     </div>
   </div>
-  
     
   </div>
   
@@ -191,20 +195,15 @@ div.csl-indent {
 <h1 class="unnumbered">Preface</h1>
 <section id="what-is-this" class="level2">
 <h2 class="anchored" data-anchor-id="what-is-this">What is this?</h2>
-<p>This is a book full of code to use when you want to do latent variable modelling. It gives suggested workflows I’ve cobbled together from a few different textbooks, and has worked examples with data from those textbooks or from open datasets I found online. When you need to do latent variable modelling for your research, you can use these workflows as a place to start.</p>
-<p>Specifically, it seems like these are the sub-areas of latent variable modelling to know how to do:</p>
-<ul>
-<li><p>Exploratory Factor Analysis;</p></li>
-<li><p>Confirmatory Factor Analysis;</p></li>
-<li><p>Item Response Theory;</p></li>
-<li><p>Full SEM;</p></li>
-<li><p>Longitudinal SEM.</p></li>
-</ul>
-<p>Maybe I’ll discover some other types of things along the way. It’s a lifelong journey haha.</p>
+<p>This document does two things:</p>
+<ol type="1">
+<li>Give a conceptual overview of latent variable modelling, especially confirmatory factor analysis (CFA).</li>
+<li>Provide workflows I’ve cobbled together from a few different textbooks, including examples with data from those textbooks or from open datasets I found online.</li>
+</ol>
 </section>
 <section id="what-am-i-referencing" class="level2">
 <h2 class="anchored" data-anchor-id="what-am-i-referencing">What am I referencing?</h2>
-<p>The first book on latent variable modelling I read was <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span>. This was a nice conceptual introduction, but the applied examples were pretty whack. I’ve since found a few sources with data and R code to work with. I also cite these sources throughout as I cobble together the workflows.</p>
+<p>The first book on latent variable modelling I read was <span class="citation" data-cites="gorsuch1983">Gorsuch (<a href="#ref-gorsuch1983" role="doc-biblioref">1983</a>)</span>. This was a nice conceptual introduction, but the applied examples weren’t great. I’ve since found a few sources with data and R code to work with. I also cite these sources throughout as I cobble together the workflows.</p>
 <ul>
 <li><p><a href="https://www.routledge.com/Latent-Variable-Modeling-with-R/Finch-French/p/book/9780415832458"><em>Latent Variable Modelling with R</em></a>, by <span class="citation" data-cites="Finch2015">Finch (<a href="#ref-Finch2015" role="doc-biblioref">2015</a>)</span>. They helpfully provide all of the datasets <a href="https://www.routledge.com/Latent-Variable-Modeling-with-R/Finch-French/p/book/9780415832458">here</a>.</p></li>
 <li><p><a href="https://www.guilford.com/books/Principles-and-Practice-of-Structural-Equation-Modeling/Rex-Kline/9781462523344"><em>Principles and Practice of Structural Equation Modeling</em></a>, by <span class="citation" data-cites="Kline2011">Kline (<a href="#ref-Kline2011" role="doc-biblioref">2011</a>)</span>. The publisher provides data and code <a href="https://www.guilford.com/companion-site/Principles-and-Practice-of-Structural-Equation-Modeling-Fourth-Edition/9781462523344">here</a>.</p></li>
@@ -274,24 +273,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     button.classList.add('code-copy-button-checked');
     var currentTitle = button.getAttribute("title");
     button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
     setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
       button.setAttribute("title", currentTitle);
       button.classList.remove('code-copy-button-checked');
     }, 1000);
@@ -327,42 +309,24 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       return note.innerHTML;
     });
   }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
   var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
   for (var i=0; i<bibliorefs.length; i++) {
     const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
       });
-    }
+      return popup.innerHTML;
+    });
   }
 });
 </script>
@@ -371,7 +335,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
   </div>
   <div class="nav-page nav-page-next">
       <a href="./intro.html" class="pagination-link">
-        <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span> <i class="bi bi-arrow-right-short"></i>
+        <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Whole Game</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

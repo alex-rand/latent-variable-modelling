@@ -8,10 +8,10 @@ book:
   chapters:
     - index.qmd
     - intro.qmd
-    - cfa.qmd
-    - sem.qmd
-    - references.qmd
-
+    - traditional-cfa-workflow.qmd
+    - modification-indexes.qmd
+    - mtmm-and-error-structure-modelling.qmd
+    - measurement-invariance-testing.qmd
 bibliography: references.bib
 
 format:
