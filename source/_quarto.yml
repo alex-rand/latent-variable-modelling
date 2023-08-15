@@ -14,7 +14,7 @@ book:
         - modification-indexes.qmd
         - mtmm-and-error-structure-modelling.qmd
         - measurement-invariance-testing.qmd
-    - part: sem.qmd
+    - part: sem-intro.qmd
       chapters:
         - latent-variable-regression.qmd
     

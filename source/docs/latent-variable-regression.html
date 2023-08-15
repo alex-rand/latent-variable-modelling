@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Latent Variable Modelling Workflow Reference - 5&nbsp; Regression with Latent Variables</title>
+<title>Latent Variable Modelling Workflow Reference - 5&nbsp; Example: Survival Analysis with Latent Variables</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,6 +20,25 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1.6em;
   vertical-align: middle;
 }
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
 </style>
 
 
@@ -30,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./sem.html" rel="prev">
+<link href="./sem-intro.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -69,7 +88,7 @@ ul.task-list li input[type="checkbox"] {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression with Latent Variables</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -99,7 +118,7 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">The Whole Game</a>
+            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">Confirmatory Factor Analysis</a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -129,7 +148,7 @@ ul.task-list li input[type="checkbox"] {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a href="./sem.html" class="sidebar-item-text sidebar-link">SEM</a>
+            <a href="./sem-intro.html" class="sidebar-item-text sidebar-link">Structural Equation Modelling</a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -137,7 +156,7 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./latent-variable-regression.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression with Latent Variables</span></a>
+  <a href="./latent-variable-regression.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></a>
   </div>
 </li>
       </ul>
@@ -147,14 +166,22 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#data-and-background" id="toc-data-and-background" class="nav-link active" data-scroll-target="#data-and-background"><span class="toc-section-number">5.1</span>  Data and Background</a></li>
+  <li><a href="#modelling-likert-measurements-as-ordinal-variables" id="toc-modelling-likert-measurements-as-ordinal-variables" class="nav-link" data-scroll-target="#modelling-likert-measurements-as-ordinal-variables"><span class="toc-section-number">5.2</span>  Modelling Likert Measurements as Ordinal Variables</a></li>
+  <li><a href="#using-raw-stan-for-correlated-factors" id="toc-using-raw-stan-for-correlated-factors" class="nav-link" data-scroll-target="#using-raw-stan-for-correlated-factors"><span class="toc-section-number">5.3</span>  Using Raw STAN for Correlated Factors</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression with Latent Variables</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></h1>
 </div>
 
 
@@ -168,8 +195,45 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
+<p>The line between SEM and classic regression starts to blur when we realize we can mix-and-match latent and observed variables in a regression, defining whichever relationships make the most sense given our background knowledge.</p>
+<p>A traditional way of incorporating a CFA measurement model into a fuller regression analysis proceeds in two steps:</p>
+<ol type="1">
+<li>first you fit the CFA model,</li>
+<li>then you fit the substantive regression, incorporating the latent variable into the regression by generating factor scores from the CFA model for each observation and including those as a regression covariate.</li>
+</ol>
+<p>But this approach is unsatisfactory because factor scores are a function of the CFA model’s parameter estimates (the estimates of the factor loadings), about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model’s factor loading estimates. This is the approach taken by <span class="citation" data-cites="Kankaraš-et-all-2019">Kankaraš, Feron, and Renbarger (<a href="#ref-Kankaraš-et-all-2019" role="doc-biblioref">2019</a>)</span>; they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using <em>those</em> point-estimates as regression predictors! In their analysis they don’t even report the standard errors of the factor loadings from their measurement models.</p>
+<p>A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This section provides an example of how to implement just such a Bayesian model in a survival analysis context in STAN via the <strong>brms</strong> R package.</p>
+<section id="data-and-background" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="data-and-background"><span class="header-section-number">5.1</span> Data and Background</h2>
+<p>For this example we’ll simulate some data related to the subject matter of <span class="citation" data-cites="Kankaraš-et-all-2019">Kankaraš, Feron, and Renbarger (<a href="#ref-Kankaraš-et-all-2019" role="doc-biblioref">2019</a>)</span>. Specifically, we’ll simulate some data in which latent social and emotional skills predict time-to-employment to varying degrees. More specifically, here is what the dataset should contain:</p>
+<ol type="1">
+<li>n participants in a skills training program;</li>
+<li>Some continuous and categorical demographic variables for each participant, such as age, gender priority group (this should be TRUE/FALSE), barriers to employment, and n previous services accessed.</li>
+<li>3 latent variables called adaptability, collaboration, and communication with arbitrary scales, on a continuous scale from 0-10;</li>
+<li>3 measurements each for these latent variables, each on a likert scale from 1-5. These should each be a function of the corresponding latent variable plus noise, where the degree of correlation should be controllable by the user via function arguments.</li>
+<li>the outcome variable, time, which should be a function of the latent variables and the demographhic variables and noise</li>
+<li>a status variable indicating whether time refers to time-to-employment or time-to-censoring. This should be random for non-informative censoring, with the probability of censoring being controllable by the user.</li>
+</ol>
+<div class="cell">
+
+</div>
+<p>The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc.</p>
+<p>This example has closely mirrored an analysis I carried out for a real client. In that example the latent variables had no predictive validity.</p>
+</section>
+<section id="modelling-likert-measurements-as-ordinal-variables" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="modelling-likert-measurements-as-ordinal-variables"><span class="header-section-number">5.2</span> Modelling Likert Measurements as Ordinal Variables</h2>
+<p>We can improve the model.</p>
+</section>
+<section id="using-raw-stan-for-correlated-factors" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="using-raw-stan-for-correlated-factors"><span class="header-section-number">5.3</span> Using Raw STAN for Correlated Factors</h2>
 
 
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-Kankaraš-et-all-2019" class="csl-entry" role="doc-biblioentry">
+Kankaraš, Miloš, Eva Feron, and Rachel Renbarger. 2019. <span>“Assessing Students’ Social and Emotional Skills Through Triangulation of Assessment Methods,”</span> no. 208. https://doi.org/<a href="https://doi.org/https://doi.org/10.1787/717ad7f2-en">https://doi.org/https://doi.org/10.1787/717ad7f2-en</a>.
+</div>
+</div>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -272,8 +336,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./sem.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">SEM</span>
+      <a href="./sem-intro.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Structural Equation Modelling</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

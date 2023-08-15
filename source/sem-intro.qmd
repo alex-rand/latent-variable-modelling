@@ -1,5 +1,5 @@
 ---
-title: "SEM"
+title: "Structural Equation Modelling"
 format:
   html:
     theme: default

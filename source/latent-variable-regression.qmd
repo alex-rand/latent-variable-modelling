@@ -1,2 +1,38 @@
-# Regression with Latent Variables
+# Example: Survival Analysis with Latent Variables
 
+The line between SEM and classic regression starts to blur when we realize we can mix-and-match latent and observed variables in a regression, defining whichever relationships make the most sense given our background knowledge.
+
+A traditional way of incorporating a CFA measurement model into a fuller regression analysis proceeds in two steps: 
+
+1. first you fit the CFA model, 
+2. then you fit the substantive regression, incorporating the latent variable into the regression by generating factor scores from the CFA model for each observation and including those as a regression covariate. 
+
+But this approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates (the estimates of the factor loadings), about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model's factor loading estimates. This is the approach taken by @Kankaraš-et-all-2019; they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using _those_ point-estimates as regression predictors! In their analysis they don't even report the standard errors of the factor loadings from their measurement models.
+
+A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This section provides an example of how to implement just such a Bayesian model in a survival analysis context in STAN via the **brms** R package.
+
+## Data and Background
+
+For this example we'll simulate some data related to the subject matter of @Kankaraš-et-all-2019. Specifically, we'll simulate some data in which latent social and emotional skills predict time-to-employment to varying degrees. More specifically, here is what the dataset should contain:
+
+1. n participants in a skills training program;
+2. Some continuous and categorical demographic variables for each participant, such as age, gender priority group (this should be TRUE/FALSE), barriers to employment, and n previous services accessed.
+3. 3 latent variables called adaptability, collaboration, and communication with arbitrary scales, on a continuous scale from 0-10;
+4. 3 measurements each for these latent variables, each on a likert scale from 1-5. These should each be a function of the corresponding latent variable plus noise, where the degree of correlation should be controllable by the user via function arguments.
+5. the outcome variable, time, which should be a function of the latent variables and the demographhic variables and noise
+6. a status variable indicating whether time refers to time-to-employment or time-to-censoring. This should be random for non-informative censoring, with the probability of censoring being controllable by the user.
+
+```{r}
+
+
+```
+
+The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc. 
+
+This example has closely mirrored an analysis I carried out for a real client. In that example the latent variables had no predictive validity.
+
+## Modelling Likert Measurements as Ordinal Variables
+
+We can improve the model. 
+
+## Using Raw STAN for Correlated Factors

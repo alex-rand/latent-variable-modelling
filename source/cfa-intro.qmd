@@ -1,5 +1,5 @@
 ---
-title: "The Whole Game"
+title: "Confirmatory Factor Analysis"
 format:
   html:
     theme: default

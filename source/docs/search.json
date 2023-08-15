@@ -9,14 +9,14 @@
   {
     "objectID": "cfa-intro.html",
     "href": "cfa-intro.html",
-    "title": "The Whole Game",
+    "title": "Confirmatory Factor Analysis",
     "section": "",
     "text": "library(tidyverse)\nlibrary(ggdag)"
   },
   {
     "objectID": "cfa-intro.html#the-whole-game",
     "href": "cfa-intro.html#the-whole-game",
-    "title": "The Whole Game",
+    "title": "Confirmatory Factor Analysis",
     "section": "The Whole Game",
     "text": "The Whole Game\nThe Whole Game of Confirmatory Factor Analysis (CFA) is that I’m trying to convince you my observed variables are confounded by some unmeasured variables. Usually I’m trying to show that the observed ariables are confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.\nSo here’s the archetypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am trying to convince you exists:\n\n# Set DAG coordinates\ndag_coords <- list(\n  x = c(\n    F1 = 1, \n    X1 = 2,\n    X2 = 2,\n    X3 = 2\n  ),\n  y = c(\n    F1 = 1.5,\n    X1 = 1.8,\n    X2 = 1.5,\n    X3 = 1.2\n  )\n)\n\n# Set DAG relationships and aesthetics\nmeasurement_confounding_dag <- ggdag::dagify(\n  X1 ~ F1,\n  X2 ~ F1,\n  X3 ~ F1,\n  coords = dag_coords\n) %>% \n  \n  tidy_dagitty() %>% \n  \n  mutate(\n    ` ` = case_when(\n      grepl(\"^F\", name) ~ \"latent\",\n      grepl(\"^X\", name) ~ \"observed\"\n    ))\n\n# Plot the DAG\nmeasurement_confounding_dag %>%\n  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +\n  geom_dag_point(aes(colour = ` `)) +\n  scale_colour_manual(values = c(\"dark blue\", \"#edbc64\")) + \n  geom_dag_edges() +\n  geom_dag_text() +\n  theme(legend.title = element_blank()) +\n  theme_void()\n\n\n\n\nCFA is just a way of trying to see whether the patterns of variance and covariance in your data are consistent with the above DAG, or a similar one.\nThe classic way of testing whether your data are consistent with a DAG is to condition on some of the variables, perhaps by including it as a predictor in a linear regression model, and see whether the patterns of correlation change in the ways the DAG expects based on the rules of d-separation. For the above DAG, this would mean controlling for F1 and seeing whether the correlations between X1, X2, and X3 decrease as a result. But in CFA we always assume the confounder is unmeasured, so we can’t directly control for it. Instead, we can only try to argue for our DAG in a more hand-wavy sort of way: we expect confounded variables to be correlated with each other, and uncounfounded variables to not be correlated with each other. This is why we focus on the empirical correlation matrix as the basis for our model: if a few of my variables are very correlated with each other then that is consistent with them being confounded by the same unobserved variable. But it is not proof! You can never prove a DAG, after all.\nSo interpreting a CFA model is all about checking to see whether the correlations between the variables are consistent with what we would expect to see under the DAG where each group of variables is confounded by a single unmeasured variable. In the next few chapters we’ll look at some examples of how people have liked to make the case for their unmeasured-confounder DAG."
   },
@@ -75,5 +75,40 @@
     "title": "SEM",
     "section": "",
     "text": "Someone on the stan forums recommended this book for a bayesian example: https://www.guilford.com/books/Bayesian-Structural-Equation-Modeling/Sarah-Depaoli/9781462547746"
+  },
+  {
+    "objectID": "latent-variable-regression.html",
+    "href": "latent-variable-regression.html",
+    "title": "5  Example: Survival Analysis with Latent Variables",
+    "section": "",
+    "text": "The line between SEM and classic regression starts to blur when we realize we can mix-and-match latent and observed variables in a regression, defining whichever relationships make the most sense given our background knowledge.\nA traditional way of incorporating a CFA measurement model into a fuller regression analysis proceeds in two steps:\nBut this approach is unsatisfactory because factor scores are a function of the CFA model’s parameter estimates (the estimates of the factor loadings), about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model’s factor loading estimates. This is the approach taken by Kankaraš, Feron, and Renbarger (2019); they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using those point-estimates as regression predictors! In their analysis they don’t even report the standard errors of the factor loadings from their measurement models.\nA better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This section provides an example of how to implement just such a Bayesian model in a survival analysis context in STAN via the brms R package."
+  },
+  {
+    "objectID": "latent-variable-regression.html#section",
+    "href": "latent-variable-regression.html#section",
+    "title": "5  Example: Survival Analysis with Latent Variables",
+    "section": "5.1 ",
+    "text": "5.1 \n\n\n\n\nKankaraš, Miloš, Eva Feron, and Rachel Renbarger. 2019. “Assessing Students’ Social and Emotional Skills Through Triangulation of Assessment Methods,” no. 208. https://doi.org/https://doi.org/https://doi.org/10.1787/717ad7f2-en."
+  },
+  {
+    "objectID": "latent-variable-regression.html#data-and-background",
+    "href": "latent-variable-regression.html#data-and-background",
+    "title": "5  Example: Survival Analysis with Latent Variables",
+    "section": "5.1 Data and Background",
+    "text": "5.1 Data and Background\nFor this example we’ll simulate some data related to the subject matter of Kankaraš, Feron, and Renbarger (2019). Specifically, we’ll simulate some data in which latent social and emotional skills predict time-to-employment to varying degrees. More specifically, here is what the dataset should contain:\n\nn participants in a skills training program;\nSome continuous and categorical demographic variables for each participant, such as age, gender priority group (this should be TRUE/FALSE), barriers to employment, and n previous services accessed.\n3 latent variables called adaptability, collaboration, and communication with arbitrary scales, on a continuous scale from 0-10;\n3 measurements each for these latent variables, each on a likert scale from 1-5. These should each be a function of the corresponding latent variable plus noise, where the degree of correlation should be controllable by the user via function arguments.\nthe outcome variable, time, which should be a function of the latent variables and the demographhic variables and noise\na status variable indicating whether time refers to time-to-employment or time-to-censoring. This should be random for non-informative censoring, with the probability of censoring being controllable by the user.\n\n\n\n\nThe idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc.\nThis example has closely mirrored an analysis I carried out for a real client. In that example the latent variables had no predictive validity."
+  },
+  {
+    "objectID": "latent-variable-regression.html#modelling-likert-measurements-as-ordinal-variables",
+    "href": "latent-variable-regression.html#modelling-likert-measurements-as-ordinal-variables",
+    "title": "5  Example: Survival Analysis with Latent Variables",
+    "section": "5.2 Modelling Likert Measurements as Ordinal Variables",
+    "text": "5.2 Modelling Likert Measurements as Ordinal Variables\nWe can improve the model."
+  },
+  {
+    "objectID": "latent-variable-regression.html#using-raw-stan-for-correlated-factors",
+    "href": "latent-variable-regression.html#using-raw-stan-for-correlated-factors",
+    "title": "5  Example: Survival Analysis with Latent Variables",
+    "section": "5.3 Using Raw STAN for Correlated Factors",
+    "text": "5.3 Using Raw STAN for Correlated Factors\n\n\n\n\nKankaraš, Miloš, Eva Feron, and Rachel Renbarger. 2019. “Assessing Students’ Social and Emotional Skills Through Triangulation of Assessment Methods,” no. 208. https://doi.org/https://doi.org/https://doi.org/10.1787/717ad7f2-en."
   }
 ]
