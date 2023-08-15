@@ -6,13 +6,18 @@ book:
   title: "Latent Variable Modelling Workflow Reference"
   author: "Alex Rand"
   date: "10/25/2022"
-  chapters:
+  chapters: 
     - index.qmd
-    - intro.qmd
-    - traditional-cfa-workflow.qmd
-    - modification-indexes.qmd
-    - mtmm-and-error-structure-modelling.qmd
-    - measurement-invariance-testing.qmd
+    - part: cfa-intro.qmd
+      chapters:
+        - traditional-cfa-workflow.qmd  
+        - modification-indexes.qmd
+        - mtmm-and-error-structure-modelling.qmd
+        - measurement-invariance-testing.qmd
+    - part: sem.qmd
+      chapters:
+        - latent-variable-regression.qmd
+    
 bibliography: references.bib
 
 format:

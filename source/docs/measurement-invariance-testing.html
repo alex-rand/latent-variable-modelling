@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Latent Variable Modelling Workflow Reference - 5&nbsp; MTMM and Error Structure Modelling</title>
+<title>Latent Variable Modelling Workflow Reference - 4&nbsp; MTMM and Error Structure Modelling</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -112,6 +112,7 @@ div.csl-indent {
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
+<link href="./sem.html" rel="next">
 <link href="./mtmm-and-error-structure-modelling.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
@@ -151,7 +152,7 @@ div.csl-indent {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -179,31 +180,51 @@ div.csl-indent {
   <a href="./index.html" class="sidebar-item-text sidebar-link">Preface</a>
   </div>
 </li>
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">The Whole Game</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./intro.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">The Whole Game</span></a>
+  <a href="./traditional-cfa-workflow.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Traditional CFA Workflow</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./traditional-cfa-workflow.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Traditional CFA Workflow</span></a>
+  <a href="./modification-indexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Modification Indexes</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modification-indexes.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Modification Indexes</span></a>
+  <a href="./mtmm-and-error-structure-modelling.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./mtmm-and-error-structure-modelling.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
+  <a href="./measurement-invariance-testing.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="./sem.html" class="sidebar-item-text sidebar-link">SEM</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./measurement-invariance-testing.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
+  <a href="./latent-variable-regression.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression with Latent Variables</span></a>
   </div>
 </li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -226,7 +247,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></h1>
 </div>
 
 
@@ -460,8 +481,8 @@ Variances:
 </div>
 <p>Notice how we just did the exact same thing as before, but we used the full dataset instead of the split sub-datasets, and we used <code>cfa()</code> function’s <code>group</code> parameter to tell the model we’re interested in group stuff. I’m not actually gonna print the outputs for this model because the loadings and residual variances are the exact same for the previous model, and the single chi-squared statistic is simply the sum of the chi-squared statistics from the previous model.</p>
 </section>
-<section id="metric-weak-invariance" class="level4" data-number="5.0.0.1">
-<h4 data-number="5.0.0.1" class="anchored" data-anchor-id="metric-weak-invariance"><span class="header-section-number">5.0.0.1</span> ‘Metric’ / ‘Weak’ Invariance</h4>
+<section id="metric-weak-invariance" class="level4" data-number="4.0.0.1">
+<h4 data-number="4.0.0.1" class="anchored" data-anchor-id="metric-weak-invariance"><span class="header-section-number">4.0.0.1</span> ‘Metric’ / ‘Weak’ Invariance</h4>
 <p>Next we’re gonna want to see if goodness-of-fit isn’t significantly reduced when we constrain the loading for each variable to be equal in both models. The idea is that if the loadings are pretty much equal then that’s consistent with the variables all being confounded <em>to the same degree</em> by the same unmeasured thing for both boys and girls. The conventional terrible name for this is ‘Metric’ invariance or ‘Weak’ invariance, but <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> just calls it ‘equal loadings’, which seems fine to me.</p>
 <p>We can fit this model in **lavaan* using the <code>cfa()</code> function’s <code>group.equal</code> argument.</p>
 <div class="cell">
@@ -598,8 +619,8 @@ equal.loadings.fit  7 5524.2 5593.5 6.801      4.179 0.06269       3     0.2428<
 </div>
 <p>That p-value isn’t significant, so we’re off to the races. So far so good.</p>
 </section>
-<section id="scalar-strong-invariance" class="level4" data-number="5.0.0.2">
-<h4 data-number="5.0.0.2" class="anchored" data-anchor-id="scalar-strong-invariance"><span class="header-section-number">5.0.0.2</span> ‘Scalar’ / ‘Strong’ Invariance</h4>
+<section id="scalar-strong-invariance" class="level4" data-number="4.0.0.2">
+<h4 data-number="4.0.0.2" class="anchored" data-anchor-id="scalar-strong-invariance"><span class="header-section-number">4.0.0.2</span> ‘Scalar’ / ‘Strong’ Invariance</h4>
 <p>Moving on now to test whether the goodness of fit is still ok when we constrain the variable-level <em>means</em> to be equal:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>equal.intercepts.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, </span>
@@ -941,10 +962,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
       <a href="./mtmm-and-error-structure-modelling.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></span>
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
+      <a href="./sem.html" class="pagination-link">
+        <span class="nav-page-text">SEM</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
   </div>
 </nav>
 </div> <!-- /content -->
