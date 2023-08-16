@@ -11,7 +11,12 @@ But this approach is unsatisfactory because factor scores are a function of the 
 
 A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This section provides an example of how to implement just such a Bayesian model in a survival analysis context in STAN via the **brms** R package.
 
-## Data and Background
+## Background and Data Simulation
+
+```{r}
+library(tidyverse)
+
+```
 
 For this example we'll simulate some data related to the subject matter of @Kankaraš-et-all-2019. Specifically, we'll simulate some data in which latent social and emotional skills predict time-to-employment to varying degrees. More specifically, here is what the dataset should contain:
 
@@ -22,8 +27,113 @@ For this example we'll simulate some data related to the subject matter of @Kank
 5. the outcome variable, time, which should be a function of the latent variables and the demographhic variables and noise
 6. a status variable indicating whether time refers to time-to-employment or time-to-censoring. This should be random for non-informative censoring, with the probability of censoring being controllable by the user.
 
+For now we'll assume the latent variables are not correlated, even though this is a bit of a silly assumption in practice. 
+
+One deviation from traditional factor analysis here is that we'll specify our measurement model with ordinal relationships between the factor and its measurements. This makes sense given that the measurements are likert, andd it doesn't make sense to assume likert variables move linearly. Or do it legit: Using a slightly modified version of the simulation approach for ordinal outcomes given in [this STAN forum thread](https://discourse.mc-stan.org/t/how-to-simulate-monotonic-effects-with-an-ordinal-outcome/28705/2) by [Conor Goold](https://scholar.google.com/citations?user=09SyjLoAAAAJ&hl=en)
+
+We'll use a Weibull likelihood. This is a popular choice for parametric survival analysis because it can fit a pretty flexible monotonic baseline hazard function, and can be interpretted as both a proportional hazards and an acceleration failure time model, which gives us flexibility in how we communicate results and frees us from the burden of needing to check the proportional hazards assumption. 
+
+Could make it fancy by clustering people and doing it multilevel?
 ```{r}
 
+# Generate a single ordinal data point
+# @K number of ordinal categories
+# @theta vector of latent cutpoints
+# @eta linear predictor
+gen_ordinal_measurements <- function(K, theta, eta){
+
+   if(length(theta) != (K - 1))
+        stop(paste0("theta must have length ", K - 1, " not ", length(theta)))
+
+   n <- length(eta)
+   result <- numeric(n)
+
+   for(i in 1:n) {
+       probs <- numeric(K)
+       for(k in 1:K){
+           if(k == 1) prev_thresh = -Inf
+           else prev_thresh = theta[k - 1]
+
+           if(k == K) next_thresh = Inf
+           else next_thresh = theta[k]
+
+           probs[k] = plogis(next_thresh - 1.5*eta[i]) - plogis(prev_thresh - 1.5*eta[i])
+       }
+       result[i] <- sample(K, 1, prob=probs)
+   }
+  
+   return(result)
+}
+
+
+theta <- c(2, 4, 6, 8)
+
+generate_data <- function(
+    n, 
+    ad_loadings,
+    coll_loadings,
+    comm_loadings,
+    likert_levels = seq(1:5),
+    ad_likert_means = c()
+    ){
+
+    res <- tibble(
+
+        # Simulate demographic variables
+        age = runif(n, 20, 60),
+        gender_priority_group = sample(c(TRUE, FALSE), n, replace = TRUE),
+        barriers_to_employment = rpois(n, lambda = 1),
+        previous_services = rpois(n, lambda = 3), 
+
+        # Simulate latent variables on an arbitrary scale
+        adaptability = runif(n, 0, 10),
+        collaboration = runif(n, 0, 10),
+        communication = runif(n, 0, 10),
+
+        # Simulate items for latent variable measurements
+        adaptability_m1 = gen_ordinal_measurements(5, theta, adaptability),
+        adaptability_m2 = gen_ordinal_measurements(5, theta, adaptability),
+        adaptability_m3 = gen_ordinal_measurements(5, theta, adaptability),
+  
+        collaboration_m1 = gen_ordinal_measurements(5, theta, collaboration),
+        collaboration_m2 = gen_ordinal_measurements(5, theta, collaboration),
+        collaboration_m3 = gen_ordinal_measurements(5, theta, collaboration),
+  
+        communication_m1 = gen_ordinal_measurements(5, theta, communication),
+        communication_m2 = gen_ordinal_measurements(5, theta, communication),
+        communication_m3 = gen_ordinal_measurements(5, theta, communication),
+
+        # Simulate time-to-event with a linear model
+        time = + 0.2*collaboration + 0.7*communication +
+                     0.01*age - 0.05*gender_priority_group - 
+                     0.4*barriers_to_employment + 0.2*previous_services,
+
+        # Randomly assign event/censoring status
+        status = sample(c(0, 1), n, replace = TRUE, prob = c(.8, .2)),
+
+    )
+
+    return(res)
+
+}
+
+test <- generate_data(10000) |> mutate(adaptability_m1 = factor(adaptability_m1))
+test |> view()
+test |>
+
+   ggplot(aes(x = adaptability, y = adaptability_m1)) + 
+   geom_point() +
+   geom_smooth()
+
+```
+
+
+```{r}
+
+test_reg <- lm(adaptability_m1 ~ adaptability, test)
+test_clm <- clm(adaptability_m1 ~ adaptability, data = test)
+test_clm |> broom::tidy()
+test_reg |> broom::tidy()
 
 ```
 
