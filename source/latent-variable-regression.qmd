@@ -15,6 +15,7 @@ A better option is to fit a Bayesian model that carries out both the measurement
 
 ```{r}
 library(tidyverse)
+library(ordinal)
 
 ```
 
@@ -22,25 +23,73 @@ For this example we'll simulate some data related to the subject matter of @Kank
 
 1. n participants in a skills training program;
 2. Some continuous and categorical demographic variables for each participant, such as age, gender priority group (this should be TRUE/FALSE), barriers to employment, and n previous services accessed.
-3. 3 latent variables called adaptability, collaboration, and communication with arbitrary scales, on a continuous scale from 0-10;
-4. 3 measurements each for these latent variables, each on a likert scale from 1-5. These should each be a function of the corresponding latent variable plus noise, where the degree of correlation should be controllable by the user via function arguments.
+3. a latent variable called 'communication' with an arbitrary scale of 0-100.
+4. a scale of 5 measurements each for this latent variable, each on a likert scale from 1-5. These should each be a function of the corresponding latent variable plus noise, where the degree of correlation should be controllable by the user via function arguments.
 5. the outcome variable, time, which should be a function of the latent variables and the demographhic variables and noise
 6. a status variable indicating whether time refers to time-to-employment or time-to-censoring. This should be random for non-informative censoring, with the probability of censoring being controllable by the user.
 
 For now we'll assume the latent variables are not correlated, even though this is a bit of a silly assumption in practice. 
 
-One deviation from traditional factor analysis here is that we'll specify our measurement model with ordinal relationships between the factor and its measurements. This makes sense given that the measurements are likert, andd it doesn't make sense to assume likert variables move linearly. Or do it legit: Using a slightly modified version of the simulation approach for ordinal outcomes given in [this STAN forum thread](https://discourse.mc-stan.org/t/how-to-simulate-monotonic-effects-with-an-ordinal-outcome/28705/2) by [Conor Goold](https://scholar.google.com/citations?user=09SyjLoAAAAJ&hl=en)
+One improvement we can make on the traitional factor analyses we looked at in previous sections is that we can specify our measurement model with ordinal relationships between the factor and its measurements. This makes sense given that the measurements are likert, andd it doesn't make sense to assume likert variables move linearly. 
 
-We'll use a Weibull likelihood. This is a popular choice for parametric survival analysis because it can fit a pretty flexible monotonic baseline hazard function, and can be interpretted as both a proportional hazards and an acceleration failure time model, which gives us flexibility in how we communicate results and frees us from the burden of needing to check the proportional hazards assumption. 
+It would be most efficient to just define a function that creates the dataset we need based on various parameters. But I'll instead go step-by-step and explain each choice as we go. First we can define the dataframe and do the easy work of adding the variables that don't depend on any of the others:
 
-Could make it fancy by clustering people and doing it multilevel?
 ```{r}
 
-# Generate a single ordinal data point
+n = 3000
+dat <- tibble(
+
+        # Simulate demographic variables
+        age = runif(n, 20, 60),
+        gender_priority_group = sample(c(TRUE, FALSE), n, replace = TRUE),
+        barriers_to_employment = rpois(n, lambda = 1),
+        previous_services = rpois(n, lambda = 3), 
+
+        # Simulate latent variables on an arbitrary scale
+        adaptability = runif(n, 0, 100),
+        collaboration = runif(n, 0, 100),
+        communication = runif(n, 0, 100)
+
+)
+
+```
+
+Now we'll simulate the likert-scale 'measurements' of the latent variables we defined above. The first step will be to define the threshold coefficients, or what @McElreath2020 calls 'cutpoints'. These are just the intercepts of the linear models that define each of the cumulative probabilities via a logit link. Another way of thinking about these is that they are the logit of each cumulative probability when the substantive predictors in the model are all equal to 0. 
+
+So how shall we choose these for our example? We can do whatever we want. Let's imagine a situation where the people grading these participants have a tendency to give out lots of 3s and 5s, and relatively very few of the other options. Since we've defined our latent variables on an arbitrary scale from 1-100, we can define the threshold coefficients to slice up that scale to give us the pattern we want. We can also define some 'true' factor loadings that determine the degree to which the measurements are actually influenced by the underlying latent variable. Usually in a real-world context we find that some measurements are tighter than others. 
+
+```{r}
+
+# Define the threshold coefficients
+theta <- c(
+    5,  # You get a 1 if your true 'latent' score is <5 and all predictors are 0. 
+    50, # You get a 2 if your true 'latent' score is between 5 and 50.
+    60, # You get a 3 if your true 'latent' score is between 50 and 60.
+    65  # You get a 4 if your true 'latent' score is between 60 and 65.
+#   NA  # You get a 5 if your true 'latent' score is >65.
+)
+
+# Define the factor loadings
+loadings <- c(
+    1,
+    2,
+    .7,
+    4,
+    -.5
+)
+
+```
+
+
+Now we can use those cutpoints to generate some data. Here I use a slightly modified version of the simulation approach for ordinal outcomes given in [this STAN forum thread](https://discourse.mc-stan.org/t/how-to-simulate-monotonic-effects-with-an-ordinal-outcome/28705/2) by [Conor Goold](https://scholar.google.com/citations?user=09SyjLoAAAAJ&hl=en).
+
+```{r}
+
+# Define a function to generate a single ordinal data point
 # @K number of ordinal categories
 # @theta vector of latent cutpoints
 # @eta linear predictor
-gen_ordinal_measurements <- function(K, theta, eta){
+gen_ordinal_measurements <- function(K, theta, eta, loading){
 
    if(length(theta) != (K - 1))
         stop(paste0("theta must have length ", K - 1, " not ", length(theta)))
@@ -57,16 +106,86 @@ gen_ordinal_measurements <- function(K, theta, eta){
            if(k == K) next_thresh = Inf
            else next_thresh = theta[k]
 
-           probs[k] = plogis(next_thresh - 1.5*eta[i]) - plogis(prev_thresh - 1.5*eta[i])
+           probs[k] = plogis(next_thresh - (eta[i] * loading)) - plogis(prev_thresh - (eta[i] * loading))
        }
        result[i] <- sample(K, 1, prob=probs)
    }
   
    return(result)
+   
 }
 
+# Simulate the measured outcomes
+dat <- dat |>
 
-theta <- c(2, 4, 6, 8)
+    # Simulate items for latent variable measurements
+    mutate(
+
+        communication_m1 = gen_ordinal_measurements(5, theta, communication, loadings[1]),
+        communication_m2 = gen_ordinal_measurements(5, theta, communication, loadings[2]),
+        communication_m3 = gen_ordinal_measurements(5, theta, communication, loadings[3]),
+        communication_m4 = gen_ordinal_measurements(5, theta, communication, loadings[4]),
+        communication_m5 = gen_ordinal_measurements(5, theta, communication, loadings[5])
+
+    )
+
+
+```
+
+We can do some quick visualization to make sure the data have that 'mostly 2s and 5s' pattern we were going for:
+
+```{r}
+
+dat |> 
+
+   select(matches('^communication')) |>
+
+   pivot_longer(matches("_m\\d+$"), names_to = "var", values_to = "measurement") |>
+
+   ggplot(aes(x = communication, y = measurement)) + 
+   geom_point() + 
+   facet_wrap(~var)
+   geom_smooth()
+
+```
+
+Lastly, we'll simulate the outcome variables for survival analysis. We'll use a Weibull likelihood. This is a popular choice for parametric survival analysis because it can fit a pretty flexible monotonic baseline hazard function, and can be interpretted as both a proportional hazards and an acceleration failure time model, which gives us flexibility in how we communicate results and frees us from the burden of needing to check the proportional hazards assumption. 
+
+Could make it fancy by clustering people and doing it multilevel?
+```{r}
+
+# Generate a single ordinal data point
+# @K number of ordinal categories
+# @theta vector of latent cutpoints
+# @eta linear predictor
+gen_ordinal_measurements <- function(K, theta, eta, loading){
+
+   if(length(theta) != (K - 1))
+        stop(paste0("theta must have length ", K - 1, " not ", length(theta)))
+
+   n <- length(eta)
+   result <- numeric(n)
+
+   for(i in 1:n) {
+       probs <- numeric(K)
+       for(k in 1:K){
+           if(k == 1) prev_thresh = -Inf
+           else prev_thresh = theta[k - 1]
+
+           if(k == K) next_thresh = Inf
+           else next_thresh = theta[k]
+
+           probs[k] = plogis(next_thresh - (eta[i] * loading)) - plogis(prev_thresh - (eta[i] * loading))
+       }
+       result[i] <- sample(K, 1, prob=probs)
+   }
+  
+   return(result)
+   
+}
+
+# These are the cutpoints on the logit scale.
+theta <- c(5, 50, 60, 65)
 
 generate_data <- function(
     n, 
@@ -86,9 +205,9 @@ generate_data <- function(
         previous_services = rpois(n, lambda = 3), 
 
         # Simulate latent variables on an arbitrary scale
-        adaptability = runif(n, 0, 10),
-        collaboration = runif(n, 0, 10),
-        communication = runif(n, 0, 10),
+        adaptability = runif(n, 0, 100),
+        collaboration = runif(n, 0, 100),
+        communication = runif(n, 0, 100),
 
         # Simulate items for latent variable measurements
         adaptability_m1 = gen_ordinal_measurements(5, theta, adaptability),
@@ -118,7 +237,7 @@ generate_data <- function(
 }
 
 test <- generate_data(10000) |> mutate(adaptability_m1 = factor(adaptability_m1))
-test |> view()
+
 test |>
 
    ggplot(aes(x = adaptability, y = adaptability_m1)) + 
@@ -128,6 +247,19 @@ test |>
 ```
 
 
+```{r}
+
+clm(factor(adaptability_m1) ~ adaptability, data = test)
+
+test |> 
+
+ #   filter(adaptability_m1 %in% c(1, 2, 3)) |>
+
+    count(adaptability_m1) |>
+
+    mutate(p = n / sum(n))
+
+```
 ```{r}
 
 test_reg <- lm(adaptability_m1 ~ adaptability, test)
@@ -140,6 +272,10 @@ test_reg |> broom::tidy()
 The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc. 
 
 This example has closely mirrored an analysis I carried out for a real client. In that example the latent variables had no predictive validity.
+
+## Prior Predictive Checks
+
+## Fitting the Model
 
 ## Modelling Likert Measurements as Ordinal Variables
 
