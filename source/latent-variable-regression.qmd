@@ -133,7 +133,7 @@ dat <- dat |>
 
 ```
 
-We can do some quick visualization to make sure the data have that 'mostly 2s and 5s' pattern we were going for:
+We can do some quick visualization to make sure the data have that 'mostly 2s and 5s' pattern we were going for, but that it varies slightly such that measured variables with higher loadings tend to have more 3s and 4s than variables with lower loadings (I think?)
 
 ```{r}
 

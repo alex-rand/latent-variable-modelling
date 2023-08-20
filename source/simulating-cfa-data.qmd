@@ -15,9 +15,11 @@ library(gt)
 Simulating data as a way of life, etc. **lavaan** has a pretty useful function `lavaan::simulateData()` for this purpose. But it is sort of a lazy way -- we will learn more and improve our understanding if we write original code to simulate the data we need. Simulating with a ready-made function also takes away some of the value of simulation in the first place -- of course a lavaan model will recover the true parameter estimates for data that was generated with the exact same model definition. 
 
 ## Metric measured variables
-```{r}
 
-```
+See [this great guide](https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html#full-example-of-a-small-scale-simulation)
+
+
+
 
 ## Ordinal measured variables 
 

@@ -1,0 +1,94 @@
+---
+title: "Bayesian CFA"
+format:
+  html:
+    theme: default
+---
+
+```{r message = FALSE}
+library(tidyverse)
+library(lavaan)
+library(brms)
+
+```
+
+Can brms replicate results from lavaan?
+
+{{brms}} doesn't officially have SEM capabilities [(but they do seem to be coming soon!)](https://github.com/paul-buerkner/brms/issues/304). But [STAN forum contributer Jack Bailey](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139) has 'patanté' a solution using artful prior specifications.
+
+To demonstrate, we can simulate some data using {{lavaan}} and show that `brms::brm()` is able to recover the 'true' factor loadings.
+
+## First Example: Simple Factor Structure
+
+First we can simulate some data with a simple factor structure using lavaan's handy `simulateData()` function:
+```{r}
+
+pop.model <- ' 
+  f1 =~ .8*m1 + .1*m2 + .6*m3
+'
+
+# Simulate data from the model
+fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 500)
+
+# Visualize the measured dat
+fake_dat |>
+
+  select(m1, m2, m3) |>
+  
+  pivot_longer(everything(), names_to = "var", values_to = "measurement") |>
+
+  ggplot() +
+  geom_histogram(aes(x = measurement)) +
+  facet_wrap(~var) +
+  theme_bw()
+
+```
+
+Unsurprisingly, the lavaan is able to recover the true parameters for the data it generated.
+
+```{r}
+
+# Fit the model
+fit_1 <- cfa(pop.model, data = fake_dat)
+
+# Make sure it works
+fit_1 |> broom::tidy()
+
+```
+
+But can brms?
+
+```{r}
+
+# Add a latent variable to the dataset
+
+fake_dat$f1 <- NA
+
+bfit.1 <- 
+  brm(
+    formula =
+      bf(m1 ~ 0 + mi(xo)) +
+      bf(m2 ~ 0 + mi(xo)) +
+      bf(m3 ~ 0 + mi(xo)) +
+      bf(f1| mi() ~ 1) + 
+      set_rescor(rescor = FALSE),
+    family = gaussian(),
+    prior =
+      prior(constant(1), class = "b", resp = "m1") +
+      prior(constant(1), class = "sigma", resp = "m1") +
+      prior(normal(0, 10), class = "b", resp = "m2") +
+      prior(constant(1), class = "sigma", resp = "m2") +
+      prior(normal(0, 10), class = "b", resp = "m3") +
+      prior(constant(1), class = "sigma", resp = "m3") +
+      prior(normal(0, 10), class = "Intercept", resp = "f1") +
+      prior(cauchy(0, 1), class = "sigma", resp = "f1"),
+    data = fake_dat
+  )
+
+m1
+
+
+```
+## Second Example: Correlated factors
+
+## Third Example: MTMM 

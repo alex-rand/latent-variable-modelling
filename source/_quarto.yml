@@ -15,6 +15,7 @@ book:
         - mtmm-and-error-structure-modelling.qmd
         - measurement-invariance-testing.qmd
         - simulating-cfa-data.qmd
+        - bayesian-cfa.qmd
     - part: sem-intro.qmd
       chapters:
         - latent-variable-regression.qmd
