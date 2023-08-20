@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Latent Variable Modelling Workflow Reference - 5&nbsp; Example: Survival Analysis with Latent Variables</title>
+<title>Latent Variable Modelling Workflow Reference - 6&nbsp; Example: Survival Analysis with Latent Variables</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -151,7 +151,7 @@ div.csl-indent {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -207,6 +207,11 @@ div.csl-indent {
   <a href="./measurement-invariance-testing.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./simulating-cfa-data.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Simulating CFA data</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -219,7 +224,7 @@ div.csl-indent {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./latent-variable-regression.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></a>
+  <a href="./latent-variable-regression.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></a>
   </div>
 </li>
       </ul>
@@ -233,11 +238,11 @@ div.csl-indent {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#background-and-data-simulation" id="toc-background-and-data-simulation" class="nav-link active" data-scroll-target="#background-and-data-simulation"><span class="toc-section-number">5.1</span>  Background and Data Simulation</a></li>
-  <li><a href="#prior-predictive-checks" id="toc-prior-predictive-checks" class="nav-link" data-scroll-target="#prior-predictive-checks"><span class="toc-section-number">5.2</span>  Prior Predictive Checks</a></li>
-  <li><a href="#fitting-the-model" id="toc-fitting-the-model" class="nav-link" data-scroll-target="#fitting-the-model"><span class="toc-section-number">5.3</span>  Fitting the Model</a></li>
-  <li><a href="#modelling-likert-measurements-as-ordinal-variables" id="toc-modelling-likert-measurements-as-ordinal-variables" class="nav-link" data-scroll-target="#modelling-likert-measurements-as-ordinal-variables"><span class="toc-section-number">5.4</span>  Modelling Likert Measurements as Ordinal Variables</a></li>
-  <li><a href="#using-raw-stan-for-correlated-factors" id="toc-using-raw-stan-for-correlated-factors" class="nav-link" data-scroll-target="#using-raw-stan-for-correlated-factors"><span class="toc-section-number">5.5</span>  Using Raw STAN for Correlated Factors</a></li>
+  <li><a href="#background-and-data-simulation" id="toc-background-and-data-simulation" class="nav-link active" data-scroll-target="#background-and-data-simulation"><span class="toc-section-number">6.1</span>  Background and Data Simulation</a></li>
+  <li><a href="#prior-predictive-checks" id="toc-prior-predictive-checks" class="nav-link" data-scroll-target="#prior-predictive-checks"><span class="toc-section-number">6.2</span>  Prior Predictive Checks</a></li>
+  <li><a href="#fitting-the-model" id="toc-fitting-the-model" class="nav-link" data-scroll-target="#fitting-the-model"><span class="toc-section-number">6.3</span>  Fitting the Model</a></li>
+  <li><a href="#modelling-likert-measurements-as-ordinal-variables" id="toc-modelling-likert-measurements-as-ordinal-variables" class="nav-link" data-scroll-target="#modelling-likert-measurements-as-ordinal-variables"><span class="toc-section-number">6.4</span>  Modelling Likert Measurements as Ordinal Variables</a></li>
+  <li><a href="#using-raw-stan-for-correlated-factors" id="toc-using-raw-stan-for-correlated-factors" class="nav-link" data-scroll-target="#using-raw-stan-for-correlated-factors"><span class="toc-section-number">6.5</span>  Using Raw STAN for Correlated Factors</a></li>
   </ul>
 </nav>
     </div>
@@ -246,7 +251,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></h1>
 </div>
 
 
@@ -268,31 +273,12 @@ div.csl-indent {
 </ol>
 <p>But this approach is unsatisfactory because factor scores are a function of the CFA model’s parameter estimates (the estimates of the factor loadings), about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model’s factor loading estimates. This is the approach taken by <span class="citation" data-cites="Kankaraš-et-all-2019">Kankaraš, Feron, and Renbarger (<a href="#ref-Kankaraš-et-all-2019" role="doc-biblioref">2019</a>)</span>; they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using <em>those</em> point-estimates as regression predictors! In their analysis they don’t even report the standard errors of the factor loadings from their measurement models.</p>
 <p>A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This section provides an example of how to implement just such a Bayesian model in a survival analysis context in STAN via the <strong>brms</strong> R package.</p>
-<section id="background-and-data-simulation" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="background-and-data-simulation"><span class="header-section-number">5.1</span> Background and Data Simulation</h2>
+<section id="background-and-data-simulation" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="background-and-data-simulation"><span class="header-section-number">6.1</span> Background and Data Simulation</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-✔ dplyr     1.1.2     ✔ readr     2.1.4
-✔ forcats   1.0.0     ✔ stringr   1.5.0
-✔ ggplot2   3.4.2     ✔ tibble    3.2.1
-✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-✔ purrr     1.0.2     
-── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinal)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'ordinal'
-
-The following object is masked from 'package:dplyr':
-
-    slice</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinal)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>For this example we’ll simulate some data related to the subject matter of <span class="citation" data-cites="Kankaraš-et-all-2019">Kankaraš, Feron, and Renbarger (<a href="#ref-Kankaraš-et-all-2019" role="doc-biblioref">2019</a>)</span>. Specifically, we’ll simulate some data in which latent social and emotional skills predict time-to-employment to varying degrees. More specifically, here is what the dataset should contain:</p>
 <ol type="1">
@@ -307,285 +293,222 @@ The following object is masked from 'package:dplyr':
 <p>One improvement we can make on the traitional factor analyses we looked at in previous sections is that we can specify our measurement model with ordinal relationships between the factor and its measurements. This makes sense given that the measurements are likert, andd it doesn’t make sense to assume likert variables move linearly.</p>
 <p>It would be most efficient to just define a function that creates the dataset we need based on various parameters. But I’ll instead go step-by-step and explain each choice as we go. First we can define the dataframe and do the easy work of adding the variables that don’t depend on any of the others:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">=</span> <span class="dv">3000</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate demographic variables</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">age =</span> <span class="fu">runif</span>(n, <span class="dv">20</span>, <span class="dv">60</span>),</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">gender_priority_group =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>), n, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">barriers_to_employment =</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">1</span>),</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">previous_services =</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">3</span>), </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate latent variables on an arbitrary scale</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">adaptability =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">collaboration =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">=</span> <span class="dv">60000</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate demographic variables</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="at">age =</span> <span class="fu">runif</span>(n, <span class="dv">20</span>, <span class="dv">60</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">gender_priority_group =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>), n, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">barriers_to_employment =</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">1</span>),</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">previous_services =</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">3</span>), </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate latent variables on an arbitrary scale</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">adaptability =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">collaboration =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now we’ll simulate the likert-scale ‘measurements’ of the latent variables we defined above. The first step will be to define the threshold coefficients, or what <span class="citation" data-cites="McElreath2020">McElreath (<a href="#ref-McElreath2020" role="doc-biblioref">2020</a>)</span> calls ‘cutpoints’. These are just the intercepts of the linear models that define each of the cumulative probabilities via a logit link. Another way of thinking about these is that they are the logit of each cumulative probability when the substantive predictors in the model are all equal to 0.</p>
-<p>So how shall we choose these for our example? We can do whatever we want. Let’s imagine a situation where the people grading these participants have a tendency to give out lots of 3s and 5s, and relatively very few of the other options. Since we’ve defined our latent variables on an arbitrary scale from 1-100, we can define the threshold coefficients to slice up that scale to give us the pattern we want:</p>
+<p>So how shall we choose these for our example? We can do whatever we want. Let’s imagine a situation where the people grading these participants have a tendency to give out lots of 3s and 5s, and relatively very few of the other options. Since we’ve defined our latent variables on an arbitrary scale from 1-100, we can define the threshold coefficients to slice up that scale to give us the pattern we want. We can also define some ‘true’ factor loadings that determine the degree to which the measurements are actually influenced by the underlying latent variable. Usually in a real-world context we find that some measurements are tighter than others.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">5</span>,  <span class="co"># You get a 1 if your true 'latent' score is &lt;5 and all predictors are 0. </span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">50</span>, <span class="co"># You get a 2 if your true 'latent' score is between 5 and 50.</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">60</span>, <span class="co"># You get a 3 if your true 'latent' score is between 50 and 60.</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">65</span>  <span class="co"># You get a 4 if your true 'latent' score is between 60 and 65.</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   NA  # You get a 5 if your true 'latent' score is &gt;65.</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the threshold coefficients</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">5</span>,  <span class="co"># You get a 1 if your true 'latent' score is &lt;5 and all predictors are 0. </span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">50</span>, <span class="co"># You get a 2 if your true 'latent' score is between 5 and 50.</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">60</span>, <span class="co"># You get a 3 if your true 'latent' score is between 50 and 60.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">65</span>  <span class="co"># You get a 4 if your true 'latent' score is between 60 and 65.</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   NA  # You get a 5 if your true 'latent' score is &gt;65.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the factor loadings</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>loadings <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now we can use those cutpoints to generate some data. Here I use a slightly modified version of the simulation approach for ordinal outcomes given in <a href="https://discourse.mc-stan.org/t/how-to-simulate-monotonic-effects-with-an-ordinal-outcome/28705/2">this STAN forum thread</a> by <a href="https://scholar.google.com/citations?user=09SyjLoAAAAJ&amp;hl=en">Conor Goold</a>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function to generate a single ordinal data point</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># @K number of ordinal categories</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># @theta vector of latent cutpoints</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># @eta linear predictor</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>gen_ordinal_measurements <span class="ot">&lt;-</span> <span class="cf">function</span>(K, theta, eta){</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>   <span class="cf">if</span>(<span class="fu">length</span>(theta) <span class="sc">!=</span> (K <span class="sc">-</span> <span class="dv">1</span>))</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">stop</span>(<span class="fu">paste0</span>(<span class="st">"theta must have length "</span>, K <span class="sc">-</span> <span class="dv">1</span>, <span class="st">" not "</span>, <span class="fu">length</span>(theta)))</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>   n <span class="ot">&lt;-</span> <span class="fu">length</span>(eta)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>   result <span class="ot">&lt;-</span> <span class="fu">numeric</span>(n)</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>   <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>       probs <span class="ot">&lt;-</span> <span class="fu">numeric</span>(K)</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>       <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>K){</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>           <span class="cf">if</span>(k <span class="sc">==</span> <span class="dv">1</span>) prev_thresh <span class="ot">=</span> <span class="sc">-</span><span class="cn">Inf</span></span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> prev_thresh <span class="ot">=</span> theta[k <span class="sc">-</span> <span class="dv">1</span>]</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>           <span class="cf">if</span>(k <span class="sc">==</span> K) next_thresh <span class="ot">=</span> <span class="cn">Inf</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> next_thresh <span class="ot">=</span> theta[k]</span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>           probs[k] <span class="ot">=</span> <span class="fu">plogis</span>(next_thresh <span class="sc">-</span> eta[i]) <span class="sc">-</span> <span class="fu">plogis</span>(prev_thresh <span class="sc">-</span> eta[i])</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>       }</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>       result[i] <span class="ot">&lt;-</span> <span class="fu">sample</span>(K, <span class="dv">1</span>, <span class="at">prob=</span>probs)</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>   }</span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">return</span>(result)</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate the measured outcomes</span></span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> dat <span class="sc">|&gt;</span></span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simulate items for latent variable measurements</span></span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m1 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m2 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m3 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m4 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m5 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function to generate a single ordinal data point</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># @K number of ordinal categories</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># @theta vector of latent cutpoints</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># @eta linear predictor</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>gen_ordinal_measurements <span class="ot">&lt;-</span> <span class="cf">function</span>(K, theta, eta, loading){</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>   <span class="cf">if</span>(<span class="fu">length</span>(theta) <span class="sc">!=</span> (K <span class="sc">-</span> <span class="dv">1</span>))</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">stop</span>(<span class="fu">paste0</span>(<span class="st">"theta must have length "</span>, K <span class="sc">-</span> <span class="dv">1</span>, <span class="st">" not "</span>, <span class="fu">length</span>(theta)))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>   n <span class="ot">&lt;-</span> <span class="fu">length</span>(eta)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>   result <span class="ot">&lt;-</span> <span class="fu">numeric</span>(n)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>   <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>       probs <span class="ot">&lt;-</span> <span class="fu">numeric</span>(K)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>       <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>K){</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>           <span class="cf">if</span>(k <span class="sc">==</span> <span class="dv">1</span>) prev_thresh <span class="ot">=</span> <span class="sc">-</span><span class="cn">Inf</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> prev_thresh <span class="ot">=</span> theta[k <span class="sc">-</span> <span class="dv">1</span>]</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>           <span class="cf">if</span>(k <span class="sc">==</span> K) next_thresh <span class="ot">=</span> <span class="cn">Inf</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> next_thresh <span class="ot">=</span> theta[k]</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>           probs[k] <span class="ot">=</span> <span class="fu">plogis</span>(next_thresh <span class="sc">-</span> (eta[i] <span class="sc">*</span> loading)) <span class="sc">-</span> <span class="fu">plogis</span>(prev_thresh <span class="sc">-</span> (eta[i] <span class="sc">*</span> loading))</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>       }</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>       result[i] <span class="ot">&lt;-</span> <span class="fu">sample</span>(K, <span class="dv">1</span>, <span class="at">prob=</span>probs)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>   }</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">return</span>(result)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate the measured outcomes</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> dat <span class="sc">|&gt;</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simulate items for latent variable measurements</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m1 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication, loadings[<span class="dv">1</span>]),</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m2 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication, loadings[<span class="dv">2</span>]),</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m3 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication, loadings[<span class="dv">3</span>]),</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m4 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication, loadings[<span class="dv">4</span>]),</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m5 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication, loadings[<span class="dv">5</span>])</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can do some quick visualization to make sure the data have that ‘mostly 2s and 5s’ pattern we were going for:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">|&gt;</span> </span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">'^communication'</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(<span class="fu">matches</span>(<span class="st">"_m</span><span class="sc">\\</span><span class="st">d+$"</span>), <span class="at">names_to =</span> <span class="st">"var"</span>, <span class="at">values_to =</span> <span class="st">"measurement"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> communication, <span class="at">y =</span> measurement)) <span class="sc">+</span> </span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">facet_wrap</span>(<span class="sc">~</span>var)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">|&gt;</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">'^communication'</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(<span class="fu">matches</span>(<span class="st">"_m</span><span class="sc">\\</span><span class="st">d+$"</span>), <span class="at">names_to =</span> <span class="st">"var"</span>, <span class="at">values_to =</span> <span class="st">"measurement"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> communication, <span class="at">y =</span> measurement)) <span class="sc">+</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">facet_wrap</span>(<span class="sc">~</span>var)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="latent-variable-regression_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_smooth</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model<span class="ot">=</span><span class="st">'communication ~ communication_m1+communication_m2+communication_m3+communication_m4+communication_m5'</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># lavaan test</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>model.ord <span class="ot">=</span> <span class="fu">cfa</span>(model, <span class="at">data=</span>dat <span class="sc">|&gt;</span> <span class="fu">rename</span>(<span class="st">"communication"</span> <span class="ot">=</span> communication), <span class="at">ordered=</span><span class="fu">c</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"communication_m1"</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"communication_m2"</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"communication_m3"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"communication_m4"</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"communication_m5"</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    )   </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in lav_data_full(data = data, group = group, cluster = cluster, : lavaan
+WARNING: exogenous variable(s) declared as ordered in data: communication_m1
+communication_m2 communication_m3 communication_m4 communication_m5</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in lav_partable_check(lavpartable, categorical =
+lavoptions$.categorical, : lavaan WARNING: parameter table does not contain
+thresholds
+
+Warning in lav_partable_check(lavpartable, categorical =
+lavoptions$.categorical, : lavaan WARNING: parameter table does not contain
+thresholds</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model.ord <span class="sc">|&gt;</span> <span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>geom_smooth: na.rm = FALSE, orientation = NA, se = TRUE
-stat_smooth: na.rm = FALSE, orientation = NA, se = TRUE
-position_identity </code></pre>
+<pre><code>lavaan 0.6.16 ended normally after 18 iterations
+
+  Estimator                                       DWLS
+  Optimization method                           NLMINB
+  Number of model parameters                         7
+
+  Number of observations                         60000
+
+Model Test User Model:
+                                              Standard      Scaled
+  Test Statistic                                 0.000       0.000
+  Degrees of freedom                                 0           0
+
+Parameter Estimates:
+
+  Standard errors                           Robust.sem
+  Information                                 Expected
+  Information saturated (h1) model        Unstructured
+
+Regressions:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)
+  communication ~                                     
+    communicatn_m1    3.687    0.197   18.713    0.000
+    communicatn_m2    3.501    0.199   17.586    0.000
+    communicatn_m3    3.969    0.202   19.652    0.000
+    communicatn_m4    4.091    0.198   20.680    0.000
+    communicatn_m5    3.553    0.199   17.841    0.000
+
+Intercepts:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)
+   .communication   -10.137    0.113  -89.739    0.000
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)
+   .communication   113.935    0.433  262.876    0.000</code></pre>
 </div>
 </div>
 <p>Lastly, we’ll simulate the outcome variables for survival analysis. We’ll use a Weibull likelihood. This is a popular choice for parametric survival analysis because it can fit a pretty flexible monotonic baseline hazard function, and can be interpretted as both a proportional hazards and an acceleration failure time model, which gives us flexibility in how we communicate results and frees us from the burden of needing to check the proportional hazards assumption.</p>
 <p>Could make it fancy by clustering people and doing it multilevel?</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate a single ordinal data point</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># @K number of ordinal categories</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># @theta vector of latent cutpoints</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># @eta linear predictor</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>gen_ordinal_measurements <span class="ot">&lt;-</span> <span class="cf">function</span>(K, theta, eta){</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>   <span class="cf">if</span>(<span class="fu">length</span>(theta) <span class="sc">!=</span> (K <span class="sc">-</span> <span class="dv">1</span>))</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">stop</span>(<span class="fu">paste0</span>(<span class="st">"theta must have length "</span>, K <span class="sc">-</span> <span class="dv">1</span>, <span class="st">" not "</span>, <span class="fu">length</span>(theta)))</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>   n <span class="ot">&lt;-</span> <span class="fu">length</span>(eta)</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>   result <span class="ot">&lt;-</span> <span class="fu">numeric</span>(n)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>   <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n) {</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>       probs <span class="ot">&lt;-</span> <span class="fu">numeric</span>(K)</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>       <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>K){</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>           <span class="cf">if</span>(k <span class="sc">==</span> <span class="dv">1</span>) prev_thresh <span class="ot">=</span> <span class="sc">-</span><span class="cn">Inf</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> prev_thresh <span class="ot">=</span> theta[k <span class="sc">-</span> <span class="dv">1</span>]</span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>           <span class="cf">if</span>(k <span class="sc">==</span> K) next_thresh <span class="ot">=</span> <span class="cn">Inf</span></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> next_thresh <span class="ot">=</span> theta[k]</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>           probs[k] <span class="ot">=</span> <span class="fu">plogis</span>(next_thresh <span class="sc">-</span> eta[i]) <span class="sc">-</span> <span class="fu">plogis</span>(prev_thresh <span class="sc">-</span> eta[i])</span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>       }</span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>       result[i] <span class="ot">&lt;-</span> <span class="fu">sample</span>(K, <span class="dv">1</span>, <span class="at">prob=</span>probs)</span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>   }</span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">return</span>(result)</span>
-<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="co"># These are the cutpoints on the logit scale.</span></span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">65</span>)</span>
-<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>generate_data <span class="ot">&lt;-</span> <span class="cf">function</span>(</span>
-<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    n, </span>
-<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    ad_loadings,</span>
-<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    coll_loadings,</span>
-<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>    comm_loadings,</span>
-<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">likert_levels =</span> <span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>),</span>
-<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">ad_likert_means =</span> <span class="fu">c</span>()</span>
-<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    ){</span>
-<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate demographic variables</span></span>
-<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>        <span class="at">age =</span> <span class="fu">runif</span>(n, <span class="dv">20</span>, <span class="dv">60</span>),</span>
-<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>        <span class="at">gender_priority_group =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>), n, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>        <span class="at">barriers_to_employment =</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">1</span>),</span>
-<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>        <span class="at">previous_services =</span> <span class="fu">rpois</span>(n, <span class="at">lambda =</span> <span class="dv">3</span>), </span>
-<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate latent variables on an arbitrary scale</span></span>
-<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>        <span class="at">adaptability =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
-<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>        <span class="at">collaboration =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
-<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>),</span>
-<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate items for latent variable measurements</span></span>
-<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>        <span class="at">adaptability_m1 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, adaptability),</span>
-<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>        <span class="at">adaptability_m2 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, adaptability),</span>
-<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>        <span class="at">adaptability_m3 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, adaptability),</span>
-<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>        <span class="at">collaboration_m1 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, collaboration),</span>
-<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>        <span class="at">collaboration_m2 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, collaboration),</span>
-<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>        <span class="at">collaboration_m3 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, collaboration),</span>
-<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m1 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m2 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m3 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication),</span>
-<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Simulate time-to-event with a linear model</span></span>
-<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>        <span class="at">time =</span> <span class="sc">+</span> <span class="fl">0.2</span><span class="sc">*</span>collaboration <span class="sc">+</span> <span class="fl">0.7</span><span class="sc">*</span>communication <span class="sc">+</span></span>
-<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a>                     <span class="fl">0.01</span><span class="sc">*</span>age <span class="sc">-</span> <span class="fl">0.05</span><span class="sc">*</span>gender_priority_group <span class="sc">-</span> </span>
-<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a>                     <span class="fl">0.4</span><span class="sc">*</span>barriers_to_employment <span class="sc">+</span> <span class="fl">0.2</span><span class="sc">*</span>previous_services,</span>
-<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Randomly assign event/censoring status</span></span>
-<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>        <span class="at">status =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), n, <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(.<span class="dv">8</span>, .<span class="dv">2</span>)),</span>
-<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(res)</span>
-<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">generate_data</span>(<span class="dv">10000</span>) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">adaptability_m1 =</span> <span class="fu">factor</span>(adaptability_m1))</span>
-<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a>test <span class="sc">|&gt;</span></span>
-<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> adaptability, <span class="at">y =</span> adaptability_m1)) <span class="sc">+</span> </span>
-<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_smooth</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Computation failed in `stat_smooth()`
-Caused by error in `gam.reparam()`:
-! NA/NaN/Inf in foreign function call (arg 3)</code></pre>
-</div>
-<div class="cell-output-display">
-<p><img src="latent-variable-regression_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
-</div>
+
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clm</span>(<span class="fu">factor</span>(adaptability_m1) <span class="sc">~</span> adaptability, <span class="at">data =</span> test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clm</span>(<span class="fu">factor</span>(communication_m1) <span class="sc">~</span> communication, <span class="at">data =</span> dat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>formula: factor(adaptability_m1) ~ adaptability
-data:    test
+<pre><code>formula: factor(communication_m1) ~ communication
+data:    dat
 
- link  threshold nobs  logLik   AIC     niter max.grad cond.H 
- logit flexible  10000 -1370.94 2751.89 12(0) 1.17e-11 7.3e+06
+ link  threshold nobs  logLik   AIC      niter max.grad cond.H 
+ logit flexible  60000 -7891.59 15793.19 12(0) 3.29e-10 7.9e+06
 
 Coefficients:
-adaptability 
-      0.9608 
+communication 
+       0.9834 
 
 Threshold coefficients:
    1|2    2|3    3|4    4|5 
- 4.943 48.199 57.655 62.602 </code></pre>
+ 4.904 49.220 59.020 63.969 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>test <span class="sc">|&gt;</span> </span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a> <span class="co">#   filter(adaptability_m1 %in% c(1, 2, 3)) |&gt;</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(adaptability_m1) <span class="sc">|&gt;</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">|&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a> <span class="co">#   filter(adaptability_m1 %in% c(1, 2, 3)) |&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(communication_m1) <span class="sc">|&gt;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 3
-  adaptability_m1     n      p
-  &lt;fct&gt;           &lt;int&gt;  &lt;dbl&gt;
-1 1                 545 0.0545
-2 2                4552 0.455 
-3 3                 992 0.0992
-4 4                 520 0.052 
-5 5                3391 0.339 </code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>test_reg <span class="ot">&lt;-</span> <span class="fu">lm</span>(adaptability_m1 <span class="sc">~</span> adaptability, test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in model.response(mf, "numeric"): using type = "numeric" with a factor
-response will be ignored</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in Ops.factor(y, z$residuals): '-' not meaningful for factors</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>test_clm <span class="ot">&lt;-</span> <span class="fu">clm</span>(adaptability_m1 <span class="sc">~</span> adaptability, <span class="at">data =</span> test)</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>test_clm <span class="sc">|&gt;</span> broom<span class="sc">::</span><span class="fu">tidy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 5 × 6
-  term         estimate std.error statistic   p.value coef.type
-  &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;    
-1 1|2             4.94     0.164       30.2 1.36e-200 intercept
-2 2|3            48.2      1.29        37.2 1.19e-303 intercept
-3 3|4            57.7      1.55        37.2 1.19e-303 intercept
-4 4|5            62.6      1.68        37.4 1.03e-305 intercept
-5 adaptability    0.961    0.0257      37.4 3.03e-306 location </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>test_reg <span class="sc">|&gt;</span> broom<span class="sc">::</span><span class="fu">tidy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in Ops.factor(r, 2): '^' not meaningful for factors</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 2 × 5
-  term         estimate std.error statistic p.value
-  &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
-1 (Intercept)    0.913         NA        NA      NA
-2 adaptability   0.0457        NA        NA      NA</code></pre>
+  communication_m1     n      p
+             &lt;dbl&gt; &lt;int&gt;  &lt;dbl&gt;
+1                1  2921 0.0487
+2                2 26893 0.448 
+3                3  5964 0.0994
+4                4  3016 0.0503
+5                5 21206 0.353 </code></pre>
 </div>
 </div>
 <p>The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc.</p>
 <p>This example has closely mirrored an analysis I carried out for a real client. In that example the latent variables had no predictive validity.</p>
 </section>
-<section id="prior-predictive-checks" class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="prior-predictive-checks"><span class="header-section-number">5.2</span> Prior Predictive Checks</h2>
+<section id="prior-predictive-checks" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="prior-predictive-checks"><span class="header-section-number">6.2</span> Prior Predictive Checks</h2>
 </section>
-<section id="fitting-the-model" class="level2" data-number="5.3">
-<h2 data-number="5.3" class="anchored" data-anchor-id="fitting-the-model"><span class="header-section-number">5.3</span> Fitting the Model</h2>
+<section id="fitting-the-model" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="fitting-the-model"><span class="header-section-number">6.3</span> Fitting the Model</h2>
 </section>
-<section id="modelling-likert-measurements-as-ordinal-variables" class="level2" data-number="5.4">
-<h2 data-number="5.4" class="anchored" data-anchor-id="modelling-likert-measurements-as-ordinal-variables"><span class="header-section-number">5.4</span> Modelling Likert Measurements as Ordinal Variables</h2>
+<section id="modelling-likert-measurements-as-ordinal-variables" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="modelling-likert-measurements-as-ordinal-variables"><span class="header-section-number">6.4</span> Modelling Likert Measurements as Ordinal Variables</h2>
 <p>We can improve the model.</p>
 </section>
-<section id="using-raw-stan-for-correlated-factors" class="level2" data-number="5.5">
-<h2 data-number="5.5" class="anchored" data-anchor-id="using-raw-stan-for-correlated-factors"><span class="header-section-number">5.5</span> Using Raw STAN for Correlated Factors</h2>
+<section id="using-raw-stan-for-correlated-factors" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="using-raw-stan-for-correlated-factors"><span class="header-section-number">6.5</span> Using Raw STAN for Correlated Factors</h2>
 
 
 <div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">

@@ -13,8 +13,9 @@ A better option is to fit a Bayesian model that carries out both the measurement
 
 ## Background and Data Simulation
 
-```{r}
+```{r message = FALSE}
 library(tidyverse)
+library(lavaan)
 library(ordinal)
 
 ```
@@ -36,7 +37,7 @@ It would be most efficient to just define a function that creates the dataset we
 
 ```{r}
 
-n = 3000
+n = 60000
 dat <- tibble(
 
         # Simulate demographic variables
@@ -72,10 +73,10 @@ theta <- c(
 # Define the factor loadings
 loadings <- c(
     1,
-    2,
-    .7,
-    4,
-    -.5
+    1,
+    1,
+    1,
+    1
 )
 
 ```
@@ -145,7 +146,21 @@ dat |>
    ggplot(aes(x = communication, y = measurement)) + 
    geom_point() + 
    facet_wrap(~var)
-   geom_smooth()
+
+
+model='communication ~ communication_m1+communication_m2+communication_m3+communication_m4+communication_m5'
+
+# lavaan test
+model.ord = cfa(model, data=dat |> rename("communication" = communication), ordered=c(
+    "communication_m1",
+    "communication_m2",
+    "communication_m3",
+    "communication_m4",
+    "communication_m5"
+    )   
+)
+
+model.ord |> summary()
 
 ```
 
@@ -154,120 +169,23 @@ Lastly, we'll simulate the outcome variables for survival analysis. We'll use a 
 Could make it fancy by clustering people and doing it multilevel?
 ```{r}
 
-# Generate a single ordinal data point
-# @K number of ordinal categories
-# @theta vector of latent cutpoints
-# @eta linear predictor
-gen_ordinal_measurements <- function(K, theta, eta, loading){
-
-   if(length(theta) != (K - 1))
-        stop(paste0("theta must have length ", K - 1, " not ", length(theta)))
-
-   n <- length(eta)
-   result <- numeric(n)
-
-   for(i in 1:n) {
-       probs <- numeric(K)
-       for(k in 1:K){
-           if(k == 1) prev_thresh = -Inf
-           else prev_thresh = theta[k - 1]
-
-           if(k == K) next_thresh = Inf
-           else next_thresh = theta[k]
-
-           probs[k] = plogis(next_thresh - (eta[i] * loading)) - plogis(prev_thresh - (eta[i] * loading))
-       }
-       result[i] <- sample(K, 1, prob=probs)
-   }
-  
-   return(result)
-   
-}
-
-# These are the cutpoints on the logit scale.
-theta <- c(5, 50, 60, 65)
-
-generate_data <- function(
-    n, 
-    ad_loadings,
-    coll_loadings,
-    comm_loadings,
-    likert_levels = seq(1:5),
-    ad_likert_means = c()
-    ){
-
-    res <- tibble(
-
-        # Simulate demographic variables
-        age = runif(n, 20, 60),
-        gender_priority_group = sample(c(TRUE, FALSE), n, replace = TRUE),
-        barriers_to_employment = rpois(n, lambda = 1),
-        previous_services = rpois(n, lambda = 3), 
-
-        # Simulate latent variables on an arbitrary scale
-        adaptability = runif(n, 0, 100),
-        collaboration = runif(n, 0, 100),
-        communication = runif(n, 0, 100),
-
-        # Simulate items for latent variable measurements
-        adaptability_m1 = gen_ordinal_measurements(5, theta, adaptability),
-        adaptability_m2 = gen_ordinal_measurements(5, theta, adaptability),
-        adaptability_m3 = gen_ordinal_measurements(5, theta, adaptability),
-  
-        collaboration_m1 = gen_ordinal_measurements(5, theta, collaboration),
-        collaboration_m2 = gen_ordinal_measurements(5, theta, collaboration),
-        collaboration_m3 = gen_ordinal_measurements(5, theta, collaboration),
-  
-        communication_m1 = gen_ordinal_measurements(5, theta, communication),
-        communication_m2 = gen_ordinal_measurements(5, theta, communication),
-        communication_m3 = gen_ordinal_measurements(5, theta, communication),
-
-        # Simulate time-to-event with a linear model
-        time = + 0.2*collaboration + 0.7*communication +
-                     0.01*age - 0.05*gender_priority_group - 
-                     0.4*barriers_to_employment + 0.2*previous_services,
-
-        # Randomly assign event/censoring status
-        status = sample(c(0, 1), n, replace = TRUE, prob = c(.8, .2)),
-
-    )
-
-    return(res)
-
-}
-
-test <- generate_data(10000) |> mutate(adaptability_m1 = factor(adaptability_m1))
-
-test |>
-
-   ggplot(aes(x = adaptability, y = adaptability_m1)) + 
-   geom_point() +
-   geom_smooth()
-
 ```
 
 
 ```{r}
 
-clm(factor(adaptability_m1) ~ adaptability, data = test)
+clm(factor(communication_m1) ~ communication, data = dat)
 
-test |> 
+dat |> 
 
  #   filter(adaptability_m1 %in% c(1, 2, 3)) |>
 
-    count(adaptability_m1) |>
+    count(communication_m1) |>
 
     mutate(p = n / sum(n))
 
 ```
-```{r}
 
-test_reg <- lm(adaptability_m1 ~ adaptability, test)
-test_clm <- clm(adaptability_m1 ~ adaptability, data = test)
-test_clm |> broom::tidy()
-test_reg |> broom::tidy()
-
-```
 
 The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc. 
 
