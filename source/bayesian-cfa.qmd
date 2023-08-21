@@ -9,6 +9,7 @@ format:
 library(tidyverse)
 library(lavaan)
 library(brms)
+library(tidybayes)
 
 # brms backend specifications
 options(brms.backend = "cmdstanr")
@@ -27,16 +28,16 @@ First we can simulate some data with a simple factor structure using lavaan's ha
 ```{r}
 
 pop.model <- ' 
-  f1 =~ .8*m1 + .1*m2 + .6*m3
+  f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
 '
 
 # Simulate data from the model
-fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 1000)
+fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 4000)
 
 # Visualize the measured dat
 fake_dat |>
 
-  select(m1, m2, m3) |>
+  select(m1, m2, m3, m4, m5, m6) |>
   
   pivot_longer(everything(), names_to = "var", values_to = "measurement") |>
 
@@ -61,10 +62,9 @@ fit_1 |> broom::tidy()
 
 But can brms?
 
-```{r}
+```{r eval = FALSE}
 
 # Add a latent variable to the dataset
-
 fake_dat$f1 <- NA_real_
 
 bfit.1 <- brm(
@@ -72,6 +72,9 @@ bfit.1 <- brm(
       bf(m1 ~ 0 + mi(f1)) +
       bf(m2 ~ 0 + mi(f1)) +
       bf(m3 ~ 0 + mi(f1)) +
+      bf(m4 ~ 0 + mi(f1)) +
+      bf(m5 ~ 0 + mi(f1)) +
+      bf(m6 ~ 0 + mi(f1)) +
       bf(f1| mi() ~ 1) + 
       set_rescor(rescor = FALSE),
     family = gaussian(),
@@ -82,13 +85,88 @@ bfit.1 <- brm(
       prior(constant(1), class = "sigma", resp = "m2") +
       prior(normal(0, 10), class = "b", resp = "m3") +
       prior(constant(1), class = "sigma", resp = "m3") +
+      prior(normal(0, 10), class = "b", resp = "m4") +
+      prior(constant(1), class = "sigma", resp = "m4") +
+      prior(normal(0, 10), class = "b", resp = "m5") +
+      prior(constant(1), class = "sigma", resp = "m5") +
+      prior(normal(0, 10), class = "b", resp = "m6") +
+      prior(constant(1), class = "sigma", resp = "m6") +
       prior(normal(0, 10), class = "Intercept", resp = "f1") +
       prior(cauchy(0, 1), class = "sigma", resp = "f1"),
     data = fake_dat,
-    file = "fits/b07.01.rds"
+    warmup = 1000,
+    iter = 6000,
+    file = "source/fits/b07.01.rds"
   )
 
-bfit.1
+```
+
+A Bayesian missing data model treats each missing observation as a parameter. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to replicate the figure below.
+
+First we can put the draws we need into a tidy format and do some cleaning:
+
+```{r}
+
+bfit.1.samples <- bfit.1 |>
+
+  # Get the raw MCMC samples
+  gather_draws(
+    bsp_m2_mif1,
+    bsp_m3_mif1,
+    bsp_m4_mif1,
+    bsp_m5_mif1,
+    bsp_m6_mif1
+  ) |>
+
+  # Do some renaming for clarity
+  mutate(.variable = case_when(
+    .variable == "bsp_m2_mif1" ~ "Loading for m2",
+    .variable == "bsp_m3_mif1" ~ "Loading for m3",
+    .variable == "bsp_m4_mif1" ~ "Loading for m4",
+    .variable == "bsp_m5_mif1" ~ "Loading for m5",
+    .variable == "bsp_m6_mif1" ~ "Loading for m6"
+  )) |> 
+
+  # Add the true factor loadings from above
+  mutate(true_loading = case_when(
+    .variable == "Loading for m2" ~ .1,
+    .variable == "Loading for m3" ~ .6,
+    .variable == "Loading for m4" ~ .2,
+    .variable == "Loading for m5" ~ .9,
+    .variable == "Loading for m6" ~ -.4
+  )) 
+
+# Save the tidy draws for reproducibility
+saveRDS(bfit.1.samples, "source/fits/b07.01.samples.rds")
+```
+
+Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since its loading was held constant at 1 to provide the scale for the latent variable):
+```{r}
+#| fig-cap: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
+#| fig-alt: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable.
+
+# Load the tidy samples
+bfit.1.samples <- readRDS("source/fits/b07.01.samples.rds")
+
+# Plot
+bfit.1.samples|>
+
+  ggplot(aes(x = .value, fill = .variable)) +
+    stat_halfeye(fill = "mediumorchid") +
+    geom_vline(aes(xintercept = true_loading), linetype = 2) + 
+    scale_x_continuous(expand = c(0, 0.015)) +
+    scale_y_continuous(expand = c(0, 0.015)) +
+    guides(fill = "none") +
+    labs(x = "lab",
+       y = NULL)  +
+    facet_wrap(~.variable) +
+    theme_minimal() + 
+    theme(panel.grid.major = element_blank())
+   
+
+  
+
+  
 
 
 ```
