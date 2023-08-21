@@ -10,6 +10,9 @@ library(tidyverse)
 library(lavaan)
 library(brms)
 
+# brms backend specifications
+options(brms.backend = "cmdstanr")
+options(mc.cores = parallel::detectCores())
 ```
 
 Can brms replicate results from lavaan?
@@ -28,7 +31,7 @@ pop.model <- '
 '
 
 # Simulate data from the model
-fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 500)
+fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 1000)
 
 # Visualize the measured dat
 fake_dat |>
@@ -62,14 +65,13 @@ But can brms?
 
 # Add a latent variable to the dataset
 
-fake_dat$f1 <- NA
+fake_dat$f1 <- NA_real_
 
-bfit.1 <- 
-  brm(
+bfit.1 <- brm(
     formula =
-      bf(m1 ~ 0 + mi(xo)) +
-      bf(m2 ~ 0 + mi(xo)) +
-      bf(m3 ~ 0 + mi(xo)) +
+      bf(m1 ~ 0 + mi(f1)) +
+      bf(m2 ~ 0 + mi(f1)) +
+      bf(m3 ~ 0 + mi(f1)) +
       bf(f1| mi() ~ 1) + 
       set_rescor(rescor = FALSE),
     family = gaussian(),
@@ -82,12 +84,21 @@ bfit.1 <-
       prior(constant(1), class = "sigma", resp = "m3") +
       prior(normal(0, 10), class = "Intercept", resp = "f1") +
       prior(cauchy(0, 1), class = "sigma", resp = "f1"),
-    data = fake_dat
+    data = fake_dat,
+    file = "fits/b07.01.rds"
   )
 
-m1
+bfit.1
 
 
+```
+
+```{r}
+
+fit3 <- brm(formula = rating ~ treat + period,
+data = inhaler, family = cumulative)
+
+fit3 |> summary()
 ```
 ## Second Example: Correlated factors
 
