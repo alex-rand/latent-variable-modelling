@@ -25,7 +25,7 @@ To demonstrate, we can simulate some data using {{lavaan}} and show that `brms::
 ## First Example: Simple Factor Structure
 
 First we can simulate some data with a simple factor structure using lavaan's handy `simulateData()` function:
-```{r}
+```{r message = FALSE, warning = FALSE}
 
 pop.model <- ' 
   f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
@@ -48,7 +48,7 @@ fake_dat |>
 
 ```
 
-Unsurprisingly, the lavaan is able to recover the true parameters for the data it generated.
+Unsurprisingly, the lavaan `cfa()` function is able to recover the true parameters for the data it generated.
 
 ```{r}
 
@@ -60,7 +60,7 @@ fit_1 |> broom::tidy()
 
 ```
 
-But can brms?
+But can brms recover the true parameter values?
 
 ```{r eval = FALSE}
 
@@ -96,16 +96,16 @@ bfit.1 <- brm(
     data = fake_dat,
     warmup = 1000,
     iter = 6000,
-    file = "source/fits/b07.01.rds"
+    file = "fits/b07.01.rds"
   )
 
 ```
 
-A Bayesian missing data model treats each missing observation as a parameter. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to replicate the figure below.
+A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to replicate the figure below.
 
 First we can put the draws we need into a tidy format and do some cleaning:
 
-```{r}
+```{r eval = FALSE}
 
 bfit.1.samples <- bfit.1 |>
 
@@ -137,16 +137,16 @@ bfit.1.samples <- bfit.1 |>
   )) 
 
 # Save the tidy draws for reproducibility
-saveRDS(bfit.1.samples, "source/fits/b07.01.samples.rds")
+saveRDS(bfit.1.samples, "fits/b07.01.samples.rds")
 ```
 
 Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since its loading was held constant at 1 to provide the scale for the latent variable):
 ```{r}
 #| fig-cap: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
-#| fig-alt: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable.
+#| fig-alt: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
 
 # Load the tidy samples
-bfit.1.samples <- readRDS("source/fits/b07.01.samples.rds")
+bfit.1.samples <- readRDS("fits/b07.01.samples.rds")
 
 # Plot
 bfit.1.samples|>
@@ -170,6 +170,8 @@ bfit.1.samples|>
 
 
 ```
+
+In all cases the model is __pretty close__ to the true parameter value. It's a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty good CFA in {{brms}}.
 
 ```{r}
 
