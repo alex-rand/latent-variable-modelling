@@ -162,13 +162,7 @@ bfit.1.samples|>
     facet_wrap(~.variable) +
     theme_minimal() + 
     theme(panel.grid.major = element_blank())
-   
-
   
-
-  
-
-
 ```
 
 In all cases the model is __pretty close__ to the true parameter value. It's a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty good CFA in {{brms}}.
@@ -187,7 +181,7 @@ mtmm.model <- '
 '
 
 # Simulate data from the model
-fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
+fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 500)
 
 ```
 
@@ -215,6 +209,24 @@ raw_stancode <- make_stancode(
   data = fake_dat 
 )
 
+# DELETE run the brms model
+test <- brm(
+  formula =
+    bf(m1 ~ 0 + mi(f1)) +
+    bf(m2 ~ 0 + mi(f1)) +
+    bf(m3 ~ 0 + mi(f1)) +
+    bf(m4 ~ 0 + mi(f2)) +
+    bf(m5 ~ 0 + mi(f2)) +
+    bf(m6 ~ 0 + mi(f2)) +
+    bf(f1| mi() ~ 1) + 
+    bf(f2| mi() ~ 1) + 
+    set_rescor(rescor = FALSE),
+  family = gaussian(),
+  data = fake_dat 
+)
+
+test$data$N_f1
+# END DELETE
 raw_stancode
 ```
 
@@ -225,9 +237,6 @@ Once we have the raw Stan code we can make a few modifications so that it models
 # Modify the raw Stan code
 stan_model_code <- "
 // generated with brms 2.20.1
-functions {
-  
-}
 data {
   int<lower=1> N; // total number of observations
   int<lower=1> N_m1; // number of observations
@@ -251,15 +260,12 @@ data {
   int<lower=1> N_f1; // number of observations
   vector[N_f1] Y_f1; // response variable
   int<lower=0> Nmi_f1; // number of missings
-  int<lower=1> Jmi_f1[Nmi_f1]; // positions of missings
+  array[Nmi_f1] int<lower=1> Jmi_f1; // positions of missings
   int<lower=1> N_f2; // number of observations
   vector[N_f2] Y_f2; // response variable
   int<lower=0> Nmi_f2; // number of missings
-  int<lower=1> Jmi_f2[Nmi_f2]; // positions of missings
+  array[Nmi_f2] int<lower=1> Jmi_f2; // positions of missings
   int prior_only; // should the likelihood be ignored?
-}
-transformed data {
-  
 }
 parameters {
   vector[Ksp_m1] bsp_m1; // special effects coefficients
@@ -311,7 +317,7 @@ transformed parameters {
   corr_matrix[2] Omega = multiply_lower_tri_self_transpose(L_Omega);
 
   // ADDED Compute correlated factors for Yl_f1 and Yl_f2
-  vector[2] mu_factors[N];
+  array[N] vector[2] mu_factors;
   for (n in 1:N) {
     mu_factors[n, 1] = Intercept_f1;
     mu_factors[n, 2] = Intercept_f2;
@@ -415,46 +421,49 @@ model <- cmdstanr::cmdstan_model(stan_file)
 
 # Put the data into a list format Stan can understand
 data_list <- list(
+  
+    N = nrow(fake_dat),
+
     N_m1 = nrow(fake_dat),
-    Y_m1 = fake_dat$Y_m1,
-    Ksp_m1 = length(fake_dat$Y_m1),
+    Y_m1 = fake_dat$m1,
+    Ksp_m1 = length(fake_dat$m1),
     
     N_m2 = nrow(fake_dat),
-    Y_m2 = fake_dat$Y_m2,
-    Ksp_m2 = length(fake_dat$Y_m2),
+    Y_m2 = fake_dat$m2,
+    Ksp_m2 = length(fake_dat$m2),
     
     N_m3 = nrow(fake_dat),
-    Y_m3 = fake_dat$Y_m3,
-    Ksp_m3 = length(fake_dat$Y_m3),
+    Y_m3 = fake_dat$m3,
+    Ksp_m3 = length(fake_dat$m3),
     
     N_m4 = nrow(fake_dat),
-    Y_m4 = fake_dat$Y_m4,
-    Ksp_m4 = length(fake_dat$Y_m4),
+    Y_m4 = fake_dat$m4,
+    Ksp_m4 = length(fake_dat$m4),
     
     N_m5 = nrow(fake_dat),
-    Y_m5 = fake_dat$Y_m5,
-    Ksp_m5 = length(fake_dat$Y_m5),
+    Y_m5 = fake_dat$m5,
+    Ksp_m5 = length(fake_dat$m5),
     
     N_m6 = nrow(fake_dat),
-    Y_m6 = fake_dat$Y_m6,
-    Ksp_m6 = length(fake_dat$Y_m6),
+    Y_m6 = fake_dat$m6,
+    Ksp_m6 = length(fake_dat$m6),
     
-    N_f1 = sum(!is.na(fake_dat$Y_f1)),
-    Y_f1 = fake_dat$Y_f1[!is.na(fake_dat$Y_f1)],
-    Nmi_f1 = sum(is.na(fake_dat$Y_f1)),
-    Jmi_f1 = which(is.na(fake_dat$Y_f1)),
+    N_f1 = nrow(fake_dat),
+    Y_f1 = rep(0, nrow(fake_dat)),
+    Nmi_f1 = sum(is.na(fake_dat$f1)),
+    Jmi_f1 = which(is.na(fake_dat$f1)),
     
-    N_f2 = sum(!is.na(fake_dat$Y_f2)),
-    Y_f2 = fake_dat$Y_f2[!is.na(fake_dat$Y_f2)],
-    Nmi_f2 = sum(is.na(fake_dat$Y_f2)),
-    Jmi_f2 = which(is.na(fake_dat$Y_f2)),
+    N_f2 = nrow(fake_dat),
+    Y_f2 = rep(0, nrow(fake_dat)),
+    Nmi_f2 = sum(is.na(fake_dat$f2)),
+    Jmi_f2 = which(is.na(fake_dat$f2)),
 
     prior_only = 0
 
 )
 
 # Fit the model
-fit <- mod$sample(
+fit <- model$sample(
   data = data_list,
   seed = 199,
   chains = 4,
@@ -464,6 +473,27 @@ fit <- mod$sample(
 
 ```
 
+```{r}
+
+# Test model for our boy
+file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
+mod <- cmdstan_model(file)
+
+mod$print()
+
+# names correspond to the data block in the Stan program
+data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+
+fit <- mod$sample(
+  data = data_list,
+  seed = 123,
+  chains = 4,
+  parallel_chains = 4,
+  refresh = 500 # print update every 500 iters
+)
+
+fit
+```
 
 
 ## Third Example: MTMM 
