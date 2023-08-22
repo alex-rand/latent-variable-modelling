@@ -222,7 +222,6 @@ Once we have the raw Stan code we can make a few modifications so that it models
 
 ```{r}
 
-
 # Modify the raw Stan code
 stan_model_code <- "
 // generated with brms 2.20.1
