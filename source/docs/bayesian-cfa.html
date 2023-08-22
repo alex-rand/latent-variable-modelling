@@ -285,130 +285,127 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x =</span> measurement)) <span class="sc">+</span></span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>var) <span class="sc">+</span></span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>Unsurprisingly, the lavaan is able to recover the true parameters for the data it generated.</p>
+<p>Unsurprisingly, the lavaan <code>cfa()</code> function is able to recover the true parameters for the data it generated.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>fit_1 <span class="ot">&lt;-</span> <span class="fu">cfa</span>(pop.model, <span class="at">data =</span> fake_dat)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure it works</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>fit_1 <span class="sc">|&gt;</span> broom<span class="sc">::</span><span class="fu">tidy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fit_1 <span class="ot">&lt;-</span> <span class="fu">cfa</span>(pop.model, <span class="at">data =</span> fake_dat)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure it works</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>fit_1 <span class="sc">|&gt;</span> broom<span class="sc">::</span><span class="fu">tidy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 13 × 9
    term     op    estimate std.error statistic p.value std.lv std.all std.nox
    &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
- 1 f1 =~ m1 =~       0.8      0           NA        NA  0.809  0.635   0.635 
- 2 f1 =~ m2 =~       0.1      0           NA        NA  0.101  0.0993  0.0993
- 3 f1 =~ m3 =~       0.6      0           NA        NA  0.607  0.521   0.521 
- 4 f1 =~ m4 =~       0.2      0           NA        NA  0.202  0.196   0.196 
- 5 f1 =~ m5 =~       0.9      0           NA        NA  0.911  0.672   0.672 
- 6 f1 =~ m6 =~      -0.4      0           NA        NA -0.405 -0.382  -0.382 
- 7 m1 ~~ m1 ~~       0.972    0.0281      34.5       0  0.972  0.597   0.597 
- 8 m2 ~~ m2 ~~       1.03     0.0231      44.6       0  1.03   0.990   0.990 
- 9 m3 ~~ m3 ~~       0.990    0.0252      39.2       0  0.990  0.729   0.729 
-10 m4 ~~ m4 ~~       1.02     0.0232      44.1       0  1.02   0.962   0.962 
-11 m5 ~~ m5 ~~       1.01     0.0313      32.2       0  1.01   0.549   0.549 
-12 m6 ~~ m6 ~~       0.956    0.0226      42.2       0  0.956  0.854   0.854 
-13 f1 ~~ f1 ~~       1.02     0.0347      29.5       0  1      1       1     </code></pre>
+ 1 f1 =~ m1 =~       0.8      0           NA        NA  0.805  0.624   0.624 
+ 2 f1 =~ m2 =~       0.1      0           NA        NA  0.101  0.0984  0.0984
+ 3 f1 =~ m3 =~       0.6      0           NA        NA  0.604  0.510   0.510 
+ 4 f1 =~ m4 =~       0.2      0           NA        NA  0.201  0.196   0.196 
+ 5 f1 =~ m5 =~       0.9      0           NA        NA  0.906  0.678   0.678 
+ 6 f1 =~ m6 =~      -0.4      0           NA        NA -0.403 -0.370  -0.370 
+ 7 m1 ~~ m1 ~~       1.02     0.0291      35.0       0  1.02   0.611   0.611 
+ 8 m2 ~~ m2 ~~       1.04     0.0232      44.6       0  1.04   0.990   0.990 
+ 9 m3 ~~ m3 ~~       1.04     0.0263      39.4       0  1.04   0.740   0.740 
+10 m4 ~~ m4 ~~       1.02     0.0231      44.1       0  1.02   0.962   0.962 
+11 m5 ~~ m5 ~~       0.966    0.0306      31.5       0  0.966  0.541   0.541 
+12 m6 ~~ m6 ~~       1.02     0.0242      42.4       0  1.02   0.863   0.863 
+13 f1 ~~ f1 ~~       1.01     0.0346      29.3       0  1      1       1     </code></pre>
 </div>
 </div>
-<p>But can brms?</p>
+<p>But can brms recover the true parameter values?</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a latent variable to the dataset</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fake_dat<span class="sc">$</span>f1 <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>bfit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m2 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m3 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m4 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m5 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m6 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(f1<span class="sc">|</span> <span class="fu">mi</span>() <span class="sc">~</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">set_rescor</span>(<span class="at">rescor =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"Intercept"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>) <span class="sc">+</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">cauchy</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>),</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> fake_dat,</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">warmup =</span> <span class="dv">1000</span>,</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">iter =</span> <span class="dv">6000</span>,</span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="st">"fits/b07.01.rds"</span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a latent variable to the dataset</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fake_dat<span class="sc">$</span>f1 <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>bfit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m2 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m3 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m4 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m5 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m6 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(f1<span class="sc">|</span> <span class="fu">mi</span>() <span class="sc">~</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">set_rescor</span>(<span class="at">rescor =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"Intercept"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>) <span class="sc">+</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">cauchy</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>),</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> fake_dat,</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">warmup =</span> <span class="dv">1000</span>,</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">iter =</span> <span class="dv">6000</span>,</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="st">"fits/b07.01.rds"</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>A Bayesian missing data model treats each missing observation as a parameter. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I’ll only push the draws we need to replicate the figure below.</p>
+<p>A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I’ll only push the draws we need to replicate the figure below.</p>
 <p>First we can put the draws we need into a tidy format and do some cleaning:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples <span class="ot">&lt;-</span> bfit<span class="fl">.1</span> <span class="sc">|&gt;</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get the raw MCMC samples</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gather_draws</span>(</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    bsp_m2_mif1,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    bsp_m3_mif1,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    bsp_m4_mif1,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    bsp_m5_mif1,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    bsp_m6_mif1</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Do some renaming for clarity</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">case_when</span>(</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m2_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m2"</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m3_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m3"</span>,</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m4_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m4"</span>,</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m5_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m5"</span>,</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m6_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m6"</span></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">|&gt;</span> </span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add the true factor loadings from above</span></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">true_loading =</span> <span class="fu">case_when</span>(</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m2"</span> <span class="sc">~</span> .<span class="dv">1</span>,</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m3"</span> <span class="sc">~</span> .<span class="dv">6</span>,</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m4"</span> <span class="sc">~</span> .<span class="dv">2</span>,</span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m5"</span> <span class="sc">~</span> .<span class="dv">9</span>,</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m6"</span> <span class="sc">~</span> <span class="sc">-</span>.<span class="dv">4</span></span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>  )) </span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the tidy draws for reproducibility</span></span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(bfit.<span class="fl">1.</span>samples, <span class="st">"fits/b07.01.samples.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples <span class="ot">&lt;-</span> bfit<span class="fl">.1</span> <span class="sc">|&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get the raw MCMC samples</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gather_draws</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    bsp_m2_mif1,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    bsp_m3_mif1,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    bsp_m4_mif1,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    bsp_m5_mif1,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    bsp_m6_mif1</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Do some renaming for clarity</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">.variable =</span> <span class="fu">case_when</span>(</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m2_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m2"</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m3_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m3"</span>,</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m4_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m4"</span>,</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m5_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m5"</span>,</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"bsp_m6_mif1"</span> <span class="sc">~</span> <span class="st">"Loading for m6"</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">|&gt;</span> </span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add the true factor loadings from above</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">true_loading =</span> <span class="fu">case_when</span>(</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m2"</span> <span class="sc">~</span> .<span class="dv">1</span>,</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m3"</span> <span class="sc">~</span> .<span class="dv">6</span>,</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m4"</span> <span class="sc">~</span> .<span class="dv">2</span>,</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m5"</span> <span class="sc">~</span> .<span class="dv">9</span>,</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Loading for m6"</span> <span class="sc">~</span> <span class="sc">-</span>.<span class="dv">4</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>  )) </span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the tidy draws for reproducibility</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(bfit.<span class="fl">1.</span>samples, <span class="st">"fits/b07.01.samples.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since its loading was held constant at 1 to provide the scale for the latent variable):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the tidy samples</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"fits/b07.01.samples.rds"</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples<span class="sc">|&gt;</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">fill =</span> .variable)) <span class="sc">+</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>(<span class="at">fill =</span> <span class="st">"mediumorchid"</span>) <span class="sc">+</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="fu">aes</span>(<span class="at">xintercept =</span> true_loading), <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">guides</span>(<span class="at">fill =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"lab"</span>,</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>)  <span class="sc">+</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable) <span class="sc">+</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.grid.major =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the tidy samples</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"fits/b07.01.samples.rds"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples<span class="sc">|&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">fill =</span> .variable)) <span class="sc">+</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>(<span class="at">fill =</span> <span class="st">"mediumorchid"</span>) <span class="sc">+</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="fu">aes</span>(<span class="at">xintercept =</span> true_loading), <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">guides</span>(<span class="at">fill =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"lab"</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="cn">NULL</span>)  <span class="sc">+</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable) <span class="sc">+</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">panel.grid.major =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -418,9 +415,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
+<p>In all cases the model is <strong>pretty close</strong> to the true parameter value. It’s a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty good CFA in {{brms}}.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fit3 <span class="ot">&lt;-</span> <span class="fu">brm</span>(<span class="at">formula =</span> rating <span class="sc">~</span> treat <span class="sc">+</span> period,</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">data =</span> inhaler, <span class="at">family =</span> cumulative)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fit3 <span class="ot">&lt;-</span> <span class="fu">brm</span>(<span class="at">formula =</span> rating <span class="sc">~</span> treat <span class="sc">+</span> period,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">data =</span> inhaler, <span class="at">family =</span> cumulative)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Start sampling</code></pre>
 </div>
@@ -428,7 +426,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 1 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is inf, but should be greater than the previous element, inf (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 1 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 3.3742e+41, but should be greater than the previous element, 3.3742e+41 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -443,7 +441,37 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 1 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 8.76258e+52, but should be greater than the previous element, 8.76258e+52 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 1 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 5.91618e+41, but should be greater than the previous element, 5.91618e+41 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 2 is -7228.43, but should be greater than the previous element, -7228.43 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Chain 1 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 2 is -206.57, but should be greater than the previous element, -206.57 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -458,7 +486,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 2.61251e+41, but should be greater than the previous element, 2.61251e+41 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 8.0387e+35, but should be greater than the previous element, 8.0387e+35 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -473,7 +501,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 1.03914e+42, but should be greater than the previous element, 1.03914e+42 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 2.96396e+35, but should be greater than the previous element, 2.96396e+35 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -488,22 +516,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is inf, but should be greater than the previous element, inf (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 </code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 1.46398e+22, but should be greater than the previous element, 1.46398e+22 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 2 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 4.66516e+73, but should be greater than the previous element, 4.66516e+73 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 2 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -518,7 +531,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 3 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 1.17947e+38, but should be greater than the previous element, 1.17947e+38 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 3 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 1.02581e+38, but should be greater than the previous element, 1.02581e+38 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -533,7 +546,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 3 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 1.37428e+38, but should be greater than the previous element, 1.37428e+38 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 3 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 2.94854e+37, but should be greater than the previous element, 2.94854e+37 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -548,7 +561,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 3 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 3 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is inf, but should be greater than the previous element, inf (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 3 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is inf, but should be greater than the previous element, inf (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 3 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -563,7 +576,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 2 is -12.0887, but should be greater than the previous element, -12.0887 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 2 is 6.51117, but should be greater than the previous element, 6.51117 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -578,7 +591,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 2 is -13.6207, but should be greater than the previous element, -13.6207 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 2 is 6.71665, but should be greater than the previous element, 6.71665 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -593,7 +606,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <pre><code>Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is inf, but should be greater than the previous element, inf (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
+<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is inf, but should be greater than the previous element, inf (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/RtmpRiOrv4/model-b226315032a7.stan', line 84, column 6 to column 63)</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
@@ -604,52 +617,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell-output cell-output-stderr">
 <pre><code>Chain 4 </code></pre>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 4.09193e+72, but should be greater than the previous element, 4.09193e+72 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 </code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 46.8931, but should be greater than the previous element, 46.8931 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 </code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 Exception: ordered_logistic: Cut-points is not a valid ordered vector. The element at 3 is 4.92994e+15, but should be greater than the previous element, 4.92994e+15 (in '/var/folders/n6/wwxpw0j17gq8j_040cqdb5fw0000gn/T/Rtmpx3PmB0/model-6aec5f6a439d.stan', line 84, column 6 to column 63)</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Chain 4 </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>fit3 <span class="sc">|&gt;</span> <span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>fit3 <span class="sc">|&gt;</span> <span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> Family: cumulative 
   Links: mu = logit; disc = identity 
@@ -660,11 +628,11 @@ Formula: rating ~ treat + period
 
 Population-Level Effects: 
              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-Intercept[1]     0.54      0.09     0.36     0.72 1.00     5070     3726
-Intercept[2]     3.18      0.20     2.80     3.60 1.00     4696     3013
-Intercept[3]     4.40      0.36     3.76     5.18 1.00     5258     3033
-treat           -1.01      0.18    -1.37    -0.67 1.00     4687     3081
-period           0.15      0.18    -0.19     0.50 1.00     5654     3092
+Intercept[1]     0.54      0.09     0.36     0.72 1.00     4383     2946
+Intercept[2]     3.18      0.21     2.79     3.60 1.00     5255     3022
+Intercept[3]     4.40      0.37     3.73     5.16 1.00     4835     3233
+treat           -1.01      0.18    -1.36    -0.67 1.00     4781     2837
+period           0.15      0.18    -0.20     0.50 1.00     5487     2956
 
 Family Specific Parameters: 
      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
