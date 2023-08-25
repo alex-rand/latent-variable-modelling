@@ -8,6 +8,7 @@ format:
 ```{r message = FALSE}
 library(tidyverse)
 library(lavaan)
+library(blavaan)
 library(brms)
 library(tidybayes)
 
@@ -465,27 +466,23 @@ fit <- model$sample(
 
 ```
 
-```{r}
+Or instead we can go with {{blavaan}}. The model fits way faster than under the {{brms}} approach and recovers the true parameter estimates. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. So it doesn't seem practical to really get in there and customize things directly. 
 
-# Test model for our boy
-file <- file.path(cmdstan_path(), "examples", "bernoulli", "bernoulli.stan")
-mod <- cmdstan_model(file)
+The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
 
-mod$print()
+```{r eval = FALSE}
+ 
+# Fit the model
+blavfit.1 <- bcfa(mtmm.model, data=fake_dat, mcmcfile = T)
 
-# names correspond to the data block in the Stan program
-data_list <- list(N = 10, y = c(0,1,0,0,0,0,0,0,0,1))
+# Gaze at parameter estimates
+blavfit.1 |> summary()
 
-fit <- mod$sample(
-  data = data_list,
-  seed = 123,
-  chains = 4,
-  parallel_chains = 4,
-  refresh = 500 # print update every 500 iters
-)
+# Make sure the MCMC diagnostics are ok
+blavInspect(blavfit.1, "mcobj")
 
-fit
 ```
+
 
 
 ## Third Example: MTMM 
