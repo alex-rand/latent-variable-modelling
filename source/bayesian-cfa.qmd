@@ -12,7 +12,7 @@ library(blavaan)
 library(brms)
 library(tidybayes)
 
-# brms backend specifications
+# MCMC specifications
 options(brms.backend = "cmdstanr")
 options(mc.cores = parallel::detectCores())
 ```
@@ -190,9 +190,8 @@ The complication here is that brms doesn't currently support setting constraints
 
 Here is the raw Stan code:
 
-```{r}
+```{r eval = FALSE}
 
-# Modify the raw Stan code
 stan_model_code <- "
 data {
   int N; // sample size
@@ -313,17 +312,18 @@ generated quantities {
 }
 "
 
-stan_file <- cmdstanr::write_stan_file(stan_model_code)
-
 ```
 
 Now we can compile and run the model
 
-```{r}
+```{r eval = FALSE}
 
-# Autoformat the model syntax
-# model <- cmdstan_model(stan_file, compile = FALSE)
-# model$format(canonicalize = TRUE)
+# Write the raw code above from an R string to a Stan file
+stan_file <- cmdstanr::write_stan_file(stan_model_code)
+
+# Autoformat the model syntax to preempt any warnings at compile time
+model <- cmdstanr::cmdstan_model(stan_file, compile = FALSE)
+model$format(canonicalize = TRUE)
 
 # Compile the model from the Stan file
 model <- cmdstanr::cmdstan_model(stan_file)
@@ -346,28 +346,56 @@ fit <- model$sample(
   parallel_chains = 4,
   iter_warmup = 1000,
   iter_sampling = 6000,
+  adapt_delta=0.99, 
+  max_treedepth = 12,
   refresh = 1 # print update every 500 iters
 )
 
-# Save the model.
+# Save the resulting model fit
 saveRDS(fit, "source/fits/b07.02.rds")
+
 
 ```
 
-The model took a long time to sample, but now we can explore the results. One important point is that we can interpret the Stan model's estimates of the correlation coefficient between the two factors directly as covariances (IE analogous to the true parameter simulated with lavaan), because we fixed the factor standard deviations to be equal to 1. 
+The model took about 90 minutes to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're are directly interested in, so we have no problem just working in memory. 
+
+```{r eval = FALSE}
+
+# Load the cmdstanr model object
+fit <- readRDS("source/fits/b07.02.rds")
+
+# Load the MCMC draws from the variables we care about
+test <- fit$draws(
+  variables = c(
+  "lam[1,1]",
+  "lam[2,1]",
+  "lam[3,1]",
+  "lam[4,2]",
+  "lam[5,2]",
+  "lam[6,2]",
+  "Rho[2,1]"
+  )
+)
+
+# Save the result
+saveRDS(test, "source/fits/b07.02.samples.rds")
+
+```
+
+Now we can explore the results. One important point is that we can interpret the Stan model's estimates of the correlation coefficient between the two factors directly as covariances (IE analogous to the true parameter simulated with lavaan), because we fixed the factor standard deviations to be equal to 1. 
 IE because our sigmas are both equal to 1, this equation:
 $\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}$
 
 Just becomes this:
 $\rho(X, Y) = \frac{\text{Cov}(X, Y)}$
 
-We're interested in the loadings and the between-factor covariance. So let's wrangle the MCMC samples and plot them. 
+We're interested in the loadings and the between-factor covariance. So let's wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers.
 
 ```{r}
 
-fit <- readRDS("source/fits/b07.02.rds")
+fit <- readRDS("source/fits/b07.02.samples.rds")
 
-fit |> 
+fit |>
 
   # Get the raw draws for the factor loadings the beween-factor correlation coefficient
   gather_draws(
@@ -414,8 +442,6 @@ fit |>
   theme_minimal() + 
   theme(panel.grid.major = element_blank())
 
-
-fit
 ```
 
 Or instead we can go with {{blavaan}}. The model fits way faster than under the {{brms}} approach and recovers the true parameter estimates. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. So it doesn't seem practical to really get in there and customize things directly. 
