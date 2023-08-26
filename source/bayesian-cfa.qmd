@@ -228,7 +228,7 @@ raw_stancode <- make_stancode(
 )
 
 
-test$data$N_f1
+raw_stancode
 #/DELETE
 raw_stancode
 ```
@@ -239,178 +239,127 @@ Once we have the raw Stan code we can make a few modifications so that it models
 
 # Modify the raw Stan code
 stan_model_code <- "
-// generated with brms 2.20.1
-functions {
-  
-}
 data {
-  int<lower=1> N; // total number of observations
-  int<lower=1> N_m1; // number of observations
-  vector[N_m1] Y_m1; // response variable
-  int<lower=1> Ksp_m1; // number of special effects terms
-  int<lower=1> N_m2; // number of observations
-  vector[N_m2] Y_m2; // response variable
-  int<lower=1> Ksp_m2; // number of special effects terms
-  int<lower=1> N_m3; // number of observations
-  vector[N_m3] Y_m3; // response variable
-  int<lower=1> Ksp_m3; // number of special effects terms
-  int<lower=1> N_m4; // number of observations
-  vector[N_m4] Y_m4; // response variable
-  int<lower=1> Ksp_m4; // number of special effects terms
-  int<lower=1> N_m5; // number of observations
-  vector[N_m5] Y_m5; // response variable
-  int<lower=1> Ksp_m5; // number of special effects terms
-  int<lower=1> N_m6; // number of observations
-  vector[N_m6] Y_m6; // response variable
-  int<lower=1> Ksp_m6; // number of special effects terms
-  int<lower=1> N_f1; // number of observations
-  vector[N_f1] Y_f1; // response variable
-  int<lower=0> Nmi_f1; // number of missings
-  array[Nmi_f1] int<lower=1> Jmi_f1; // positions of missings
-  int<lower=1> N_f2; // number of observations
-  vector[N_f2] Y_f2; // response variable
-  int<lower=0> Nmi_f2; // number of missings
-  array[Nmi_f2] int<lower=1> Jmi_f2; // positions of missings
-  int<lower=1> nresp; // number of responses
-  int nrescor; // number of residual correlations
-  int prior_only; // should the likelihood be ignored?
-}
-transformed data {
-  array[N] vector[nresp] Y; // response array
-  for (n in 1 : N) {
-    Y[n] = transpose([Y_m1[n], Y_m2[n], Y_m3[n], Y_m4[n], Y_m5[n], Y_m6[n],
-                      Y_f1[n], Y_f2[n]]);
-  }
+  int N; // sample size
+  int P; // number of variables
+  int D; // number of factors
+  array[N] vector[P] X; // data matrix of order [N,P]
+  int n_lam; // how many factor loadings are estimated
 }
 parameters {
-  vector[Ksp_m2] bsp_m2; // special effects coefficients
-  vector[Ksp_m3] bsp_m3; // special effects coefficients
-  vector[Ksp_m5] bsp_m5; // special effects coefficients
-  vector[Ksp_m6] bsp_m6; // special effects coefficients
-  vector[Nmi_f1] Ymi_f1; // estimated missings
-  real Intercept_f1; // temporary intercept for centered predictors
-  real<lower=0> sigma_f1; // dispersion parameter
-  vector[Nmi_f2] Ymi_f2; // estimated missings
-  real Intercept_f2; // temporary intercept for centered predictors
-  real<lower=0> sigma_f2; // dispersion parameter
-  real<lower=-1, upper=1> corr_f1_f2; // correlation between f1 and f2
+  matrix[N, D] FS_UNC; // factor scores, matrix of order [N,D]
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  vector<lower=0>[P] sd_p; // residual sd for each variable
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
 }
 transformed parameters {
-  vector[Ksp_m1] bsp_m1; // special effects coefficients
-  real<lower=0> sigma_m1; // dispersion parameter
-  real<lower=0> sigma_m2; // dispersion parameter
-  real<lower=0> sigma_m3; // dispersion parameter
-  vector[Ksp_m4] bsp_m4; // special effects coefficients
-  real<lower=0> sigma_m4; // dispersion parameter
-  real<lower=0> sigma_m5; // dispersion parameter
-  real<lower=0> sigma_m6; // dispersion parameter
-  real lprior = 0; // prior contributions to the log posterior
-  bsp_m1 = rep_vector(1, rows(bsp_m1));
-  sigma_m1 = 1;
-  sigma_m2 = 1;
-  sigma_m3 = 1;
-  bsp_m4 = rep_vector(1, rows(bsp_m4));
-  sigma_m4 = 1;
-  sigma_m5 = 1;
-  sigma_m6 = 1;
-  lprior += normal_lpdf(bsp_m2 | 0, 10);
-  lprior += normal_lpdf(bsp_m3 | 0, 10);
-  lprior += normal_lpdf(bsp_m5 | 0, 10);
-  lprior += normal_lpdf(bsp_m6 | 0, 10);
-  lprior += normal_lpdf(Intercept_f1 | 0, 10);
-  lprior += cauchy_lpdf(sigma_f1 | 0, 1) - 1 * cauchy_lccdf(0 | 0, 1);
-  lprior += student_t_lpdf(Intercept_f2 | 3, 0, 2.5);
-  lprior += student_t_lpdf(sigma_f2 | 3, 0, 2.5)
-            - 1 * student_t_lccdf(0 | 3, 0, 2.5);
-  // Create the residual correlation matrix
-  corr_matrix[nresp] Rescor = diag_matrix(rep_vector(1, nresp));
-  Rescor[7, 8] = corr_f1_f2;
-  Rescor[8, 7] = corr_f1_f2;
-
-  // cholesky factor of residual covariance matrix
-  vector[nresp] sigma = [sigma_m1, sigma_m2, sigma_m3, sigma_m4, sigma_m5, sigma_m6, sigma_f1, sigma_f2]';
-  matrix[nresp, nresp] LSigma = diag_pre_multiply(sigma, cholesky_decompose(Rescor));
+  // a vector to hold the factor means, which will be a bunch of 0s
+  vector[D] M;
+  M = rep_vector(0, D);
+  
+  // a vector to hold the factor SDs, which will be a bunch of 1s. 
+  vector<lower=0>[D] Sd_d;
+  Sd_d = rep_vector(1, D);
+  
+  // A vector to hold the linear predictors for the manifest variables, which are each a deterministic function of loading*factor_score
+  array[N] vector[P] mu_UNC;
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+    mu_UNC[i, 7] = lam_UNC[7] * FS_UNC[i, 3];
+    mu_UNC[i, 8] = lam_UNC[8] * FS_UNC[i, 3];
+    mu_UNC[i, 9] = lam_UNC[9] * FS_UNC[i, 3];
+  }
+  
+  // the var-covar matrix for the factors, a deterministic function of the deterministic SDs and the estimated rhos defined in parameters{}
+  cholesky_factor_cov[D] L_Sigma;
+  L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
 }
 model {
-  // likelihood including constants
-  if (!prior_only) {
-    // vector combining observed and missing responses
-    vector[N_f1] Yl_f1 = Y_f1;
-    // vector combining observed and missing responses
-    vector[N_f2] Yl_f2 = Y_f2;
-    array[N] vector[nresp] Yl = Y;
-    // initialize linear predictor term
-    vector[N_m1] mu_m1 = rep_vector(0.0, N_m1);
-    // initialize linear predictor term
-    vector[N_m2] mu_m2 = rep_vector(0.0, N_m2);
-    // initialize linear predictor term
-    vector[N_m3] mu_m3 = rep_vector(0.0, N_m3);
-    // initialize linear predictor term
-    vector[N_m4] mu_m4 = rep_vector(0.0, N_m4);
-    // initialize linear predictor term
-    vector[N_m5] mu_m5 = rep_vector(0.0, N_m5);
-    // initialize linear predictor term
-    vector[N_m6] mu_m6 = rep_vector(0.0, N_m6);
-    // initialize linear predictor term
-    vector[N_f1] mu_f1 = rep_vector(0.0, N_f1);
-    // initialize linear predictor term
-    vector[N_f2] mu_f2 = rep_vector(0.0, N_f2);
-    // multivariate predictor array
-    array[N] vector[nresp] Mu;
-    Yl_f1[Jmi_f1] = Ymi_f1;
-    Yl_f2[Jmi_f2] = Ymi_f2;
-    mu_f1 += Intercept_f1;
-    mu_f2 += Intercept_f2;
-    for (n in 1 : N_m1) {
-      // add more terms to the linear predictor
-      mu_m1[n] += bsp_m1[1] * Yl_f1[n];
+  // Declare some priors
+  L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
+  lam_UNC ~ normal(0, 10); // Prior on loadings
+  sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
+  
+  // Set up the likelihoods of the manifest and latent factors
+  for (i in 1 : N) {
+    for (j in 1 : P) {
+      // Manifest variables
+      X[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
     }
-    for (n in 1 : N_m2) {
-      // add more terms to the linear predictor
-      mu_m2[n] += bsp_m2[1] * Yl_f1[n];
-    }
-    for (n in 1 : N_m3) {
-      // add more terms to the linear predictor
-      mu_m3[n] += bsp_m3[1] * Yl_f1[n];
-    }
-    for (n in 1 : N_m4) {
-      // add more terms to the linear predictor
-      mu_m4[n] += bsp_m4[1] * Yl_f2[n];
-    }
-    for (n in 1 : N_m5) {
-      // add more terms to the linear predictor
-      mu_m5[n] += bsp_m5[1] * Yl_f2[n];
-    }
-    for (n in 1 : N_m6) {
-      // add more terms to the linear predictor
-      mu_m6[n] += bsp_m6[1] * Yl_f2[n];
-    }
-    // combine univariate parameters
-    for (n in 1 : N) {
-      Yl[n][7] = Yl_f1[n];
-      Yl[n][8] = Yl_f2[n];
-    }
-    // combine univariate parameters
-    for (n in 1 : N) {
-      Mu[n] = transpose([mu_m1[n], mu_m2[n], mu_m3[n], mu_m4[n], mu_m5[n],
-                         mu_m6[n], mu_f1[n], mu_f2[n]]);
-    }
-    target += multi_normal_cholesky_lpdf(Yl | Mu, LSigma);
+    // Latent factors
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
   }
-  // priors including constants
-  target += lprior;
 }
 generated quantities {
-  // actual population-level intercept
-  real b_f1_Intercept = Intercept_f1;
-  // actual population-level intercept
-  real b_f2_Intercept = Intercept_f2;
-  // residual correlations
+  array[N] real log_lik; // log likelihood of each datapoint
+  real dev; // global deviance
+  real log_lik0; // global log likelihood
+  vector[N] log_lik_row;
   
-  vector[1] rescor;
-  rescor[1] = corr_f1_f2;
+  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
+  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
+  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
+  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
+  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
+  
+  corr_matrix[D] Rho_UNC; /// correlation matrix
+  corr_matrix[D] Rho; /// correlation matrix
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores, matrix of order [N,D]
+  
+  // Do some fancy things to sign-correct the parameter estimates.
+  // The idea seems to be that when we estimate the loadings with unconstrained signs
+  // It can lead to identification issues. So we take these steps to correct the signs.
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho = Rho_UNC;
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  lam[7 : 9, 3] = to_vector(lam_UNC[7 : 9]);
+  
+  // factor 1
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    
+    if (lam_UNC[4] > 0) {
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  // factor 2
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    
+    if (lam_UNC[1] > 0) {
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+  
+  /// marginal log-likelihood based on signed corrected parameters
+  Phi_lv = quad_form_diag(Rho, Sd_d);
+  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
+  theta_del = diag_matrix(sd_p);
+  
+  Sigma = lambda_phi_lambda + theta_del;
+  L_Sigma_model = cholesky_decompose(Sigma);
+  
+  for (i in 1 : N) {
+    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
+  }
+  
+  log_lik0 = sum(log_lik); // global log-likelihood
+  dev = -2 * log_lik0; // model deviance
 }
-
 "
 
 stan_file <- cmdstanr::write_stan_file(stan_model_code)
@@ -420,6 +369,10 @@ stan_file <- cmdstanr::write_stan_file(stan_model_code)
 Now we can run the model
 
 ```{r}
+
+# Autoformat the model syntax
+# model <- cmdstan_model(stan_file, compile = FALSE)
+# model$format(canonicalize = TRUE)
 
 # Compile the model from the Stan file
 model <- cmdstanr::cmdstan_model(stan_file)
@@ -496,5 +449,10 @@ blavInspect(blavfit.1, "mcobj")
 ```
 
 
+ANOTHER TEST, copying [this example here](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13). This approach uses the built-in `cholesky_factor_corr[]` Stan function to set up the correlation matrix for the factors. We just make a few examples to the code given, namely:
+- Remove the intercepts from the linear models of the manifest variables, to align our model with the lavaan default.
+```{r}
 
+
+```
 ## Third Example: MTMM 
