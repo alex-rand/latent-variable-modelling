@@ -352,12 +352,12 @@ fit <- model$sample(
 )
 
 # Save the resulting model fit
-saveRDS(fit, "source/fits/b07.02.rds")
+saveRDS(fit, "source/fits/b07.02b.rds")
 
 
 ```
 
-The model took about 90 minutes to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're are directly interested in, so we have no problem just working in memory. 
+The model took about 90 minutes to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're directly interested in, so we have no problem just working in memory. 
 
 ```{r eval = FALSE}
 
@@ -378,7 +378,7 @@ test <- fit$draws(
 )
 
 # Save the result
-saveRDS(test, "source/fits/b07.02.samples.rds")
+saveRDS(test, "source/fits/b07.02b.samples.rds")
 
 ```
 
@@ -389,15 +389,16 @@ $\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}$
 Just becomes this:
 $\rho(X, Y) = \frac{\text{Cov}(X, Y)}$
 
-We're interested in the loadings and the between-factor covariance. So let's wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers.
+We're interested in the loadings and the between-factor covariance. So let's wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. We can also check convergence diagnostics to get a sense of whether things went smoothly. 
 
 ```{r}
 
-fit <- readRDS("source/fits/b07.02.samples.rds")
+fit <- readRDS("source/fits/b07.02b.samples.rds")
 
+fit |> summary()
 fit |>
 
-  # Get the raw draws for the factor loadings the beween-factor correlation coefficient
+  # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
   gather_draws(
     `lam[1,1]`,
     `lam[2,1]`,
