@@ -357,7 +357,7 @@ saveRDS(fit, "source/fits/b07.02b.rds")
 
 ```
 
-The model took about 90 minutes to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're directly interested in, so we have no problem just working in memory. 
+The model took about 5 hours to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're directly interested in, so we have no problem just working in memory. 
 
 ```{r eval = FALSE}
 
@@ -365,7 +365,7 @@ The model took about 90 minutes to sample and the resulting files are enormous -
 fit <- readRDS("source/fits/b07.02.rds")
 
 # Load the MCMC draws from the variables we care about
-test <- fit$draws(
+draws <- fit$draws(
   variables = c(
   "lam[1,1]",
   "lam[2,1]",
@@ -378,7 +378,7 @@ test <- fit$draws(
 )
 
 # Save the result
-saveRDS(test, "source/fits/b07.02b.samples.rds")
+saveRDS(draws, "source/fits/b07.02b.samples.rds")
 
 ```
 
@@ -389,13 +389,14 @@ $\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}$
 Just becomes this:
 $\rho(X, Y) = \frac{\text{Cov}(X, Y)}$
 
-We're interested in the loadings and the between-factor covariance. So let's wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. We can also check convergence diagnostics to get a sense of whether things went smoothly. 
+We're interested in the loadings and the between-factor covariance. So we can wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. Based on this plot it looks like the model did pretty well -- the posterior peak is close to the true value for all of the loadings:
 
 ```{r}
 
+# Load the draws for the loadings and correlation 
 fit <- readRDS("source/fits/b07.02b.samples.rds")
 
-fit |> summary()
+# Plot
 fit |>
 
   # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
@@ -442,6 +443,28 @@ fit |>
   facet_wrap(~.variable) +
   theme_minimal() + 
   theme(panel.grid.major = element_blank())
+
+```
+
+In this exampe we can feel good about model performance because it successfully recovered the true simulation parameter estimates for the samples of interest. But in a real application where we don't know the true parameter values we would also want to look at the model convergence diagnostics such as rhat and effective number of samples. Here we see that we have rhats slightly greater than 1 for a few of the loadings and for rho. We also see that loading 4, loading 6, and rho have a pretty low number of effective samples. This is cause for concern, and in a real application I would probably increase the number of MCMC iterations to see if we can improve that sample size. The trace plots also look a bit weird at times for a few of the parameters, with some occasional spikes and some parts where one chain goes berzerk relative to the others. But overall they seem to show healthy mixing. 
+
+```{r}
+
+# Create a summary table
+fit |>
+
+  summary() |>
+
+  select(variable, rhat, ess_bulk, ess_tail) |>
+
+  mutate(across(where(is.numeric), ~round(., 2))) |>
+
+  knitr::kable()
+
+# Look at traceplots
+fit |> 
+
+  bayesplot::mcmc_trace()
 
 ```
 
