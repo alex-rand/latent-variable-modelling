@@ -5,7 +5,10 @@ format:
     theme: default
 ---
 
-```{r message = FALSE}
+```{r}
+#| label: setup
+#| message: false
+
 library(tidyverse)
 library(lavaan)
 library(blavaan)
@@ -26,7 +29,10 @@ To demonstrate, we can simulate some data using {{lavaan}} and show that `brms::
 ## First Example: Simple Factor Structure
 
 First we can simulate some data with a simple factor structure using lavaan's handy `simulateData()` function:
-```{r message = FALSE, warning = FALSE}
+```{r}
+#| label: sim-1-fac
+#| message: false
+#| warning: false
 
 pop.model <- ' 
   f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
@@ -52,6 +58,9 @@ fake_dat |>
 Unsurprisingly, the lavaan `cfa()` function is able to recover the true parameters for the data it generated.
 
 ```{r}
+#| label: lavaan-fit-1-fac
+#| message: false
+#| warning: false
 
 # Fit the model
 fit_1 <- cfa(pop.model, data = fake_dat)
@@ -63,7 +72,9 @@ fit_1 |> broom::tidy()
 
 But can brms recover the true parameter values? I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a sharedd multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. It's a pretty cool and weird thing.
 
-```{r eval = FALSE}
+```{r}
+#| label: brms-fit-1-fac
+#| eval: false
 
 # Add a latent variable to the dataset
 fake_dat$f1 <- NA_real_
@@ -106,7 +117,9 @@ A Bayesian missing data model treats each missing observation as a parameter to 
 
 First we can put the draws we need into a tidy format and do some cleaning:
 
-```{r eval = FALSE}
+```{r}
+#| label: wrangle-draws-1-fac
+#| eval: false
 
 bfit.1.samples <- bfit.1 |>
 
@@ -141,13 +154,17 @@ bfit.1.samples <- bfit.1 |>
 saveRDS(bfit.1.samples, "fits/b07.01.samples.rds")
 ```
 
-Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since its loading was held constant at 1 to provide the scale for the latent variable):
+Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since it was held constant at 1 to provide the scale for the latent variable):
 ```{r}
+#| label: viz-draws-1-fac
+#| message: false
+#| warning: false
 #| fig-cap: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
 #| fig-alt: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
 
+
 # Load the tidy samples
-bfit.1.samples <- readRDS("source/fits/b07.01.samples.rds")
+bfit.1.samples <- readRDS("fits/b07.01.samples.rds")
 
 # Plot
 bfit.1.samples|>
@@ -173,25 +190,154 @@ In all cases the model is __pretty close__ to the true parameter value. It's a b
 Now an example where we assume the latent vactors are themselves dependent, so that discriminant validity is questionable. So we can include a term for their correlation structure in the model. We'll need to amend the lavaan model structure to implement these changes.
 
 ```{r}
+#| label: sim-2-fac
+#| message: false
+#| warning: false
 
 # Declare the new model with correlated factors
-mtmm.model <- ' 
+correlated.factors.model <- ' 
   f1 =~ .8*m1 + .6*m2 + .9*m3
   f2 =~ .1*m4 + .2*m5 + -.4*m6
   f1 ~~ .4*f2
 '
 
 # Simulate data from the model
-fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
+fake_dat <- lavaan::simulateData(model = correlated.factors.model, sample.nobs = 4000)
 
 ```
 
 The complication here is that brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but for now we'll need to specify the model using raw Stan code. There seem to be a few strategies for avoiding convergence issues when fitting this kind of model in Stan. I worked closely from the strategy provided in [this Stan forum comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by Mauricio Garnier-Villarre, making a few minor adjustments such as removing latent intercepts from the linear predictors to better align this model with the {{lavaan}} defaults. 
 
-Here is the raw Stan code:
+Here is the raw Stan code. I also declare it as a string in a hidden R block so we can use {{cmdstanr}}'s autoformatting function before we compile. 
 
-```{r eval = FALSE}
+```stan
+data {
+  int N; // sample size
+  int P; // number of variables
+  int D; // number of factors
+  array[N] vector[P] X; // data matrix of order [N,P]
+  int n_lam; // how many factor loadings are estimated
+}
+parameters {
+  matrix[N, D] FS_UNC; // factor scores, matrix of order [N,D]
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  vector<lower=0>[P] sd_p; // residual sd for each variable
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+}
+transformed parameters {
+  // a vector to hold the factor means, which will be a bunch of 0s
+  vector[D] M;
+  M = rep_vector(0, D);
+  
+  // a vector to hold the factor SDs, which will be a bunch of 1s. 
+  vector<lower=0>[D] Sd_d;
+  Sd_d = rep_vector(1, D);
+  
+  // A vector to hold the linear predictors for the manifest variables, which are each a deterministic function of loading*factor_score
+  array[N] vector[P] mu_UNC;
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  // the var-covar matrix for the factors, a deterministic function of the deterministic SDs and the estimated rhos defined in parameters{}
+  cholesky_factor_cov[D] L_Sigma;
+  L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
+}
+model {
+  // Declare some priors
+  L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
+  lam_UNC ~ normal(0, 10); // Prior on loadings
+  sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
+  
+  // Set up the likelihoods of the manifest and latent factors
+  for (i in 1 : N) {
+    for (j in 1 : P) {
+      // Manifest variables
+      X[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    // Latent factors
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+}
+generated quantities {
+  array[N] real log_lik; // log likelihood of each datapoint
+  real dev; // global deviance
+  real log_lik0; // global log likelihood
+  vector[N] log_lik_row;
+  
+  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
+  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
+  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
+  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
+  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
+  
+  corr_matrix[D] Rho_UNC; /// correlation matrix
+  corr_matrix[D] Rho; /// correlation matrix
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores, matrix of order [N,D]
+  
+  // Do some fancy things to sign-correct the parameter estimates.
+  // The idea seems to be that when we estimate the loadings with unconstrained signs
+  // It can lead to identification issues. So we take these steps to correct the signs.
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho = Rho_UNC;
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  // factor 1
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    
+    if (lam_UNC[4] > 0) {
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  // factor 2
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    
+    if (lam_UNC[1] > 0) {
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+  
+  /// marginal log-likelihood based on signed corrected parameters
+  Phi_lv = quad_form_diag(Rho, Sd_d);
+  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
+  theta_del = diag_matrix(sd_p);
+  
+  Sigma = lambda_phi_lambda + theta_del;
+  L_Sigma_model = cholesky_decompose(Sigma);
+  
+  for (i in 1 : N) {
+    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
+  }
+  
+  log_lik0 = sum(log_lik); // global log-likelihood
+  dev = -2 * log_lik0; // model deviance
+}
 
+```
+
+```{r}
+#| label: stan-string-2-fac
+#| eval: false
+#| include: false
+
+# We like the syntax highlighting of declaring the model in a Stan block,
+# But here I also secretly declare it as a string in an R block so we can use autoformatting before compile time. 
 stan_model_code <- "
 data {
   int N; // sample size
@@ -313,12 +459,13 @@ generated quantities {
 "
 
 ```
-
 Now we can compile and run the model
 
-```{r eval = FALSE}
+```{r}
+#| label: stanfit-2-fac
+#| eval: false
 
-# Write the raw code above from an R string to a Stan file
+# Write the raw Stan code from an R string to a Stan file
 stan_file <- cmdstanr::write_stan_file(stan_model_code)
 
 # Autoformat the model syntax to preempt any warnings at compile time
@@ -352,17 +499,19 @@ fit <- model$sample(
 )
 
 # Save the resulting model fit
-saveRDS(fit, "source/fits/b07.02b.rds")
+saveRDS(fit, "fits/b07.02.rds")
 
 
 ```
 
 The model took about 5 hours to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're directly interested in, so we have no problem just working in memory. 
 
-```{r eval = FALSE}
+```{r}
+#| label: wrangle-draws-2-fac
+#| eval: false
 
 # Load the cmdstanr model object
-fit <- readRDS("source/fits/b07.02.rds")
+fit <- readRDS("fits/b07.02.rds")
 
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
@@ -378,7 +527,7 @@ draws <- fit$draws(
 )
 
 # Save the result
-saveRDS(draws, "source/fits/b07.02b.samples.rds")
+saveRDS(draws, "fits/b07.02.samples.rds")
 
 ```
 
@@ -387,14 +536,17 @@ IE because our sigmas are both equal to 1, this equation:
 $\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}$
 
 Just becomes this:
-$\rho(X, Y) = \frac{\text{Cov}(X, Y)}$
+$\rho(X, Y) = \text{Cov}(X, Y)$
 
 We're interested in the loadings and the between-factor covariance. So we can wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. Based on this plot it looks like the model did pretty well -- the posterior peak is close to the true value for all of the loadings:
 
 ```{r}
+#| label: viz-draws-2-fac
+#| message: false
+#| warnings: false
 
 # Load the draws for the loadings and correlation 
-fit <- readRDS("source/fits/b07.02b.samples.rds")
+fit <- readRDS("fits/b07.02.samples.rds")
 
 # Plot
 fit |>
@@ -449,6 +601,9 @@ fit |>
 In this exampe we can feel good about model performance because it successfully recovered the true simulation parameter estimates for the samples of interest. But in a real application where we don't know the true parameter values we would also want to look at the model convergence diagnostics such as rhat and effective number of samples. Here we see that we have rhats slightly greater than 1 for a few of the loadings and for rho. We also see that loading 4, loading 6, and rho have a pretty low number of effective samples. This is cause for concern, and in a real application I would probably increase the number of MCMC iterations to see if we can improve that sample size. The trace plots also look a bit weird at times for a few of the parameters, with some occasional spikes and some parts where one chain goes berzerk relative to the others. But overall they seem to show healthy mixing. 
 
 ```{r}
+#| label: diagnostics-2-fac
+#| message: false
+#| warnings: false
 
 # Create a summary table
 fit |>
@@ -462,20 +617,24 @@ fit |>
   knitr::kable()
 
 # Look at traceplots
-fit |> 
+# fit |> 
 
-  bayesplot::mcmc_trace()
+#  bayesplot::mcmc_trace()
 
 ```
 
-Or instead we can go with {{blavaan}}. The model fits way faster than under the {{brms}} approach and recovers the true parameter estimates. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. So it doesn't seem practical to really get in there and customize things directly. 
+Or instead we can go with {{blavaan}}. The model fits way faster than under the raw Stan approach and recovers the true parameter estimates, but is less flexible overall. Crucially for the present analysis, there is no way to do survival analysis with {{blavaan}}. 
 
-The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
+But for posterity, below is the syntax we would use to fit the model with {{blavaan}}. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. So it doesn't seem practical to really get in there and customize things directly. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
 
-```{r eval = FALSE}
- 
+```{r}
+#| label: blavaan-2-fac
+#| message: false
+#| warnings: false
+#| eval: false
+
 # Fit the model
-blavfit.1 <- bcfa(mtmm.model, data=fake_dat, mcmcfile = T)
+blavfit.1 <- bcfa(correlated.factors.model, data=fake_dat, mcmcfile = T)
 
 # Gaze at parameter estimates
 blavfit.1 |> summary()
@@ -485,11 +644,363 @@ blavInspect(blavfit.1, "mcobj")
 
 ```
 
+## Third Example: MTMM 
 
-ANOTHER TEST, copying [this example here](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13). This approach uses the built-in `cholesky_factor_corr[]` Stan function to set up the correlation matrix for the factors. We just make a few examples to the code given, namely:
-- Remove the intercepts from the linear models of the manifest variables, to align our model with the lavaan default.
+In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm]. 
+
+For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. We can simulate data from this DAG using {{lavaan}} like we did for the two models above:
+
 ```{r}
 
+# Declare the new model where m1 and m4 covary
+mtmm.model <- ' 
+  f1 =~ .8*m1 + .6*m2 + .9*m3
+  f2 =~ .1*m4 + .2*m5 + -.4*m6
+  f1 ~~ .4*f2
+  m1 ~~ m4
+'
+
+# Simulate data from the model
+fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 500)
 
 ```
-## Third Example: MTMM 
+
+
+Now we add a new parameter to our Stan model to account for the possibility of shared method confounding. This only involves a few changes, namely:
+- 
+
+```stan
+data {
+  int N; // sample size
+  int P; // number of variables
+  int D; // number of factors
+  array[N] vector[P] X; // data matrix of order [N,P]
+  int n_lam; // how many factor loadings are estimated
+}
+parameters {
+  matrix[N, D] FS_UNC; // factor scores, matrix of order [N,D]
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  vector<lower=0>[P] sd_p; // residual sd for each variable
+  real theta_m1_m4; // covariance between error terms of m1 and m4
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+}
+transformed parameters {
+  // a vector to hold the factor means, which will be a bunch of 0s
+  vector[D] M;
+  M = rep_vector(0, D);
+  
+  // a vector to hold the factor SDs, which will be a bunch of 1s. 
+  vector<lower=0>[D] Sd_d;
+  Sd_d = rep_vector(1, D);
+  
+  // A vector to hold the linear predictors for the manifest variables, which are each a deterministic function of loading*factor_score
+  array[N] vector[P] mu_UNC;
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  // the var-covar matrix for the factors, a deterministic function of the deterministic SDs and the estimated rhos defined in the parameters block
+  cholesky_factor_cov[D] L_Sigma;
+  L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
+
+  // covariance parameter for the error terms of m1 and m4
+  real theta_m1_m4; 
+}
+model {
+  // Declare some priors
+  L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
+  lam_UNC ~ normal(0, 10); // Prior on loadings
+  sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
+
+  // Set up the likelihood for m1 and m4, which need special treatment because we want to estimate their covariance
+  for (i in 1 : N) {
+    vector[2] mu_sub;
+    matrix[2, 2] sigma_sub;
+    
+    mu_sub[1] = mu_UNC[i, 1];
+    mu_sub[2] = mu_UNC[i, 4];
+    sigma_sub[1,1] = square(sd_p[1]);
+    sigma_sub[2,2] = square(sd_p[4]);
+    sigma_sub[1,2] = theta_m1_m4;
+    sigma_sub[2,1] = theta_m1_m4;
+    
+    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, sigma_sub);
+  }
+
+  // Set up the likelihoods of the other manifest variables and latent factors
+  for (i in 1 : N) {
+    for (j in {2,3,5,6}) {
+      // Manifest variables
+      X[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    // Latent factors
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+}
+generated quantities {
+  array[N] real log_lik; // log likelihood of each datapoint
+  real dev; // global deviance
+  real log_lik0; // global log likelihood
+  vector[N] log_lik_row;
+  
+  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
+  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
+  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
+  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
+  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
+  
+  corr_matrix[D] Rho_UNC; /// correlation matrix
+  corr_matrix[D] Rho; /// correlation matrix
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores, matrix of order [N,D]
+  
+  // Do some fancy things to sign-correct the parameter estimates.
+  // The idea seems to be that when we estimate the loadings with unconstrained signs
+  // It can lead to identification issues. So we take these steps to correct the signs.
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho = Rho_UNC;
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  // factor 1
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    
+    if (lam_UNC[4] > 0) {
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  // factor 2
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    
+    if (lam_UNC[1] > 0) {
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+  
+  /// marginal log-likelihood based on signed corrected parameters
+  Phi_lv = quad_form_diag(Rho, Sd_d);
+  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
+  theta_del = diag_matrix(sd_p);
+  
+  Sigma = lambda_phi_lambda + theta_del;
+  // Update sigma to reflect the presence of the new covariance parameters
+  Sigma[1,4] = theta_m1_m4;
+  Sigma[4,1] = theta_m1_m4;
+  L_Sigma_model = cholesky_decompose(Sigma);
+  
+  for (i in 1 : N) {
+    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
+  }
+  
+  log_lik0 = sum(log_lik); // global log-likelihood
+  dev = -2 * log_lik0; // model deviance
+}
+```
+
+```{r}
+#| label: stan-string-mtmm
+#| eval: false
+#| include: false
+
+stan_model_code <- "
+data {
+  int N; // sample size
+  int P; // number of variables
+  int D; // number of factors
+  array[N] vector[P] X; // data matrix of order [N,P]
+  int n_lam; // how many factor loadings are estimated
+}
+parameters {
+  matrix[N, D] FS_UNC; // factor scores, matrix of order [N,D]
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  vector<lower=0>[P] sd_p; // residual sd for each variable
+  real theta_m1_m4; // covariance between error terms of m1 and m4
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+}
+transformed parameters {
+  // a vector to hold the factor means, which will be a bunch of 0s
+  vector[D] M;
+  M = rep_vector(0, D);
+  
+  // a vector to hold the factor SDs, which will be a bunch of 1s. 
+  vector<lower=0>[D] Sd_d;
+  Sd_d = rep_vector(1, D);
+  
+  // A vector to hold the linear predictors for the manifest variables, which are each a deterministic function of loading*factor_score
+  array[N] vector[P] mu_UNC;
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  // the var-covar matrix for the factors, a deterministic function of the deterministic SDs and the estimated rhos defined in the parameters block
+  cholesky_factor_cov[D] L_Sigma;
+  L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
+
+}
+model {
+  // Declare some priors
+  L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
+  lam_UNC ~ normal(0, 10); // Prior on loadings
+  sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
+
+  // Set up the likelihood for m1 and m4, which need special treatment because we want to estimate their covariance
+  for (i in 1 : N) {
+    vector[2] mu_sub;
+    matrix[2, 2] sigma_sub;
+    
+    mu_sub[1] = mu_UNC[i, 1];
+    mu_sub[2] = mu_UNC[i, 4];
+    sigma_sub[1,1] = square(sd_p[1]);
+    sigma_sub[2,2] = square(sd_p[4]);
+    sigma_sub[1,2] = theta_m1_m4;
+    sigma_sub[2,1] = theta_m1_m4;
+    
+    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, sigma_sub);
+  }
+
+  // Set up the likelihoods of the other manifest variables and latent factors
+  for (i in 1 : N) {
+    for (j in {2,3,5,6}) {
+      // Manifest variables
+      X[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    // Latent factors
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+}
+generated quantities {
+  array[N] real log_lik; // log likelihood of each datapoint
+  real dev; // global deviance
+  real log_lik0; // global log likelihood
+  vector[N] log_lik_row;
+  
+  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
+  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
+  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
+  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
+  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
+  
+  corr_matrix[D] Rho_UNC; /// correlation matrix
+  corr_matrix[D] Rho; /// correlation matrix
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores, matrix of order [N,D]
+  
+  // Do some fancy things to sign-correct the parameter estimates.
+  // The idea seems to be that when we estimate the loadings with unconstrained signs
+  // It can lead to identification issues. So we take these steps to correct the signs.
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho = Rho_UNC;
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  // factor 1
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    
+    if (lam_UNC[4] > 0) {
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  // factor 2
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    
+    if (lam_UNC[1] > 0) {
+      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+  
+  /// marginal log-likelihood based on signed corrected parameters
+  Phi_lv = quad_form_diag(Rho, Sd_d);
+  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
+  theta_del = diag_matrix(sd_p);
+  
+  Sigma = lambda_phi_lambda + theta_del;
+  // Update sigma to reflect the presence of the new covariance parameters
+  Sigma[1,4] = theta_m1_m4;
+  Sigma[4,1] = theta_m1_m4;
+  L_Sigma_model = cholesky_decompose(Sigma);
+  
+  for (i in 1 : N) {
+    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
+  }
+  
+  log_lik0 = sum(log_lik); // global log-likelihood
+  dev = -2 * log_lik0; // model deviance
+}
+"
+
+```
+
+Now we can compile and run the model
+
+```{r}
+#| label: stanfit-mtmm
+#| eval: false
+
+# Write the raw Stan code from an R string to a Stan file
+stan_file <- cmdstanr::write_stan_file(stan_model_code)
+
+# Autoformat the model syntax to preempt any warnings at compile time
+model <- cmdstanr::cmdstan_model(stan_file, compile = FALSE)
+model$format(canonicalize = TRUE)
+
+# Compile the model from the Stan file
+model <- cmdstanr::cmdstan_model(stan_file)
+
+# Put the data into a list format Stan can understand
+X <- as.matrix(fake_dat)
+P <- ncol(fake_dat) 
+N <- nrow(fake_dat)
+D <- 2
+
+data_list <- list(N=N,P=P,D=D,X=X, n_lam=6)
+param <- c("lam","Rho","sd_p","M","Sd_d", "theta_m1_m4")
+
+# Fit the model
+fit <- model$sample(
+  data = data_list,
+  seed = 199,
+  chains = 4,
+  parallel_chains = 4,
+  iter_warmup = 1000,
+  iter_sampling = 1000,
+ # adapt_delta=0.99, 
+ # max_treedepth = 12,
+  refresh = 1 # print update at each iter
+)
+
+# Save the resulting model fit
+saveRDS(fit, "fits/b07.03.rds")
+
+```
+
+
+
+## Fourth Example: Survival Analysis

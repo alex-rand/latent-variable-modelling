@@ -1,4 +1,4 @@
-# MTMM and Error Structure Modelling
+# MTMM and Error Structure Modelling {#sec-mtmm}
 
 In this chapter we'll learn some workflows for situations where we're worried our measured variables are confounded by other unmeasured things besides just the unmeasured 'factors' we're interested in, and how we can address that and reassure ourselves that our inferences about the factor structure are ok. 
 
