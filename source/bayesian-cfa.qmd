@@ -459,6 +459,7 @@ generated quantities {
 "
 
 ```
+
 Now we can compile and run the model
 
 ```{r}
@@ -546,10 +547,10 @@ We're interested in the loadings and the between-factor covariance. So we can wr
 #| warnings: false
 
 # Load the draws for the loadings and correlation 
-fit <- readRDS("fits/b07.02.samples.rds")
+draws <- readRDS("fits/b07.02.samples.rds")
 
 # Plot
-fit |>
+draws |>
 
   # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
   gather_draws(
@@ -657,11 +658,13 @@ mtmm.model <- '
   f1 =~ .8*m1 + .6*m2 + .9*m3
   f2 =~ .1*m4 + .2*m5 + -.4*m6
   f1 ~~ .4*f2
-  m1 ~~ m4
+  m1 ~~ .4*m4
 '
 
 # Simulate data from the model
-fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 500)
+fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
+
+lavaan::cfa(mtmm.model, fake_dat) |> summary()
 
 ```
 
@@ -707,15 +710,13 @@ transformed parameters {
   // the var-covar matrix for the factors, a deterministic function of the deterministic SDs and the estimated rhos defined in the parameters block
   cholesky_factor_cov[D] L_Sigma;
   L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
-
-  // covariance parameter for the error terms of m1 and m4
-  real theta_m1_m4; 
 }
 model {
   // Declare some priors
   L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
   lam_UNC ~ normal(0, 10); // Prior on loadings
   sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
+  cauchy(0, 2.5); // Prior on residual covariance of m1 and m4
 
   // Set up the likelihood for m1 and m4, which need special treatment because we want to estimate their covariance
   for (i in 1 : N) {
@@ -861,6 +862,7 @@ model {
   L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
   lam_UNC ~ normal(0, 10); // Prior on loadings
   sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
+  theta_m1_m4 ~ cauchy(0, 2.5); // Prior on residual covariance of m1 and m4
 
   // Set up the likelihood for m1 and m4, which need special treatment because we want to estimate their covariance
   for (i in 1 : N) {
@@ -990,7 +992,7 @@ fit <- model$sample(
   chains = 4,
   parallel_chains = 4,
   iter_warmup = 1000,
-  iter_sampling = 1000,
+  iter_sampling = 2000,
  # adapt_delta=0.99, 
  # max_treedepth = 12,
   refresh = 1 # print update at each iter
@@ -1000,6 +1002,90 @@ fit <- model$sample(
 saveRDS(fit, "fits/b07.03.rds")
 
 ```
+
+Once again, the resulting object is enormous. So let's pare it down to only contain the draws of substantive interest.
+```{r}
+#| label: wrangle-draws-mtmm
+#| eval: false
+
+# Load the cmdstanr model object
+fit <- readRDS("fits/b07.03.rds")
+
+# Load the MCMC draws from the variables we care about
+draws <- fit$draws(
+  variables = c(
+  "lam[1,1]",
+  "lam[2,1]",
+  "lam[3,1]",
+  "lam[4,2]",
+  "lam[5,2]",
+  "lam[6,2]",
+  "Rho[2,1]", 
+  "theta_m1_m4"
+  )
+)
+
+# Save the result
+saveRDS(draws, "source/fits/b07.03.samples.rds")
+
+```
+
+How did that go? We can plot the draws and look at the MCMC diagnostics like we did above.
+```{r}
+
+# Load the draws saved in the previous block
+draws <- readRDS("source/fits/b07.03.samples.rds")
+
+# Plot
+draws |>
+
+  # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
+  gather_draws(
+   `lam[1,1]`,
+   `lam[2,1]`,
+   `lam[3,1]`,
+   `lam[4,2]`,
+   `lam[5,2]`,
+   `lam[6,2]`,
+   `Rho[2,1]`,
+    theta_m1_m4
+  ) 
+
+  # Do some renaming for clarity
+  mutate(.variable = case_when(
+    .variable == "lam[1,1]" ~ "Loading for m1",
+    .variable == "lam[2,1]" ~ "Loading for m2",
+    .variable == "lam[3,1]" ~ "Loading for m3",
+    .variable == "lam[4,2]" ~ "Loading for m4",
+    .variable == "lam[5,2]" ~ "Loading for m5",
+    .variable == "lam[6,2]" ~ "Loading for m6",
+    .variable == "Rho[2,1]" ~ "Covariance for f1 ~ f2",
+    .variable == "theta_m1_m4" ~ "Covariance for m1 ~ m4"
+  )) |>
+
+  # Add the true factor loadings for plotting
+  mutate(true_loading = case_when(
+    .variable == "Loading for m1" ~ .8,
+    .variable == "Loading for m2" ~ .6,
+    .variable == "Loading for m3" ~ .9,
+    .variable == "Loading for m4" ~ .1,
+    .variable == "Loading for m5" ~ .2,
+    .variable == "Loading for m6" ~ -.4,
+    .variable == "Covariance for f1 ~ f2" ~ .4,
+    .variable == "Covariance for m1 ~ m4" ~ .4
+  )) |>
+
+  ggplot(aes(x = .value, fill = .variable)) 
+  stat_halfeye(fill = "mediumorchid") +
+  geom_vline(aes(xintercept = true_loading), linetype = 2) + 
+  scale_x_continuous(expand = c(0, 0.015)) +
+  scale_y_continuous(expand = c(0, 0.015)) +
+  guides(fill = "none") +
+  labs(x = "lab",
+     y = NULL)  +
+  facet_wrap(~.variable) +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank())
 
 
 
