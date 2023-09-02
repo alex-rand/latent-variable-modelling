@@ -284,9 +284,11 @@ generated quantities {
   // Do some fancy things to sign-correct the parameter estimates.
   // The idea seems to be that when we estimate the loadings with unconstrained signs
   // It can lead to identification issues. So we take these steps to correct the signs.
-  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho = Rho_UNC;
+  Rho_factors = Rho_UNC;
+  Rho_measured = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  Rho_factors = Rho_m1_m4;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -412,9 +414,11 @@ generated quantities {
   // Do some fancy things to sign-correct the parameter estimates.
   // The idea seems to be that when we estimate the loadings with unconstrained signs
   // It can lead to identification issues. So we take these steps to correct the signs.
-  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho = Rho_UNC;
+  Rho_factors = Rho_UNC;
+  Rho_measured = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  Rho_factors = Rho_m1_m4;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -681,8 +685,8 @@ data {
 parameters {
   matrix[N, D] FS_UNC; // factor scores, matrix of order [N,D]
   cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
   vector<lower=0>[P] sd_p; // residual sd for each variable
-  real theta_m1_m4; // covariance between error terms of m1 and m4
   vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
 }
 transformed parameters {
@@ -708,42 +712,29 @@ transformed parameters {
   // the var-covar matrix for the factors, a deterministic function of the deterministic SDs and the estimated rhos defined in the parameters block
   cholesky_factor_cov[D] L_Sigma;
   L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
+
+  // Same, but for the var-covar matrix of m1 and m4
+  cholesky_factor_cov[D] L_Sigma_m1_m4;
+  L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4);
 }
 model {
   // Declare some priors
   L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
+  L_corr_m1_m4 ~ lkj_corr_cholesky(1); // Prior on corr between m1 and m4
   lam_UNC ~ normal(0, 10); // Prior on loadings
   sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
-  cauchy(0, 2.5); // Prior on residual covariance of m1 and m4
 
-  // Set up the likelihood for m1 and m4, which need special treatment because we want to estimate their covariance
+  // Set up the joint log likelihood function
   for (i in 1 : N) {
-    vector[2] mu_sub;
-    matrix[2, 2] sigma_sub;
-    matrix[2, 2] L_sub;  // Cholesky decomposition
-    
-    mu_sub[1] = mu_UNC[i, 1];
-    mu_sub[2] = mu_UNC[i, 4];
-
-    // Set up the raw var-covar matrix for m1 and m4
-    sigma_sub[1,1] = square(sd_p[1]);
-    sigma_sub[2,2] = square(sd_p[4]);
-    sigma_sub[1,2] = theta_m1_m4;
-    sigma_sub[2,1] = theta_m1_m4;
-
-    // Get the Cholesky decomp of the raw var-covar matrix
-    L_sub = cholesky_decompose(sigma_sub);  // Cholesky decomposition
-    
-    // Declare the likelihood using the Cholesky decomp of the var-covar matrix. 
-    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, L_sub);
-  }
-
-  // Set up the likelihoods of the other manifest variables and latent factors
-  for (i in 1 : N) {
+    // The uncorrelated measured variables
     for (j in {2,3,5,6}) {
       // Manifest variables
       X[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
     }
+
+    // m1 and m4, which get special treatment for being correlated
+    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
+
     // Latent factors
     FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
   }
@@ -796,24 +787,6 @@ generated quantities {
       Rho[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
-  
-  /// marginal log-likelihood based on signed corrected parameters
-  Phi_lv = quad_form_diag(Rho, Sd_d);
-  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
-  theta_del = diag_matrix(sd_p);
-  
-  Sigma = lambda_phi_lambda + theta_del;
-  // Update sigma to reflect the presence of the new covariance parameters
-  Sigma[1,4] = theta_m1_m4;
-  Sigma[4,1] = theta_m1_m4;
-  L_Sigma_model = cholesky_decompose(Sigma);
-  
-  for (i in 1 : N) {
-    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
-  }
-  
-  log_lik0 = sum(log_lik); // global log-likelihood
-  dev = -2 * log_lik0; // model deviance
 }
 ```
 
@@ -833,8 +806,8 @@ data {
 parameters {
   matrix[N, D] FS_UNC; // factor scores, matrix of order [N,D]
   cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
   vector<lower=0>[P] sd_p; // residual sd for each variable
-  real theta_m1_m4; // covariance between error terms of m1 and m4
   vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
 }
 transformed parameters {
@@ -861,42 +834,28 @@ transformed parameters {
   cholesky_factor_cov[D] L_Sigma;
   L_Sigma = diag_pre_multiply(Sd_d, L_corr_d);
 
+  // Same, but for the var-covar matrix of m1 and m4
+  cholesky_factor_cov[D] L_Sigma_m1_m4;
+  L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4);
 }
 model {
   // Declare some priors
   L_corr_d ~ lkj_corr_cholesky(1); // Prior on factor corrs
+  L_corr_m1_m4 ~ lkj_corr_cholesky(1); // Prior on corr between m1 and m4
   lam_UNC ~ normal(0, 10); // Prior on loadings
   sd_p ~ cauchy(0, 2.5); // Prior on residual SDs of manifest variables
-  theta_m1_m4 ~ cauchy(0, 2.5); // Prior on residual covariance of m1 and m4
 
-  // Set up the likelihood for m1 and m4, which need special treatment because we want to estimate their covariance
+  // Set up the joint log likelihood function
   for (i in 1 : N) {
-    vector[2] mu_sub;
-    matrix[2, 2] sigma_sub;
-    matrix[2, 2] L_sub;  // Cholesky decomposition
-    
-    mu_sub[1] = mu_UNC[i, 1];
-    mu_sub[2] = mu_UNC[i, 4];
-
-    // Set up the raw var-covar matrix for m1 and m4
-    sigma_sub[1,1] = square(sd_p[1]);
-    sigma_sub[2,2] = square(sd_p[4]);
-    sigma_sub[1,2] = theta_m1_m4;
-    sigma_sub[2,1] = theta_m1_m4;
-
-    // Get the Cholesky decomp of the raw var-covar matrix
-    L_sub = cholesky_decompose(sigma_sub);  // Cholesky decomposition
-    
-    // Declare the likelihood using the Cholesky decomp of the var-covar matrix. 
-    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, L_sub);
-  }
-
-  // Set up the likelihoods of the other manifest variables and latent factors
-  for (i in 1 : N) {
+    // The uncorrelated measured variables
     for (j in {2,3,5,6}) {
       // Manifest variables
       X[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
     }
+
+    // m1 and m4, which get special treatment for being correlated
+    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
+
     // Latent factors
     FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
   }
@@ -949,24 +908,6 @@ generated quantities {
       Rho[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
-  
-  /// marginal log-likelihood based on signed corrected parameters
-  Phi_lv = quad_form_diag(Rho, Sd_d);
-  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
-  theta_del = diag_matrix(sd_p);
-  
-  Sigma = lambda_phi_lambda + theta_del;
-  // Update sigma to reflect the presence of the new covariance parameters
-  Sigma[1,4] = theta_m1_m4;
-  Sigma[4,1] = theta_m1_m4;
-  L_Sigma_model = cholesky_decompose(Sigma);
-  
-  for (i in 1 : N) {
-    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
-  }
-  
-  log_lik0 = sum(log_lik); // global log-likelihood
-  dev = -2 * log_lik0; // model deviance
 }
 "
 
@@ -995,7 +936,7 @@ N <- nrow(fake_dat)
 D <- 2
 
 data_list <- list(N=N,P=P,D=D,X=X, n_lam=6)
-param <- c("lam","Rho","sd_p","M","Sd_d", "theta_m1_m4")
+param <- c("lam","Rho","sd_p","M","Sd_d")
 
 # Fit the model
 fit <- model$sample(
@@ -1004,7 +945,7 @@ fit <- model$sample(
   chains = 4,
   parallel_chains = 4,
   iter_warmup = 1000,
-  iter_sampling = 2000,
+  iter_sampling = 1000,
  # adapt_delta=0.99, 
  # max_treedepth = 12,
   refresh = 1 # print update at each iter
