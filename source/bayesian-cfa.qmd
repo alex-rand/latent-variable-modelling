@@ -664,8 +664,6 @@ mtmm.model <- '
 # Simulate data from the model
 fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
 
-lavaan::cfa(mtmm.model, fake_dat) |> summary()
-
 ```
 
 
@@ -722,15 +720,22 @@ model {
   for (i in 1 : N) {
     vector[2] mu_sub;
     matrix[2, 2] sigma_sub;
+    matrix[2, 2] L_sub;  // Cholesky decomposition
     
     mu_sub[1] = mu_UNC[i, 1];
     mu_sub[2] = mu_UNC[i, 4];
+
+    // Set up the raw var-covar matrix for m1 and m4
     sigma_sub[1,1] = square(sd_p[1]);
     sigma_sub[2,2] = square(sd_p[4]);
     sigma_sub[1,2] = theta_m1_m4;
     sigma_sub[2,1] = theta_m1_m4;
+
+    // Get the Cholesky decomp of the raw var-covar matrix
+    L_sub = cholesky_decompose(sigma_sub);  // Cholesky decomposition
     
-    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, sigma_sub);
+    // Declare the likelihood using the Cholesky decomp of the var-covar matrix. 
+    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, L_sub);
   }
 
   // Set up the likelihoods of the other manifest variables and latent factors
@@ -868,15 +873,22 @@ model {
   for (i in 1 : N) {
     vector[2] mu_sub;
     matrix[2, 2] sigma_sub;
+    matrix[2, 2] L_sub;  // Cholesky decomposition
     
     mu_sub[1] = mu_UNC[i, 1];
     mu_sub[2] = mu_UNC[i, 4];
+
+    // Set up the raw var-covar matrix for m1 and m4
     sigma_sub[1,1] = square(sd_p[1]);
     sigma_sub[2,2] = square(sd_p[4]);
     sigma_sub[1,2] = theta_m1_m4;
     sigma_sub[2,1] = theta_m1_m4;
+
+    // Get the Cholesky decomp of the raw var-covar matrix
+    L_sub = cholesky_decompose(sigma_sub);  // Cholesky decomposition
     
-    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, sigma_sub);
+    // Declare the likelihood using the Cholesky decomp of the var-covar matrix. 
+    to_vector({X[i, 1], X[i, 4]}) ~ multi_normal_cholesky(mu_sub, L_sub);
   }
 
   // Set up the likelihoods of the other manifest variables and latent factors
@@ -1009,7 +1021,11 @@ Once again, the resulting object is enormous. So let's pare it down to only cont
 #| eval: false
 
 # Load the cmdstanr model object
-fit <- readRDS("fits/b07.03.rds")
+fit <- readRDS("source/fits/b07.03.rds")
+
+check <- fit$summary()
+
+check |> view()
 
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
