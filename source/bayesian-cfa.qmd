@@ -286,9 +286,7 @@ generated quantities {
   // It can lead to identification issues. So we take these steps to correct the signs.
   // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho_factors = Rho_UNC;
-  Rho_measured = multiply_lower_tri_self_transpose(L_corr_m1_m4);
-  Rho_factors = Rho_m1_m4;
+  Rho = Rho_UNC;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -416,9 +414,7 @@ generated quantities {
   // It can lead to identification issues. So we take these steps to correct the signs.
   // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho_factors = Rho_UNC;
-  Rho_measured = multiply_lower_tri_self_transpose(L_corr_m1_m4);
-  Rho_factors = Rho_m1_m4;
+  Rho = Rho_UNC;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -751,17 +747,20 @@ generated quantities {
   cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
   matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
   
-  corr_matrix[D] Rho_UNC; /// correlation matrix
-  corr_matrix[D] Rho; /// correlation matrix
+  corr_matrix[D] Rho_UNC; /// correlation matrix for factors
+  corr_matrix[D] Rho_factors; /// correlation matrix for factors
+  corr_matrix[D] Rho_m1_m4; /// correlation matrix for m1 and m4
   matrix[P, D] lam; // factor loadings
   matrix[N, D] FS; // factor scores, matrix of order [N,D]
   
   // Do some fancy things to sign-correct the parameter estimates.
   // The idea seems to be that when we estimate the loadings with unconstrained signs
   // It can lead to identification issues. So we take these steps to correct the signs.
-  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho = Rho_UNC;
+  Rho_factors = Rho_UNC;
+  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  Rho_factors = Rho_m1_m4;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -773,8 +772,8 @@ generated quantities {
     FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
     
     if (lam_UNC[4] > 0) {
-      Rho[1, 2] = -1 * Rho_UNC[1, 2];
-      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
     }
   }
   // factor 2
@@ -783,8 +782,8 @@ generated quantities {
     FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
     
     if (lam_UNC[1] > 0) {
-      Rho[2, 1] = -1 * Rho_UNC[2, 1];
-      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
 }
@@ -872,17 +871,20 @@ generated quantities {
   cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
   matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
   
-  corr_matrix[D] Rho_UNC; /// correlation matrix
-  corr_matrix[D] Rho; /// correlation matrix
+  corr_matrix[D] Rho_UNC; /// correlation matrix for factors
+  corr_matrix[D] Rho_factors; /// correlation matrix for factors
+  corr_matrix[D] Rho_m1_m4; /// correlation matrix for m1 and m4
   matrix[P, D] lam; // factor loadings
   matrix[N, D] FS; // factor scores, matrix of order [N,D]
   
   // Do some fancy things to sign-correct the parameter estimates.
   // The idea seems to be that when we estimate the loadings with unconstrained signs
   // It can lead to identification issues. So we take these steps to correct the signs.
-  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?u=alex.b.r
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho = Rho_UNC;
+  Rho_factors = Rho_UNC;
+  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  Rho_factors = Rho_m1_m4;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -894,8 +896,8 @@ generated quantities {
     FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
     
     if (lam_UNC[4] > 0) {
-      Rho[1, 2] = -1 * Rho_UNC[1, 2];
-      Rho[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
     }
   }
   // factor 2
@@ -904,8 +906,8 @@ generated quantities {
     FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
     
     if (lam_UNC[1] > 0) {
-      Rho[2, 1] = -1 * Rho_UNC[2, 1];
-      Rho[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
 }
@@ -936,7 +938,7 @@ N <- nrow(fake_dat)
 D <- 2
 
 data_list <- list(N=N,P=P,D=D,X=X, n_lam=6)
-param <- c("lam","Rho","sd_p","M","Sd_d")
+param <- c("lam","Rho_factors", "Rho_m1_m4", "sd_p","M","Sd_d")
 
 # Fit the model
 fit <- model$sample(
