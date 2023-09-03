@@ -440,21 +440,6 @@ generated quantities {
       Rho[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
-  
-  /// marginal log-likelihood based on signed corrected parameters
-  Phi_lv = quad_form_diag(Rho, Sd_d);
-  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
-  theta_del = diag_matrix(sd_p);
-  
-  Sigma = lambda_phi_lambda + theta_del;
-  L_Sigma_model = cholesky_decompose(Sigma);
-  
-  for (i in 1 : N) {
-    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
-  }
-  
-  log_lik0 = sum(log_lik); // global log-likelihood
-  dev = -2 * log_lik0; // model deviance
 }
 "
 
@@ -649,25 +634,9 @@ blavInspect(blavfit.1, "mcobj")
 
 In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm]. 
 
-For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. We can simulate data from this DAG using {{lavaan}} like we did for the two models above:
+For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. We can simulate data from this DAG using {{lavaan}} like we did for the two models above.
 
-```{r}
-
-# Declare the new model where m1 and m4 covary
-mtmm.model <- ' 
-  f1 =~ .8*m1 + .6*m2 + .9*m3
-  f2 =~ .1*m4 + .2*m5 + -.4*m6
-  f1 ~~ .4*f2
-  m1 ~~ .4*m4
-'
-
-# Simulate data from the model
-fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
-
-```
-
-
-Now we add a new parameter to our Stan model to account for the possibility of shared method confounding. This only involves a few changes, namely:
+First we'll need to add a new parameter to our Stan model to account for the possibility of shared method confounding. This only involves a few changes, namely:
 - 
 
 ```stan
@@ -736,17 +705,6 @@ model {
   }
 }
 generated quantities {
-  array[N] real log_lik; // log likelihood of each datapoint
-  real dev; // global deviance
-  real log_lik0; // global log likelihood
-  vector[N] log_lik_row;
-  
-  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
-  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
-  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
-  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
-  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
-  
   corr_matrix[D] Rho_UNC; /// correlation matrix for factors
   corr_matrix[D] Rho_factors; /// correlation matrix for factors
   corr_matrix[D] Rho_m1_m4; /// correlation matrix for m1 and m4
@@ -760,7 +718,6 @@ generated quantities {
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
   Rho_factors = Rho_UNC;
   Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
-  Rho_factors = Rho_m1_m4;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -860,17 +817,6 @@ model {
   }
 }
 generated quantities {
-  array[N] real log_lik; // log likelihood of each datapoint
-  real dev; // global deviance
-  real log_lik0; // global log likelihood
-  vector[N] log_lik_row;
-  
-  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
-  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
-  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
-  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
-  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
-  
   corr_matrix[D] Rho_UNC; /// correlation matrix for factors
   corr_matrix[D] Rho_factors; /// correlation matrix for factors
   corr_matrix[D] Rho_m1_m4; /// correlation matrix for m1 and m4
@@ -884,7 +830,6 @@ generated quantities {
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
   Rho_factors = Rho_UNC;
   Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
-  Rho_factors = Rho_m1_m4;
   FS = FS_UNC;
   lam = rep_matrix(0, P, D);
   lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
@@ -931,6 +876,17 @@ model$format(canonicalize = TRUE)
 # Compile the model from the Stan file
 model <- cmdstanr::cmdstan_model(stan_file)
 
+# Declare the new lavaan model where m1 and m4 covary
+mtmm.model <- ' 
+  f1 =~ .8*m1 + .6*m2 + .9*m3
+  f2 =~ .1*m4 + .2*m5 + -.4*m6
+  f1 ~~ .4*f2
+  m1 ~~ .4*m4
+'
+
+# Simulate data from the lavaan model
+fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
+
 # Put the data into a list format Stan can understand
 X <- as.matrix(fake_dat)
 P <- ncol(fake_dat) 
@@ -938,7 +894,6 @@ N <- nrow(fake_dat)
 D <- 2
 
 data_list <- list(N=N,P=P,D=D,X=X, n_lam=6)
-param <- c("lam","Rho_factors", "Rho_m1_m4", "sd_p","M","Sd_d")
 
 # Fit the model
 fit <- model$sample(
@@ -947,14 +902,14 @@ fit <- model$sample(
   chains = 4,
   parallel_chains = 4,
   iter_warmup = 1000,
-  iter_sampling = 1000,
+  iter_sampling = 6000,
  # adapt_delta=0.99, 
  # max_treedepth = 12,
   refresh = 1 # print update at each iter
 )
 
 # Save the resulting model fit
-saveRDS(fit, "fits/b07.03.rds")
+saveRDS(fit, "source/fits/b07.03.rds")
 
 ```
 
@@ -966,10 +921,6 @@ Once again, the resulting object is enormous. So let's pare it down to only cont
 # Load the cmdstanr model object
 fit <- readRDS("source/fits/b07.03.rds")
 
-check <- fit$summary()
-
-check |> view()
-
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
   variables = c(
@@ -979,8 +930,8 @@ draws <- fit$draws(
   "lam[4,2]",
   "lam[5,2]",
   "lam[6,2]",
-  "Rho[2,1]", 
-  "theta_m1_m4"
+  "Rho_factors[2,1]", 
+  "Rho_m1_m4[2,1]"
   )
 )
 
@@ -1006,9 +957,9 @@ draws |>
    `lam[4,2]`,
    `lam[5,2]`,
    `lam[6,2]`,
-   `Rho[2,1]`,
-    theta_m1_m4
-  ) 
+   `Rho_factors[2,1]`,
+   `Rho_m1_m4[2,1]`,
+  ) |>
 
   # Do some renaming for clarity
   mutate(.variable = case_when(
@@ -1018,8 +969,8 @@ draws |>
     .variable == "lam[4,2]" ~ "Loading for m4",
     .variable == "lam[5,2]" ~ "Loading for m5",
     .variable == "lam[6,2]" ~ "Loading for m6",
-    .variable == "Rho[2,1]" ~ "Covariance for f1 ~ f2",
-    .variable == "theta_m1_m4" ~ "Covariance for m1 ~ m4"
+    .variable == "Rho_factors[2,1]" ~ "Covariance for f1 ~ f2",
+    .variable == "Rho_m1_m4[2,1]" ~ "Covariance for m1 ~ m4"
   )) |>
 
   # Add the true factor loadings for plotting
@@ -1034,7 +985,7 @@ draws |>
     .variable == "Covariance for m1 ~ m4" ~ .4
   )) |>
 
-  ggplot(aes(x = .value, fill = .variable)) 
+  ggplot(aes(x = .value, fill = .variable)) +
   stat_halfeye(fill = "mediumorchid") +
   geom_vline(aes(xintercept = true_loading), linetype = 2) + 
   scale_x_continuous(expand = c(0, 0.015)) +
