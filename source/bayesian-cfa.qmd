@@ -592,7 +592,7 @@ In this exampe we can feel good about model performance because it successfully 
 #| warnings: false
 
 # Create a summary table
-fit |>
+draws |>
 
   summary() |>
 
@@ -637,7 +637,7 @@ In the previous section we moved beyond {{brms}} into raw Stan, which allowed us
 For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. We can simulate data from this DAG using {{lavaan}} like we did for the two models above.
 
 First we'll need to add a new parameter to our Stan model to account for the possibility of shared method confounding. This only involves a few changes, namely:
-- 
+
 
 ```stan
 data {
@@ -909,7 +909,7 @@ fit <- model$sample(
 )
 
 # Save the resulting model fit
-saveRDS(fit, "source/fits/b07.03.rds")
+saveRDS(fit, "fits/b07.03.rds")
 
 ```
 
@@ -919,7 +919,7 @@ Once again, the resulting object is enormous. So let's pare it down to only cont
 #| eval: false
 
 # Load the cmdstanr model object
-fit <- readRDS("source/fits/b07.03.rds")
+fit <- readRDS("fits/b07.03.rds")
 
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
@@ -936,7 +936,7 @@ draws <- fit$draws(
 )
 
 # Save the result
-saveRDS(draws, "source/fits/b07.03.samples.rds")
+saveRDS(draws, "fits/b07.03.samples.rds")
 
 ```
 
@@ -944,7 +944,7 @@ How did that go? We can plot the draws and look at the MCMC diagnostics like we 
 ```{r}
 
 # Load the draws saved in the previous block
-draws <- readRDS("source/fits/b07.03.samples.rds")
+draws <- readRDS("fits/b07.03.samples.rds")
 
 # Plot
 draws |>
@@ -996,7 +996,170 @@ draws |>
   facet_wrap(~.variable) +
   theme_minimal() + 
   theme(panel.grid.major = element_blank())
-
+```
 
 
 ## Fourth Example: Survival Analysis
+
+Now that we're confident our measurement model for the correlated factors is well-specified, we can move on to modelling the outcome of interest: time to employment. The updated model is shown below. The only change from the MTMM model above is the two top lines: now we imagine time-to-event $T$ for each person $i$ to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors $f_1$ and $f_2$, as well as other measured variables in the matrix $\mathbf{X}$, each with its own coefficient in the vector $\boldsymbol{\beta}$. 
+
+$$
+\begin{aligned}
+T_i &\sim \text{Weibull}(\theta_i, k) \\
+\theta_i &= \alpha + \beta_1 f_{1i} + \beta_2 f_{2i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\\
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 f_1, \quad \mu_{m2} = \lambda_2 f_1, \quad \mu_{m3} = \lambda_3 f_1 \\
+\mu_{m4} &= \lambda_4 f_2, \quad \mu_{m5} = \lambda_5 f_2, \quad \mu_{m6} = \lambda_6 f_2 \\
+\\
+\begin{bmatrix}
+f_{1} \\
+f_{2}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_1 \\
+\mu_2
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_{f1}^2 & \rho \sigma_{f1} \sigma_{f2} \\
+\rho \sigma_{f1} \sigma_{f2} & \sigma_{f2}^2
+\end{bmatrix} \\
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & \rho \sigma_{m1} \sigma_{m4} & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+\rho \sigma_{m1} \sigma_{m4} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+
+$$
+
+Why a Weibull likelihood? This is a conventional choice for parameteric Cox Proportional Hazard regression because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither very rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we interpret the parameter estimates, and allows us to not worry too much about the proportional hazards assumption. 
+
+### Simulating data
+
+For this final section we won't be able to rely on `lavaan::simulateData()` to create our simulated data, because it can't generate time-to-event data. So we'll need to generate the data ourselves. [Mark Lai](https://scholar.google.com/citations?user=s2LhwXAAAAAJ&hl=en) has shared [some nice code](https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html#full-example-of-a-small-scale-simulation) to do this, so we can take his approach, adapting it slightly allow for covariance between m1 and m4 as in the MTMM model above. For now we'll simulate the measured variables as continuous and gaussian, even though it is more realistic that in this context they would be ordinal likert-style. 
+
+```{r}
+
+# Define sample size
+N <- 4000
+
+# Define the Fixed Parameters
+alpha <- c(0, 0)  # latent means
+
+# latent variances/covariances
+Phi <- matrix(c(1, 0.4, 
+                0.4, 1), nrow = 2)  
+
+# factor loadings
+Lambda <- cbind(c(.8, .6, .9, 0, 0, 0), 
+                c(0, 0, 0, .1, .2, -.4))  
+
+# Error structure of measured variables
+Theta <- diag(c(c(0.5, .2, .2, .3, .4, .5)))
+Theta[4, 1] <- .38
+Theta[1, 4] <- .38
+
+# Generate latent factor scores
+eta <- MASS::mvrnorm(N, mu = alpha, Sigma = Phi)
+
+# Generate residuals
+e <- MASS::mvrnorm(N, mu = rep(0, 6), Sigma = Theta)
+
+# Compute outcome scores: m_i = t(Lambda %*% eta_i) + e
+m <- tcrossprod(eta, Lambda) + e
+
+# Pack the measured variables and factor scores into a dataset
+fake_dat <- tibble(
+  m1 = m[,1],
+  m2 = m[,2],
+  m3 = m[,3],
+  m4 = m[,4],
+  m5 = m[,5],
+  m6 = m[,6],
+  f1 = eta[,1],
+  f2 = eta[,2]
+)
+
+```
+
+Now we have our 'measured' variables, simulated according to our chosen factor loadings and error structure. Just to be safe, let's make sure lavaan can recover the true parameter estimates. We need to specify `std.lv = TRUE` to override lavaan's default behaviour of setting the first loading of each factor to 1 and instead fix the variances of the latent variables to 1, or else it doesn't return the true simulated parameter estimates because the scales of the latent variables get messed up. Looks like everything works fine:
+
+```{r}
+
+surv.measurement.model <- ' 
+  f1 =~ m1 + m2 + m3
+  f2 =~ m4 + m5 + m6
+
+  f1 ~~ f1
+  f2 ~~ f2
+
+  m1 ~~ m4
+'
+
+# Fit the model
+fit_test <- cfa(surv.measurement.model, data = fake_dat |> select(starts_with("m")), std.lv = TRUE)
+
+# Make sure it works
+fit_test |> 
+
+  broom::tidy() |>
+
+  select(term, estimate) |>
+
+  knitr::kable()
+
+
+```
+
+Now that we have the factor scores and their measured manifestations, we can simulate the demographic variables and time-to-event data and add them to the dataset.
+
+```{r}
+
+
+
+
+
+
+```
+
+
+### Prior Predictive Distributions
+
+Check priors for the betas for f1 and f2, and for the sigmas. 
+
+
+## Multilevel Survival Analysis
+
+Let's say like 30 clusters. How to simulate?
