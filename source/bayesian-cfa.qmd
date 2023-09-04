@@ -14,6 +14,7 @@ library(lavaan)
 library(blavaan)
 library(brms)
 library(tidybayes)
+library(survival)
 
 # MCMC specifications
 options(brms.backend = "cmdstanr")
@@ -1064,7 +1065,7 @@ f_{2}
 
 $$
 
-Why a Weibull likelihood? According to @Collett2003, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we interpret the parameter estimates, and allows us to not worry too much about the proportional hazards assumption. 
+Why a Weibull likelihood? According to @Collett2003, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we communicate about the parameter estimates, and allows us to not worry too much about the proportional hazards assumption. 
 
 ### Simulating data
 
@@ -1234,7 +1235,7 @@ S(t \mid x, \lambda) &= \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(x'
 
 $$
 
-Now the denominator incorporates both $\lambda$ and the linear model. So we can just take the whole denominator and call it its own new thing $\lambda'$
+Now the denominator incorporates both $\lambda$ and the linear model. So we can just take the whole denominator and call it its own new thing $\lambda'$:
 
 $$
 
@@ -1244,7 +1245,7 @@ $$
 
 $$
 
-So now we've snuck our linear model into the classic no-model definition of the Weibull survival function we saw above, just with $\lambda'$ instead of $\lambda$.
+So now we've snuck our linear model into the classic no-model definition of the Weibull survival function we saw above, just with $\lambda'$ instead of $\lambda$:
 
 $$
 
@@ -1254,7 +1255,9 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 
 $$
 
-Now we can just implement this reparameterization when we go to create our event times. We'll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We'll generate an event time and a censoring time for each person, and a person's status will be the lower of those two times. 
+This is the parameterization we can implement when we go to create our event times. We'll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We'll generate an event time and a censoring time for each person, and a person's status will be the shorter of those two times. 
+
+Note for choosing the simulated parameter estimates for the linear model: there's some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios *or* acceleration factors. [This nice markdown document](https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html) provides a walkthrough of the transformations required to move between these two interpretations.
 
 ```{r}
 
@@ -1264,33 +1267,43 @@ rho <- 1
 lambda_wiki <- lambda^(-1 / rho) 
 
 # Declare some true linear model parameters
-beta_f1 <- log(.1)
-beta_f2 <- log(10)
-beta_age <- log(.8)
-beta_ei <- log(.3)
+beta_f1 <- 1
+beta_f2 <- .5
+beta_age <- .8
+beta_ei <- .3
 
 # Declare the rate for the exponential distribution from which we will sample censoring times
-censor_rate = .01
+censor_rate = .02
 
+# Simulate the covariates and event times
 fake_dat <- fake_dat |>
+
+  rowid_to_column() |>
 
   mutate(
 
     # Simulate the covariates
     age = rnorm(N), 
     ei_status = rbinom(N, 1, .4),
-    n_previous_programs = sample(c(1, 2, 3, 4), N, prob = c(.5, .3, .15, .05), replace = TRUE),
+    n_previous_programs = sample(c(1, 2, 3, 4), N, prob = c(.5, .3, .15, .05), replace = TRUE)
+
+  ) |>
+
+  group_by(rowid) |>
+
+  mutate(
 
     # Simulate the event times and censoring times
-  #  lambda_prime = lambda_wiki / exp((beta_f1*f1 + beta_f2*f2 + beta_age*age + beta_ei*ei_status) / rho),
-    lambda_prime = lambda_wiki / exp((beta_f1*f1) / rho),
-    time_event = rweibull(N, shape=rho, scale=lambda_prime),
-    time_censor = rexp(N, censor_rate),
+    lambda_prime = lambda_wiki / exp((beta_f1*f1 + beta_f2*f2 + beta_age*age + beta_ei*ei_status) / rho),
+    time_event = rweibull(1, shape=rho, scale=lambda_prime),
+    time_censor = rexp(1, censor_rate),
     time = min(time_event, time_censor),
     censored = ifelse(time_censor <= time_event, 1, 0),
     status = ifelse(time_censor > time_event, 1, 0)
 
   ) |>
+
+  ungroup() |>
 
   # Remove the intermediary variables we don't need
   select(-c(
@@ -1305,16 +1318,20 @@ If we've done everything correctly then a basic survival analysis should be able
 
 ```{r}
 
-test <- survreg(Surv(time, status) ~ f1, dat = fake_dat, 
+test <- survreg(Surv(time, status) ~ f1 + f2 + age + ei_status, data=fake_dat, 
 dist='weibull')
 
 test |> 
 
-  broom::tidy() |>
+  broom::tidy() |> 
 
-  mutate(estimate = exp(estimate))
+  knitr::kable()
+
+ # mutate(estimate = exp(estimate))
 
 ```
+
+Yes!
 
 ### Prior Predictive Distributions
 
