@@ -1064,7 +1064,7 @@ f_{2}
 
 $$
 
-Why a Weibull likelihood? This is a conventional choice for parameteric Cox Proportional Hazard regression because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither very rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we interpret the parameter estimates, and allows us to not worry too much about the proportional hazards assumption. 
+Why a Weibull likelihood? According to @Collett2003, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we interpret the parameter estimates, and allows us to not worry too much about the proportional hazards assumption. 
 
 ### Simulating data
 
@@ -1140,20 +1140,181 @@ fit_test |>
 
   knitr::kable()
 
-
 ```
 
-Now that we have the factor scores and their measured manifestations, we can simulate the demographic variables and time-to-event data and add them to the dataset.
+Now that we have the factor scores and their measured manifestations, we can simulate the demographic variables and time-to-event data and add them to the dataset. We can draw the covariates straightforwardly from the relevent distributions, but the times-to-event will require a bit more thought. There are existing packages for simulating survival data in R (such as [simsurv](https://cran.r-project.org/web/packages/simsurv/vignettes/simsurv_usage.html) by Sam Brilleman of rstanarm fame!) but since we're taking an explicit approach for the latent variables this time, it's nice to continue in that fashion for the entire dataset. I found [this Stack Exchange answer](https://stats.stackexchange.com/a/472260/337075) by user [Ryan SY Kwan](https://stats.stackexchange.com/users/206635/ryan-sy-kwan) helpful for learning an explicit workflow for simulating survival data from a Weibull distribution, which I implement here. 
+
+The goal is to find a way of expressing the Weibull distribution's shape parameter with reference to the linear model, so that we can use R's built-in `rweibull()` function to sample our event times. We can start from [the PDF of the Weibull distribution](https://en.wikipedia.org/wiki/Weibull_distribution):
+
+$$
+
+\begin{equation}
+f(x; k, \lambda) = \begin{cases}
+\frac{k}{\lambda} \left( \frac{x}{\lambda} \right)^{k-1} e^{-(x/\lambda)^{k}} & x > 0, \\
+0 & x \leq 0.
+\end{cases}
+\end{equation}
+
+$$
+
+And its cumulative density function is given by:
+
+$$
+
+\begin{equation}
+F(x; k, \lambda) = 1 - \exp\left(-\left(\frac{x}{\lambda}\right)^{k}\right)
+\end{equation}
+
+$$
+
+So the survival curve, given by 1 - CDF, is:
+
+$$
+
+\begin{equation}
+S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda}\right)^{k}\right)
+\end{equation}
+
+$$
+
+And using the classic negative-log relationship between the survival function and the cumulative hazard function, we can say:
+
+$$
+
+\begin{equation}
+H(t) = -\log\left(\exp\left(-\left(\frac{t}{\lambda}\right)^{\rho}\right)\right)
+\end{equation}
+
+\\[1em]
+
+\begin{equation}
+H(t) = \left(\frac{t}{\lambda}\right)^{\rho}
+\end{equation}
+
+$$
+
+Now we have everything we need to implement the the classic form of a Cox Proportional Hazards regression, given by:
+$$
+
+\begin{equation}
+H(t | \mathbf{X}) = H_0(t) \exp(\mathbf{\beta}' \mathbf{X})
+\end{equation}
+
+$$
+
+Since this is directly equivalent to the model for the actual function of interest, the baseline hazard. As @Singer+Willett2003 put it, _"This direct equivalence may not be intuitive, but it certainly is invaluable."_
+
+$$
+
+\begin{equation}
+h(t | \mathbf{X}) = h_0(t) \exp(\mathbf{\beta}' \mathbf{X})
+\end{equation}
+
+$$
+
+So we can take the definition of the Weibull cumulative hazard function we found above and substitute it into this equation, then take its negative exp to get it back in terms of the survival function, which is what we actually want to be sampling event times from:
+
+$$
+
+\begin{equation}
+S(t \mid \mathbf{x}) = \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(\mathbf{\beta}' \mathbf{x})\right)
+\end{equation}
+
+$$
+
+Now we can rearrange things to make the scale parameter $\lambda$ itself a function of the linear model. This allows us to use R's built-in `rweibull()` function to generate the event times. All we need is some fancy algebra:
+
+$$
+
+\begin{align*}
+S(t \mid x, \lambda) &= \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(x' \beta)\right) \\
+&= \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp\left(\frac{x' \beta}{\rho}\right)\rho\right) \\
+&= \exp\left(-\left(\frac{t}{\frac{\lambda}{\exp\left(\frac{x' \beta}{\rho}\right)}}\right)^{\rho}\right) \\
+\end{align*}
+
+$$
+
+Now the denominator incorporates both $\lambda$ and the linear model. So we can just take the whole denominator and call it its own new thing $\lambda'$
+
+$$
+
+\begin{align*}
+\lambda' = \frac{\lambda}{\exp\left(\frac{x' \beta}{\rho}\right)}
+\end{align*}
+
+$$
+
+So now we've snuck our linear model into the classic no-model definition of the Weibull survival function we saw above, just with $\lambda'$ instead of $\lambda$.
+
+$$
+
+\begin{equation}
+S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
+\end{equation}
+
+$$
+
+Now we can just implement this reparameterization when we go to create our event times. We'll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We'll generate an event time and a censoring time for each person, and a person's status will be the lower of those two times. 
 
 ```{r}
 
+# Declare some parameter values for baseline hazard
+lambda <- 1
+rho <- 1
+lambda_wiki <- lambda^(-1 / rho) 
 
+# Declare some true linear model parameters
+beta_f1 <- log(.1)
+beta_f2 <- log(10)
+beta_age <- log(.8)
+beta_ei <- log(.3)
 
+# Declare the rate for the exponential distribution from which we will sample censoring times
+censor_rate = .01
 
+fake_dat <- fake_dat |>
 
+  mutate(
+
+    # Simulate the covariates
+    age = rnorm(N), 
+    ei_status = rbinom(N, 1, .4),
+    n_previous_programs = sample(c(1, 2, 3, 4), N, prob = c(.5, .3, .15, .05), replace = TRUE),
+
+    # Simulate the event times and censoring times
+  #  lambda_prime = lambda_wiki / exp((beta_f1*f1 + beta_f2*f2 + beta_age*age + beta_ei*ei_status) / rho),
+    lambda_prime = lambda_wiki / exp((beta_f1*f1) / rho),
+    time_event = rweibull(N, shape=rho, scale=lambda_prime),
+    time_censor = rexp(N, censor_rate),
+    time = min(time_event, time_censor),
+    censored = ifelse(time_censor <= time_event, 1, 0),
+    status = ifelse(time_censor > time_event, 1, 0)
+
+  ) |>
+
+  # Remove the intermediary variables we don't need
+  select(-c(
+    lambda_prime,
+    time_event,
+    time_censor
+  ))
 
 ```
 
+If we've done everything correctly then a basic survival analysis should be able to recover the true parameter estimates:
+
+```{r}
+
+test <- survreg(Surv(time, status) ~ f1, dat = fake_dat, 
+dist='weibull')
+
+test |> 
+
+  broom::tidy() |>
+
+  mutate(estimate = exp(estimate))
+
+```
 
 ### Prior Predictive Distributions
 

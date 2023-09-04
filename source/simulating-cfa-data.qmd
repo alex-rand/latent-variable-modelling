@@ -47,7 +47,7 @@ $$
 P(Z < 1.5) \approx 0.9332
 $$
 
-And in classic ordinal variable modelling fashion, we can just use subtraction to get the level-speccific probabilities (we already got the probability of level 1 for free above):
+And in classic ordinal variable modelling fashion, we can just use subtraction to get the level-specific probabilities (we already got the probability of level 1 for free above):
 
 $$
 \begin{align*}
