@@ -1002,12 +1002,14 @@ draws |>
 
 ## Fourth Example: Survival Analysis
 
-Now that we're confident our measurement model for the correlated factors is well-specified, we can move on to modelling the outcome of interest: time to employment. The updated model is shown below. The only change from the MTMM model above is the two top lines: now we imagine time-to-event $T$ for each person $i$ to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors $f_1$ and $f_2$, as well as other measured variables in the matrix $\mathbf{X}$, each with its own coefficient in the vector $\boldsymbol{\beta}$. 
+Now that we're confident our measurement model for the correlated factors is well-specified, we can move on to modelling the outcome of interest: time to employment. Let's say our client has designed two scales for measuring the latent features 'Adaptability' `adapt` and 'Collaboration Skills' `collab`, which are thought to be correlated but distinct constructs. Each is measured by 3 instruments, and as above we assume `m1` and `m4` are confounded by their shared measurement approach, so we estimate their residual covariance to account for this.
+
+The updated model is shown below. The only change from the MTMM model above is the two top lines: now we imagine time-to-event $T$ for each person $i$ to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors $\text{adapt}$ and $\text{collab}$, as well as other measured variables in the matrix $\mathbf{X}$, each with its own coefficient in the vector $\boldsymbol{\beta}$. 
 
 $$
 \begin{aligned}
 T_i &\sim \text{Weibull}(\theta_i, k) \\
-\theta_i &= \alpha + \beta_1 f_{1i} + \beta_2 f_{2i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\theta_i &= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -1030,26 +1032,26 @@ m_{6}
 \Sigma_m
 \right) \\
 \\
-\mu_{m1} &= \lambda_1 f_1, \quad \mu_{m2} = \lambda_2 f_1, \quad \mu_{m3} = \lambda_3 f_1 \\
-\mu_{m4} &= \lambda_4 f_2, \quad \mu_{m5} = \lambda_5 f_2, \quad \mu_{m6} = \lambda_6 f_2 \\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
 \\
 \begin{bmatrix}
-f_{1} \\
-f_{2}
+\text{adapt}_{i} \\
+\text{collab}_{i}
 \end{bmatrix}
 &\sim \text{MVNormal}
 \left(
 \begin{bmatrix}
-\mu_1 \\
-\mu_2
+\mu_\text{adapt} \\
+\mu_\text{collab}
 \end{bmatrix},
 \Sigma_f
 \right) \\
 \\
 \Sigma_f &=
 \begin{bmatrix}
-\sigma_{f1}^2 & \rho \sigma_{f1} \sigma_{f2} \\
-\rho \sigma_{f1} \sigma_{f2} & \sigma_{f2}^2
+\sigma_\text{adapt}^2 & \rho \sigma_\text{adapt} \sigma_\text{collab} \\
+\rho \sigma_\text{adapt} \sigma_\text{collab} & \sigma_\text{adapt}^2
 \end{bmatrix} \\
 \\
 \Sigma_m &=
@@ -1102,15 +1104,15 @@ e <- MASS::mvrnorm(N, mu = rep(0, 6), Sigma = Theta)
 m <- tcrossprod(eta, Lambda) + e
 
 # Pack the measured variables and factor scores into a dataset
-fake_dat <- tibble(
+fake_dat_measurement <- tibble(
   m1 = m[,1],
   m2 = m[,2],
   m3 = m[,3],
   m4 = m[,4],
   m5 = m[,5],
   m6 = m[,6],
-  f1 = eta[,1],
-  f2 = eta[,2]
+  adapt = eta[,1],
+  collab = eta[,2]
 )
 
 ```
@@ -1130,7 +1132,7 @@ surv.measurement.model <- '
 '
 
 # Fit the model
-fit_test <- cfa(surv.measurement.model, data = fake_dat |> select(starts_with("m")), std.lv = TRUE)
+fit_test <- cfa(surv.measurement.model, data = fake_dat_measurement |> select(starts_with("m")), std.lv = TRUE)
 
 # Make sure it works
 fit_test |> 
@@ -1257,26 +1259,28 @@ $$
 
 This is the parameterization we can implement when we go to create our event times. We'll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We'll generate an event time and a censoring time for each person, and a person's status will be the shorter of those two times. 
 
-Note for choosing the simulated parameter estimates for the linear model: there's some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios *or* acceleration factors. [This nice markdown document](https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html) provides a walkthrough of the transformations required to move between these two interpretations.
+We can start by choosing values for the Weibull distribution's `rho` and `lambda` parameters that generate a realistic-seeming distribution of times-to-employment in the absence of a linear model. This is simpler conceptually if we define `rho = 1`. After some trial and error I settled on `lambda = .02`, which results in a mean time-to-employment of 22 days, as shown in the plot below. 
+
+Now we can choose the simulated parameter estimates for the linear model. There's some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios *or* acceleration factors. [This nice markdown document](https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html) provides a walkthrough of the transformations required to move between these two interpretations. The canonical **survival** package implements Weibull regression as an accelerated failure time model by default, and I find this interpretation more user-friendly so I will stick with it for our purposes here. This means that when we declare our 'true' parameter estimtes we'll need to keep this interpretation in mind: the exponentiated parameter estimate reflects a multiplicative scaling of estimate survival time among people who are the same along all other measured covariates, but differ by 1 for this covariate. For example, for this simulation we can imagine that being on employment insurance is associated with twice-as-fast time-to-employment because it means you have recent work experience. We simulate this by setting the coefficient of `beta_ie <- log(2)`. 
 
 ```{r}
 
 # Declare some parameter values for baseline hazard
-lambda <- 1
-rho <- 1
+lambda <- .02
+rho <- 1 # keep rho = 1 to keep the conversions simple / make it easier to specify lambda
 lambda_wiki <- lambda^(-1 / rho) 
 
 # Declare some true linear model parameters
-beta_f1 <- 1
-beta_f2 <- .5
-beta_age <- .8
-beta_ei <- .3
+beta_adapt <- log(1) # adaptability skills have no effect on time-to-employment
+beta_collab <- log(1.2) # collaboration skills decrease time-to-employment by 20% for each standard deviation increase.
+beta_age <- log(.9) # older people find employment a bit slower -- each increase in age of 1 standard deviation slows time-to-employment to 90% of what is was previously.
+beta_ei <- log(2) # people on EI find employment twice as fast 
 
 # Declare the rate for the exponential distribution from which we will sample censoring times
 censor_rate = .02
 
 # Simulate the covariates and event times
-fake_dat <- fake_dat |>
+fake_dat <- fake_dat_measurement |>
 
   rowid_to_column() |>
 
@@ -1294,7 +1298,7 @@ fake_dat <- fake_dat |>
   mutate(
 
     # Simulate the event times and censoring times
-    lambda_prime = lambda_wiki / exp((beta_f1*f1 + beta_f2*f2 + beta_age*age + beta_ei*ei_status) / rho),
+    lambda_prime = lambda_wiki / exp((beta_adapt*adapt + beta_collab*collab + beta_age*age + beta_ei*ei_status) / rho),
     time_event = rweibull(1, shape=rho, scale=lambda_prime),
     time_censor = rexp(1, censor_rate),
     time = min(time_event, time_censor),
@@ -1314,28 +1318,159 @@ fake_dat <- fake_dat |>
 
 ```
 
-If we've done everything correctly then a basic survival analysis should be able to recover the true parameter estimates:
+We can plot the event times to make sure they seem realistic:
+
+```{r}
+#| label: viz-weibull-samples
+#| message: false
+#| warning: false
+#| fig-cap: "Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time."
+#| fig-alt: "Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time."
+
+fake_dat |>
+
+  ggplot() + 
+  geom_density(aes(x = time)) +
+  geom_vline(aes(xintercept = mean(time)), linetype = 2) +
+  scale_y_continuous(expand=c(0, 0)) +
+  theme_minimal()
+
+```
+
+If we've done everything correctly then a basic survival analysis should be able to recover the true parameter estimates using the true model specification. Indeed, this is what we see:
 
 ```{r}
 
-test <- survreg(Surv(time, status) ~ f1 + f2 + age + ei_status, data=fake_dat, 
-dist='weibull')
+test <- survreg(Surv(time, status) ~ adapt + collab + age + ei_status, data=fake_dat, dist='weibull')
 
 test |> 
 
   broom::tidy() |> 
 
-  knitr::kable()
+  mutate(estimate = exp(estimate)) |>
 
- # mutate(estimate = exp(estimate))
+  knitr::kable()
 
 ```
 
-Yes!
 
-### Prior Predictive Distributions
+### Report the scale reliabilities?
 
-Check priors for the betas for f1 and f2, and for the sigmas. 
+
+### Prior Predictive Simulation. 
+
+Unlike the factor analysis models we fit above, this model has substantive predictors about which we have background knowledge. So we can use prior predictive simulation to specify informative priors. One convenient workflow for doing this is to write some simple code to simulate from the prior distributions of interest, then transform the simulated values to check whether the priors make sense on the scale of interest. Once we arrive at reasonable-seeming priors for all of the parameters, we can use **brms** to sample from the prior predictive distribution of event times and make sure everything is making sense.
+
+The **brms** parameterization of the Weibull distribution [is slightly different](https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html) than the one used in the **survival** package, with **brms** specifying a mean parameter as a function of the scale and shape parameters of the more traditional parameterization:
+
+$$
+
+s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
+
+$$
+
+So when we specify a prior for the intercept term in our Bayesian model, we're also specifying a prior for this transformation of the scale and shape parameters under the traditional parameterization:
+
+$$
+
+\mu = s \times \Gamma\left(1 + \frac{1}{\alpha}\right)
+
+$$
+
+I don't think this has any big implications: setting a prior for the intercept is more intuitive than setting a prior for the scale and shape parameters indivdually anyway. 
+
+Now it's time to iteratively choose some priors, sample them, visualize their implications, and refine them to better reflect our background knowledge. A few points to keep in mind:
+- We can specify the intercept on the raw 'days-to-employment' scale because that helps keep things interpretable. Based on previous studies I've seen at my work, an average time-to-employment of 30 days seems reasonable, and an average higher than 60 days seems very unlikely. 
+- The beta coefficients are going to be log acceleration factors. So an exponentiated beta coefficient multiplicatively scales the time to event. For any of the covariates, an acceleration factor of a factor of 5 or more in either direction seems pretty unlikely
+
+We can start with the intercept
+
+```{r}
+
+# Simulate some data
+sim <- rnorm(10000, 0, .5) |>
+
+  as_tibble() |>
+
+  mutate(value = exp(value)) 
+
+# Get the mean
+sim |> 
+
+    pull(value) |>
+    
+    mean()
+
+# Plot the distribution
+sim |>
+
+    ggplot(aes(x = value)) +
+    stat_halfeye() 
+
+
+```
+
+```{r}
+
+# exp(-0.0121805)
+# 
+# convert_to_scale <- function(mu, alpha) {
+#   scale <- mu / gamma(1 + 1 / alpha)
+#   return(scale)
+# }
+# 
+# convert_to_scale(1.01, 0.86)
+
+# Declare the formula
+bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status, family = weibull())
+
+# See which priors are available
+get_prior(
+  formula = bf,
+  data = fake_dat
+)
+
+# Declare some priors
+priors <- c(
+    prior(normal(3.3, .4), class = "b", coef = "Intercept"), # The average time-to-employment. Use gamma because times are positive and continuous
+    prior(normal(0, .5), class = "b", coef = "adapt"),
+    prior(normal(0, .5), class = "b", coef = "age"),
+    prior(normal(0, .5), class = "b", coef = "collab"),
+    prior(normal(0, .5), class = "b", coef = "ei_status")
+  )
+
+
+# Fit the model
+test.brms <- brm(
+  data = fake_dat,
+  formula = bf,
+  prior = priors,
+  sample_prior = "only",
+  iter = 2000 # Number of iterations
+)
+
+# Figure out what brms has named everything
+get_variables(prior.fit)
+
+# Work with the draws
+test.brms |> 
+
+    gather_draws(b_Intercept) |>
+
+    mutate(.value = exp(.value)) |>
+
+    ggplot(aes(x = .value, y = .variable)) +
+    stat_halfeye() 
+    
+    view()
+
+
+
+
+
+
+```
+ 
 
 
 ## Multilevel Survival Analysis
