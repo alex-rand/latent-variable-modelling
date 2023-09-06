@@ -1354,8 +1354,11 @@ test |>
 ```
 
 
-### Report the scale reliabilities?
+### Exploratory Data Analysis. Report the scale reliabilities?
 
+Now we'll adopt the conceit that the two factors `adapt` and `collab` are unmeasured, as would be the case in reality. 
+
+Stratified Kaplan Meier, etc?
 
 ### Prior Predictive Simulation. 
 
@@ -1380,13 +1383,10 @@ $$
 I don't think this has any big implications: setting a prior for the intercept is more intuitive than setting a prior for the scale and shape parameters indivdually anyway. 
 
 Now it's time to iteratively choose some priors, sample them, visualize their implications, and refine them to better reflect our background knowledge. A few points to keep in mind:
-- We can specify the intercept on the raw 'days-to-employment' scale because that helps keep things interpretable. Based on previous studies I've seen at my work, an average time-to-employment of 30 days seems reasonable, and an average higher than 60 days seems very unlikely. 
-- The beta coefficients are going to be log acceleration factors. So an exponentiated beta coefficient multiplicatively scales the time to event. For any of the covariates, an acceleration factor of a factor of 5 or more in either direction seems pretty unlikely
 
-We can start with the intercept
+We can start with the intercept, specifying a prior on the raw 'days-to-employment' scale because that helps keep things interpretable. Based on previous studies I've done at my work, an average time-to-employment of 30 days seems reasonable, and an average higher than 60 days seems very unlikely. After much trial and error with the code below it seems like a gaussian with `mean = 3.3, sd = .4` gives a distribution with appropriate characteristics: 
 
 ```{r}
-
 # Simulate some data
 sim <- rnorm(10000, 0, .5) |>
 
@@ -1405,7 +1405,32 @@ sim |>
 sim |>
 
     ggplot(aes(x = value)) +
-    stat_halfeye() 
+    stat_halfeye()  
+```
+
+Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 5 or more in either direction (I.E. 5 or 0.2) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with `mean = 0, sd = 1` captures this 'factor of 5' intuition, with the a factor of 5 or greater being associated with a probability of about 5% in either direction. 
+
+```{r}
+# Simulate some data
+sim <- rnorm(10000, 0, 1) |>
+
+  as_tibble() |>
+
+  mutate(value = exp(value)) 
+
+# Get the quantiles
+sim |> 
+
+  summarise_draws() |>
+
+  select(q5, q95)
+
+# Plot the distribution
+sim |>
+
+    ggplot(aes(x = value)) +
+    stat_halfeye() +
+    xlim(c(0, 10))
 
 
 ```
@@ -1422,32 +1447,37 @@ sim |>
 # convert_to_scale(1.01, 0.86)
 
 # Declare the formula
-bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status, family = weibull())
+bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status)
+
 
 # See which priors are available
 get_prior(
   formula = bf,
-  data = fake_dat
+  data = fake_dat,
+  family = weibull()
 )
 
-# Declare some priors
+# Declare the priors we want
 priors <- c(
     prior(normal(3.3, .4), class = "b", coef = "Intercept"), # The average time-to-employment. Use gamma because times are positive and continuous
-    prior(normal(0, .5), class = "b", coef = "adapt"),
-    prior(normal(0, .5), class = "b", coef = "age"),
-    prior(normal(0, .5), class = "b", coef = "collab"),
-    prior(normal(0, .5), class = "b", coef = "ei_status")
+    prior(constant(10), class = "shape"), # Constrain the shape parameter, or else it thinks event times can go on basically forever.
+    prior(normal(0, 1), class = "b", coef = "adapt"),
+    prior(normal(0, 1), class = "b", coef = "age"),
+    prior(normal(0, 1), class = "b", coef = "collab"),
+    prior(normal(0, 1), class = "b", coef = "ei_status")
   )
-
 
 # Fit the model
 test.brms <- brm(
   data = fake_dat,
   formula = bf,
+  family = weibull(),
   prior = priors,
   sample_prior = "only",
   iter = 2000 # Number of iterations
 )
+
+test.brms |>summary()
 
 # Figure out what brms has named everything
 get_variables(prior.fit)
@@ -1455,22 +1485,31 @@ get_variables(prior.fit)
 # Work with the draws
 test.brms |> 
 
-    gather_draws(b_Intercept) |>
+    gather_draws(shape) |>
+
+    summarise_draws()
 
     mutate(.value = exp(.value)) |>
 
     ggplot(aes(x = .value, y = .variable)) +
     stat_halfeye() 
     
-    view()
+# Check the prior predictive distribution
+fake_dat |>
 
+  add_predicted_draws(test.brms, ndraws = 100) |>
 
-
-
-
+  ggplot() + 
+  geom_density(aes(x = .prediction, group = .draw), alpha = 0, colour = "mediumorchid") +
+  scale_y_continuous(expand=c(0, 0)) +
+  xlim(c(0, 365)) +
+  theme_minimal()
+?scale_y_continuous
 
 ```
  
+
+These look like densities of event times to me. 
 
 
 ## Multilevel Survival Analysis
