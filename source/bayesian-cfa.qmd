@@ -1358,6 +1358,15 @@ test |>
 
 Now we'll adopt the conceit that the two factors `adapt` and `collab` are unmeasured, as would be the case in reality. 
 
+```{r}
+
+fake_dat |>
+
+    ggplot() + 
+    geom_density(aes(x = time))
+
+```
+
 Stratified Kaplan Meier, etc?
 
 ### Prior Predictive Simulation. 
@@ -1435,22 +1444,19 @@ sim |>
 
 ```
 
-```{r}
+Now that we have some reasonable priors, we can sample from them to simulate from the prior predictive distribution. One thing I was finding at this stage was I needed to fix the Weibull distribution's `shape` parameter at a constant value in order to produce reasonable-seeming event times. This also greatly improved the number of divergent transitions in sampling. The resulting densities of bounded 1-year times-to-event look reasonable to me, and there is plenty of uncertainty leftover for the model to refine its predictions after it sees the data.
 
-# exp(-0.0121805)
-# 
-# convert_to_scale <- function(mu, alpha) {
-#   scale <- mu / gamma(1 + 1 / alpha)
-#   return(scale)
-# }
-# 
-# convert_to_scale(1.01, 0.86)
+```{r}
+#| label: prior-pred-1-densities
+#| message: false
+#| warning: false
+#| fig-cap: "Densities for 400 draws from the prior predictive distribution of event times."
+#| fig-alt: "Densities for 400 draws from the prior predictive distribution of event times."
 
 # Declare the formula
 bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status)
 
-
-# See which priors are available
+# See how brms names the parameters, so we know how to specify priors form them
 get_prior(
   formula = bf,
   data = fake_dat,
@@ -1468,48 +1474,67 @@ priors <- c(
   )
 
 # Fit the model
-test.brms <- brm(
+fit.prior <- brm(
   data = fake_dat,
   formula = bf,
   family = weibull(),
   prior = priors,
   sample_prior = "only",
-  iter = 2000 # Number of iterations
+  iter = 2000,
+  file = "fits/b07.04.priors.rds"
 )
 
-test.brms |>summary()
-
-# Figure out what brms has named everything
-get_variables(prior.fit)
-
-# Work with the draws
-test.brms |> 
-
-    gather_draws(shape) |>
-
-    summarise_draws()
-
-    mutate(.value = exp(.value)) |>
-
-    ggplot(aes(x = .value, y = .variable)) +
-    stat_halfeye() 
+# Figure out what brms has named everything so we can wrangle the draws
+get_variables(fit.prior)
     
 # Check the prior predictive distribution
 fake_dat |>
-
-  add_predicted_draws(test.brms, ndraws = 100) |>
+ 
+  add_predicted_draws(fit.prior, ndraws = 400) |>
 
   ggplot() + 
-  geom_density(aes(x = .prediction, group = .draw), alpha = 0, colour = "mediumorchid") +
+  geom_density(aes(x = .prediction, group = .draw), alpha = 0, colour=alpha("mediumorchid", .1)) +
   scale_y_continuous(expand=c(0, 0)) +
   xlim(c(0, 365)) +
   theme_minimal()
-?scale_y_continuous
 
 ```
  
 
-These look like densities of event times to me. 
+ We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something @Gelman2020 advocate for in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven't told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could change the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let's just stick with the plan. 
+
+```{r}
+#| label: prior-pred-1-means
+#| message: false
+#| warning: false
+#| fig-cap: "Mean event times of 400 draws from the prior predictive distribution of event times." 
+#| fig-alt: "Mean event times of 400 draws from the prior predictive distribution of event times."
+
+fake_dat |>
+ 
+  add_predicted_draws(fit.prior, ndraws = 400) |>
+
+  group_by(.draw) |>
+
+  mutate(draw_mean = mean(.prediction)) |>
+
+  distinct(.draw, .keep_all = TRUE) |>
+
+  ggplot() + 
+  geom_histogram(aes(x = draw_mean), colour = "white", fill = "mediumorchid") +
+  labs(x = "Mean of draw from prior predictive distribution", y = "n draws") +
+  scale_x_continuous(expand=c(0, 0), limits = c(0, 1000)) +
+  scale_y_continuous(expand=c(0, 0)) +
+  theme_minimal()
+
+```
+
+
+
+```{r}
+
+
+```
 
 
 ## Multilevel Survival Analysis

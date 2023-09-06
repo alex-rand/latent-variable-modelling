@@ -251,7 +251,8 @@ div.csl-indent {
   <li><a href="#fourth-example-survival-analysis" id="toc-fourth-example-survival-analysis" class="nav-link" data-scroll-target="#fourth-example-survival-analysis"><span class="toc-section-number">6.4</span>  Fourth Example: Survival Analysis</a>
   <ul class="collapse">
   <li><a href="#simulating-data" id="toc-simulating-data" class="nav-link" data-scroll-target="#simulating-data"><span class="toc-section-number">6.4.1</span>  Simulating data</a></li>
-  <li><a href="#prior-predictive-distributions" id="toc-prior-predictive-distributions" class="nav-link" data-scroll-target="#prior-predictive-distributions"><span class="toc-section-number">6.4.2</span>  Prior Predictive Distributions</a></li>
+  <li><a href="#exploratory-data-analysis.-report-the-scale-reliabilities" id="toc-exploratory-data-analysis.-report-the-scale-reliabilities" class="nav-link" data-scroll-target="#exploratory-data-analysis.-report-the-scale-reliabilities"><span class="toc-section-number">6.4.2</span>  Exploratory Data Analysis. Report the scale reliabilities?</a></li>
+  <li><a href="#prior-predictive-simulation." id="toc-prior-predictive-simulation." class="nav-link" data-scroll-target="#prior-predictive-simulation."><span class="toc-section-number">6.4.3</span>  Prior Predictive Simulation.</a></li>
   </ul></li>
   <li><a href="#multilevel-survival-analysis" id="toc-multilevel-survival-analysis" class="nav-link" data-scroll-target="#multilevel-survival-analysis"><span class="toc-section-number">6.5</span>  Multilevel Survival Analysis</a></li>
   </ul>
@@ -326,21 +327,21 @@ div.csl-indent {
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>fit_1 <span class="sc">|&gt;</span> broom<span class="sc">::</span><span class="fu">tidy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 13 × 9
-   term     op    estimate std.error statistic p.value std.lv std.all std.nox
-   &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
- 1 f1 =~ m1 =~       0.8      0           NA        NA  0.812   0.635   0.635
- 2 f1 =~ m2 =~       0.1      0           NA        NA  0.101   0.101   0.101
- 3 f1 =~ m3 =~       0.6      0           NA        NA  0.609   0.527   0.527
- 4 f1 =~ m4 =~       0.2      0           NA        NA  0.203   0.196   0.196
- 5 f1 =~ m5 =~       0.9      0           NA        NA  0.913   0.674   0.674
- 6 f1 =~ m6 =~      -0.4      0           NA        NA -0.406  -0.380  -0.380
- 7 m1 ~~ m1 ~~       0.975    0.0282      34.6       0  0.975   0.597   0.597
- 8 m2 ~~ m2 ~~       0.995    0.0223      44.6       0  0.995   0.990   0.990
- 9 m3 ~~ m3 ~~       0.964    0.0247      39.1       0  0.964   0.722   0.722
-10 m4 ~~ m4 ~~       1.03     0.0233      44.1       0  1.03    0.961   0.961
-11 m5 ~~ m5 ~~       1.00     0.0311      32.1       0  1.00    0.545   0.545
-12 m6 ~~ m6 ~~       0.978    0.0231      42.3       0  0.978   0.856   0.856
-13 f1 ~~ f1 ~~       1.03     0.0347      29.6       0  1       1       1    </code></pre>
+   term     op    estimate std.error statistic p.value  std.lv std.all std.nox
+   &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+ 1 f1 =~ m1 =~       0.8      0           NA        NA  0.790   0.623   0.623 
+ 2 f1 =~ m2 =~       0.1      0           NA        NA  0.0988  0.0975  0.0975
+ 3 f1 =~ m3 =~       0.6      0           NA        NA  0.593   0.510   0.510 
+ 4 f1 =~ m4 =~       0.2      0           NA        NA  0.198   0.193   0.193 
+ 5 f1 =~ m5 =~       0.9      0           NA        NA  0.889   0.648   0.648 
+ 6 f1 =~ m6 =~      -0.4      0           NA        NA -0.395  -0.375  -0.375 
+ 7 m1 ~~ m1 ~~       0.985    0.0285      34.6       0  0.985   0.612   0.612 
+ 8 m2 ~~ m2 ~~       1.02     0.0228      44.6       0  1.02    0.991   0.991 
+ 9 m3 ~~ m3 ~~       0.997    0.0254      39.2       0  0.997   0.739   0.739 
+10 m4 ~~ m4 ~~       1.01     0.0229      44.1       0  1.01    0.963   0.963 
+11 m5 ~~ m5 ~~       1.09     0.0330      33.0       0  1.09    0.580   0.580 
+12 m6 ~~ m6 ~~       0.956    0.0227      42.2       0  0.956   0.860   0.860 
+13 f1 ~~ f1 ~~       0.976    0.0340      28.7       0  1       1       1     </code></pre>
 </div>
 </div>
 <p>But can brms recover the true parameter values? I like this approach because it gives a nice conceptual perspective on what we’re actually doing when we’re doing latant variable modelling: we’re just doing a linear regression where the measured variables are all drawn from a sharedd multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. It’s a pretty cool and weird thing.</p>
@@ -1021,11 +1022,12 @@ div.csl-indent {
 </section>
 <section id="fourth-example-survival-analysis" class="level2" data-number="6.4">
 <h2 data-number="6.4" class="anchored" data-anchor-id="fourth-example-survival-analysis"><span class="header-section-number">6.4</span> Fourth Example: Survival Analysis</h2>
-<p>Now that we’re confident our measurement model for the correlated factors is well-specified, we can move on to modelling the outcome of interest: time to employment. The updated model is shown below. The only change from the MTMM model above is the two top lines: now we imagine time-to-event <span class="math inline">\(T\)</span> for each person <span class="math inline">\(i\)</span> to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors <span class="math inline">\(f_1\)</span> and <span class="math inline">\(f_2\)</span>, as well as other measured variables in the matrix <span class="math inline">\(\mathbf{X}\)</span>, each with its own coefficient in the vector <span class="math inline">\(\boldsymbol{\beta}\)</span>.</p>
+<p>Now that we’re confident our measurement model for the correlated factors is well-specified, we can move on to modelling the outcome of interest: time to employment. Let’s say our client has designed two scales for measuring the latent features ‘Adaptability’ <code>adapt</code> and ‘Collaboration Skills’ <code>collab</code>, which are thought to be correlated but distinct constructs. Each is measured by 3 instruments, and as above we assume <code>m1</code> and <code>m4</code> are confounded by their shared measurement approach, so we estimate their residual covariance to account for this.</p>
+<p>The updated model is shown below. The only change from the MTMM model above is the two top lines: now we imagine time-to-event <span class="math inline">\(T\)</span> for each person <span class="math inline">\(i\)</span> to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors <span class="math inline">\(\text{adapt}\)</span> and <span class="math inline">\(\text{collab}\)</span>, as well as other measured variables in the matrix <span class="math inline">\(\mathbf{X}\)</span>, each with its own coefficient in the vector <span class="math inline">\(\boldsymbol{\beta}\)</span>.</p>
 $$
 <span class="math display">\[\begin{aligned}
 T_i &amp;\sim \text{Weibull}(\theta_i, k) \\
-\theta_i &amp;= \alpha + \beta_1 f_{1i} + \beta_2 f_{2i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\theta_i &amp;= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -1048,26 +1050,26 @@ m_{6}
 \Sigma_m
 \right) \\
 \\
-\mu_{m1} &amp;= \lambda_1 f_1, \quad \mu_{m2} = \lambda_2 f_1, \quad \mu_{m3} = \lambda_3 f_1 \\
-\mu_{m4} &amp;= \lambda_4 f_2, \quad \mu_{m5} = \lambda_5 f_2, \quad \mu_{m6} = \lambda_6 f_2 \\
+\mu_{m1} &amp;= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &amp;= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
 \\
 \begin{bmatrix}
-f_{1} \\
-f_{2}
+\text{adapt}_{i} \\
+\text{collab}_{i}
 \end{bmatrix}
 &amp;\sim \text{MVNormal}
 \left(
 \begin{bmatrix}
-\mu_1 \\
-\mu_2
+\mu_\text{adapt} \\
+\mu_\text{collab}
 \end{bmatrix},
 \Sigma_f
 \right) \\
 \\
 \Sigma_f &amp;=
 \begin{bmatrix}
-\sigma_{f1}^2 &amp; \rho \sigma_{f1} \sigma_{f2} \\
-\rho \sigma_{f1} \sigma_{f2} &amp; \sigma_{f2}^2
+\sigma_\text{adapt}^2 &amp; \rho \sigma_\text{adapt} \sigma_\text{collab} \\
+\rho \sigma_\text{adapt} \sigma_\text{collab} &amp; \sigma_\text{adapt}^2
 \end{bmatrix} \\
 \\
 \Sigma_m &amp;=
@@ -1115,15 +1117,15 @@ f_{2}
 <span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">tcrossprod</span>(eta, Lambda) <span class="sc">+</span> e</span>
 <span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Pack the measured variables and factor scores into a dataset</span></span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>fake_dat_measurement <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">m1 =</span> m[,<span class="dv">1</span>],</span>
 <span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">m2 =</span> m[,<span class="dv">2</span>],</span>
 <span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">m3 =</span> m[,<span class="dv">3</span>],</span>
 <span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">m4 =</span> m[,<span class="dv">4</span>],</span>
 <span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">m5 =</span> m[,<span class="dv">5</span>],</span>
 <span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">m6 =</span> m[,<span class="dv">6</span>],</span>
-<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">f1 =</span> eta[,<span class="dv">1</span>],</span>
-<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">f2 =</span> eta[,<span class="dv">2</span>]</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">adapt =</span> eta[,<span class="dv">1</span>],</span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">collab =</span> eta[,<span class="dv">2</span>]</span>
 <span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now we have our ‘measured’ variables, simulated according to our chosen factor loadings and error structure. Just to be safe, let’s make sure lavaan can recover the true parameter estimates. We need to specify <code>std.lv = TRUE</code> to override lavaan’s default behaviour of setting the first loading of each factor to 1 and instead fix the variances of the latent variables to 1, or else it doesn’t return the true simulated parameter estimates because the scales of the latent variables get messed up. Looks like everything works fine:</p>
@@ -1139,7 +1141,7 @@ f_{2}
 <span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
 <span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>fit_test <span class="ot">&lt;-</span> <span class="fu">cfa</span>(surv.measurement.model, <span class="at">data =</span> fake_dat <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"m"</span>)), <span class="at">std.lv =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>fit_test <span class="ot">&lt;-</span> <span class="fu">cfa</span>(surv.measurement.model, <span class="at">data =</span> fake_dat_measurement <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"m"</span>)), <span class="at">std.lv =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure it works</span></span>
 <span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>fit_test <span class="sc">|&gt;</span> </span>
@@ -1160,27 +1162,27 @@ f_{2}
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m1</td>
-<td style="text-align: right;">0.7805970</td>
+<td style="text-align: right;">0.7941100</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 =~ m2</td>
-<td style="text-align: right;">0.5949903</td>
+<td style="text-align: right;">0.5964884</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m3</td>
-<td style="text-align: right;">0.8989833</td>
+<td style="text-align: right;">0.8840351</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m4</td>
-<td style="text-align: right;">0.0876004</td>
+<td style="text-align: right;">0.0888914</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f2 =~ m5</td>
-<td style="text-align: right;">0.1813892</td>
+<td style="text-align: right;">0.2035876</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m6</td>
-<td style="text-align: right;">-0.4255505</td>
+<td style="text-align: right;">-0.4577306</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 ~~ f1</td>
@@ -1192,35 +1194,35 @@ f_{2}
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m1 ~~ m4</td>
-<td style="text-align: right;">0.3788046</td>
+<td style="text-align: right;">0.3763638</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m1 ~~ m1</td>
-<td style="text-align: right;">0.5001594</td>
+<td style="text-align: right;">0.4828051</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m2 ~~ m2</td>
-<td style="text-align: right;">0.1955768</td>
+<td style="text-align: right;">0.2045730</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m3 ~~ m3</td>
-<td style="text-align: right;">0.1942557</td>
+<td style="text-align: right;">0.1997486</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m4 ~~ m4</td>
-<td style="text-align: right;">0.2985550</td>
+<td style="text-align: right;">0.3023003</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m5 ~~ m5</td>
-<td style="text-align: right;">0.4147208</td>
+<td style="text-align: right;">0.3921832</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m6 ~~ m6</td>
-<td style="text-align: right;">0.5090688</td>
+<td style="text-align: right;">0.4503641</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 ~~ f2</td>
-<td style="text-align: right;">0.3572068</td>
+<td style="text-align: right;">0.3688634</td>
 </tr>
 </tbody>
 </table>
@@ -1296,24 +1298,25 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 \end{equation}\]</span></p>
 <p>$$</p>
 <p>This is the parameterization we can implement when we go to create our event times. We’ll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We’ll generate an event time and a censoring time for each person, and a person’s status will be the shorter of those two times.</p>
-<p>Note for choosing the simulated parameter estimates for the linear model: there’s some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios <em>or</em> acceleration factors. <a href="https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html">This nice markdown document</a> provides a walkthrough of the transformations required to move between these two interpretations.</p>
+<p>We can start by choosing values for the Weibull distribution’s <code>rho</code> and <code>lambda</code> parameters that generate a realistic-seeming distribution of times-to-employment in the absence of a linear model. This is simpler conceptually if we define <code>rho = 1</code>. After some trial and error I settled on <code>lambda = .02</code>, which results in a mean time-to-employment of 22 days, as shown in the plot below.</p>
+<p>Now we can choose the simulated parameter estimates for the linear model. There’s some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios <em>or</em> acceleration factors. <a href="https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html">This nice markdown document</a> provides a walkthrough of the transformations required to move between these two interpretations. The canonical <strong>survival</strong> package implements Weibull regression as an accelerated failure time model by default, and I find this interpretation more user-friendly so I will stick with it for our purposes here. This means that when we declare our ‘true’ parameter estimtes we’ll need to keep this interpretation in mind: the exponentiated parameter estimate reflects a multiplicative scaling of estimate survival time among people who are the same along all other measured covariates, but differ by 1 for this covariate. For example, for this simulation we can imagine that being on employment insurance is associated with twice-as-fast time-to-employment because it means you have recent work experience. We simulate this by setting the coefficient of <code>beta_ie &lt;- log(2)</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare some parameter values for baseline hazard</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>rho <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> .<span class="dv">02</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>rho <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># keep rho = 1 to keep the conversions simple / make it easier to specify lambda</span></span>
 <span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>lambda_wiki <span class="ot">&lt;-</span> lambda<span class="sc">^</span>(<span class="sc">-</span><span class="dv">1</span> <span class="sc">/</span> rho) </span>
 <span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare some true linear model parameters</span></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>beta_f1 <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>beta_f2 <span class="ot">&lt;-</span> .<span class="dv">5</span></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>beta_age <span class="ot">&lt;-</span> .<span class="dv">8</span></span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>beta_ei <span class="ot">&lt;-</span> .<span class="dv">3</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>beta_adapt <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="dv">1</span>) <span class="co"># adaptability skills have no effect on time-to-employment</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>beta_collab <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="fl">1.2</span>) <span class="co"># collaboration skills decrease time-to-employment by 20% for each standard deviation increase.</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>beta_age <span class="ot">&lt;-</span> <span class="fu">log</span>(.<span class="dv">9</span>) <span class="co"># older people find employment a bit slower -- each increase in age of 1 standard deviation slows time-to-employment to 90% of what is was previously.</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>beta_ei <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="dv">2</span>) <span class="co"># people on EI find employment twice as fast </span></span>
 <span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare the rate for the exponential distribution from which we will sample censoring times</span></span>
 <span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>censor_rate <span class="ot">=</span> .<span class="dv">02</span></span>
 <span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate the covariates and event times</span></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="ot">&lt;-</span> fake_dat <span class="sc">|&gt;</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="ot">&lt;-</span> fake_dat_measurement <span class="sc">|&gt;</span></span>
 <span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowid_to_column</span>() <span class="sc">|&gt;</span></span>
 <span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a></span>
@@ -1331,7 +1334,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simulate the event times and censoring times</span></span>
-<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">lambda_prime =</span> lambda_wiki <span class="sc">/</span> <span class="fu">exp</span>((beta_f1<span class="sc">*</span>f1 <span class="sc">+</span> beta_f2<span class="sc">*</span>f2 <span class="sc">+</span> beta_age<span class="sc">*</span>age <span class="sc">+</span> beta_ei<span class="sc">*</span>ei_status) <span class="sc">/</span> rho),</span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">lambda_prime =</span> lambda_wiki <span class="sc">/</span> <span class="fu">exp</span>((beta_adapt<span class="sc">*</span>adapt <span class="sc">+</span> beta_collab<span class="sc">*</span>collab <span class="sc">+</span> beta_age<span class="sc">*</span>age <span class="sc">+</span> beta_ei<span class="sc">*</span>ei_status) <span class="sc">/</span> rho),</span>
 <span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_event =</span> <span class="fu">rweibull</span>(<span class="dv">1</span>, <span class="at">shape=</span>rho, <span class="at">scale=</span>lambda_prime),</span>
 <span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">time_censor =</span> <span class="fu">rexp</span>(<span class="dv">1</span>, censor_rate),</span>
 <span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">time =</span> <span class="fu">min</span>(time_event, time_censor),</span>
@@ -1349,16 +1352,35 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>    time_censor</span>
 <span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>  ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>If we’ve done everything correctly then a basic survival analysis should be able to recover the true parameter estimates:</p>
+<p>We can plot the event times to make sure they seem realistic:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">survreg</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> f1 <span class="sc">+</span> f2 <span class="sc">+</span> age <span class="sc">+</span> ei_status, <span class="at">data=</span>fake_dat, </span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="at">dist=</span><span class="st">'weibull'</span>)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>test <span class="sc">|&gt;</span> </span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="fu">aes</span>(<span class="at">x =</span> time)) <span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="fu">aes</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(time)), <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="bayesian-cfa_files/figure-html/viz-weibull-samples-1.png" class="img-fluid figure-img" alt="Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time." width="672"></p>
+<p></p><figcaption class="figure-caption">Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>If we’ve done everything correctly then a basic survival analysis should be able to recover the true parameter estimates using the true model specification. Indeed, this is what we see:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">survreg</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> adapt <span class="sc">+</span> collab <span class="sc">+</span> age <span class="sc">+</span> ei_status, <span class="at">data=</span>fake_dat, <span class="at">dist=</span><span class="st">'weibull'</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>test <span class="sc">|&gt;</span> </span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">estimate =</span> <span class="fu">exp</span>(estimate)) <span class="sc">|&gt;</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
@@ -1373,56 +1395,238 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: right;">0.0275677</td>
-<td style="text-align: right;">0.0215448</td>
-<td style="text-align: right;">1.2795547</td>
-<td style="text-align: right;">0.2007018</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">f1</td>
-<td style="text-align: right;">-0.9811666</td>
-<td style="text-align: right;">0.0181810</td>
-<td style="text-align: right;">-53.9665572</td>
+<td style="text-align: right;">52.6504293</td>
+<td style="text-align: right;">0.0309972</td>
+<td style="text-align: right;">127.872219</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;">adapt</td>
+<td style="text-align: right;">0.9949901</td>
+<td style="text-align: right;">0.0237949</td>
+<td style="text-align: right;">-0.211073</td>
+<td style="text-align: right;">0.8328303</td>
+</tr>
 <tr class="odd">
-<td style="text-align: left;">f2</td>
-<td style="text-align: right;">-0.5273364</td>
-<td style="text-align: right;">0.0176524</td>
-<td style="text-align: right;">-29.8733537</td>
+<td style="text-align: left;">collab</td>
+<td style="text-align: right;">0.8325723</td>
+<td style="text-align: right;">0.0236285</td>
+<td style="text-align: right;">-7.754825</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">age</td>
-<td style="text-align: right;">-0.8100603</td>
-<td style="text-align: right;">0.0162067</td>
-<td style="text-align: right;">-49.9830249</td>
-<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">1.1246784</td>
+<td style="text-align: right;">0.0218113</td>
+<td style="text-align: right;">5.386982</td>
+<td style="text-align: right;">0.0000001</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ei_status</td>
-<td style="text-align: right;">-0.3310430</td>
-<td style="text-align: right;">0.0329215</td>
-<td style="text-align: right;">-10.0555318</td>
+<td style="text-align: right;">0.4709482</td>
+<td style="text-align: right;">0.0439235</td>
+<td style="text-align: right;">-17.143610</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Log(scale)</td>
-<td style="text-align: right;">0.0003371</td>
-<td style="text-align: right;">0.0126138</td>
-<td style="text-align: right;">0.0267228</td>
-<td style="text-align: right;">0.9786808</td>
+<td style="text-align: right;">1.0250124</td>
+<td style="text-align: right;">0.0166532</td>
+<td style="text-align: right;">1.483480</td>
+<td style="text-align: right;">0.1379469</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a> <span class="co"># mutate(estimate = exp(estimate))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Yes!</p>
 </section>
-<section id="prior-predictive-distributions" class="level3" data-number="6.4.2">
-<h3 data-number="6.4.2" class="anchored" data-anchor-id="prior-predictive-distributions"><span class="header-section-number">6.4.2</span> Prior Predictive Distributions</h3>
-<p>Check priors for the betas for f1 and f2, and for the sigmas.</p>
+<section id="exploratory-data-analysis.-report-the-scale-reliabilities" class="level3" data-number="6.4.2">
+<h3 data-number="6.4.2" class="anchored" data-anchor-id="exploratory-data-analysis.-report-the-scale-reliabilities"><span class="header-section-number">6.4.2</span> Exploratory Data Analysis. Report the scale reliabilities?</h3>
+<p>Now we’ll adopt the conceit that the two factors <code>adapt</code> and <code>collab</code> are unmeasured, as would be the case in reality.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_density</span>(<span class="fu">aes</span>(<span class="at">x =</span> time))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Stratified Kaplan Meier, etc?</p>
+</section>
+<section id="prior-predictive-simulation." class="level3" data-number="6.4.3">
+<h3 data-number="6.4.3" class="anchored" data-anchor-id="prior-predictive-simulation."><span class="header-section-number">6.4.3</span> Prior Predictive Simulation.</h3>
+<p>Unlike the factor analysis models we fit above, this model has substantive predictors about which we have background knowledge. So we can use prior predictive simulation to specify informative priors. One convenient workflow for doing this is to write some simple code to simulate from the prior distributions of interest, then transform the simulated values to check whether the priors make sense on the scale of interest. Once we arrive at reasonable-seeming priors for all of the parameters, we can use <strong>brms</strong> to sample from the prior predictive distribution of event times and make sure everything is making sense.</p>
+<p>The <strong>brms</strong> parameterization of the Weibull distribution <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html">is slightly different</a> than the one used in the <strong>survival</strong> package, with <strong>brms</strong> specifying a mean parameter as a function of the scale and shape parameters of the more traditional parameterization:</p>
+<p>$$</p>
+<p>s = </p>
+<p>$$</p>
+<p>So when we specify a prior for the intercept term in our Bayesian model, we’re also specifying a prior for this transformation of the scale and shape parameters under the traditional parameterization:</p>
+<p>$$</p>
+<p>= s (1 + )</p>
+<p>$$</p>
+<p>I don’t think this has any big implications: setting a prior for the intercept is more intuitive than setting a prior for the scale and shape parameters indivdually anyway.</p>
+<p>Now it’s time to iteratively choose some priors, sample them, visualize their implications, and refine them to better reflect our background knowledge. A few points to keep in mind:</p>
+<p>We can start with the intercept, specifying a prior on the raw ‘days-to-employment’ scale because that helps keep things interpretable. Based on previous studies I’ve done at my work, an average time-to-employment of 30 days seems reasonable, and an average higher than 60 days seems very unlikely. After much trial and error with the code below it seems like a gaussian with <code>mean = 3.3, sd = .4</code> gives a distribution with appropriate characteristics:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate some data</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">10000</span>, <span class="dv">0</span>, .<span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value =</span> <span class="fu">exp</span>(value)) </span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the mean</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span> </span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(value) <span class="sc">|&gt;</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.134891</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the distribution</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>()  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 5 or more in either direction (I.E. 5 or 0.2) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with <code>mean = 0, sd = 1</code> captures this ‘factor of 5’ intuition, with the a factor of 5 or greater being associated with a probability of about 5% in either direction.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate some data</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">10000</span>, <span class="dv">0</span>, <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>() <span class="sc">|&gt;</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value =</span> <span class="fu">exp</span>(value)) </span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the quantiles</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span> </span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise_draws</span>() <span class="sc">|&gt;</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(q5, q95)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+     q5   q95
+  &lt;num&gt; &lt;num&gt;
+1 0.192  5.02</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the distribution</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> value)) <span class="sc">+</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>() <span class="sc">+</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">xlim</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 107 rows containing missing values (`stat_slabinterval()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Now that we have some reasonable priors, we can sample from them to simulate from the prior predictive distribution. One thing I was finding at this stage was I needed to fix the Weibull distribution’s <code>shape</code> parameter at a constant value in order to produce reasonable-seeming event times. This also greatly improved the number of divergent transitions in sampling. The resulting densities of bounded 1-year times-to-event look reasonable to me, and there is plenty of uncertainty leftover for the model to refine its predictions after it sees the data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare the formula</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>bf <span class="ot">&lt;-</span> <span class="fu">formula</span>(time <span class="sc">|</span> <span class="fu">cens</span>(censored) <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> Intercept <span class="sc">+</span> adapt <span class="sc">+</span> collab <span class="sc">+</span> age <span class="sc">+</span> ei_status)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co"># See how brms names the parameters, so we know how to specify priors form them</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="fu">get_prior</span>(</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> bf,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> fake_dat,</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">weibull</span>()</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             prior class      coef group resp dpar nlpar lb ub       source
+            (flat)     b                                            default
+            (flat)     b     adapt                             (vectorized)
+            (flat)     b       age                             (vectorized)
+            (flat)     b    collab                             (vectorized)
+            (flat)     b ei_status                             (vectorized)
+            (flat)     b Intercept                             (vectorized)
+ gamma(0.01, 0.01) shape                                  0         default</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare the priors we want</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>priors <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="fl">3.3</span>, .<span class="dv">4</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"Intercept"</span>), <span class="co"># The average time-to-employment. Use gamma because times are positive and continuous</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">10</span>), <span class="at">class =</span> <span class="st">"shape"</span>), <span class="co"># Constrain the shape parameter, or else it thinks event times can go on basically forever.</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"adapt"</span>),</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"age"</span>),</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"collab"</span>),</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">coef =</span> <span class="st">"ei_status"</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>fit.prior <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> fake_dat,</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> bf,</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">weibull</span>(),</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span> priors,</span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">sample_prior =</span> <span class="st">"only"</span>,</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">2000</span>,</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/b07.04.priors.rds"</span></span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Figure out what brms has named everything so we can wrangle the draws</span></span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a><span class="fu">get_variables</span>(fit.prior)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "b_Intercept"   "b_adapt"       "b_collab"      "b_age"        
+ [5] "b_ei_status"   "shape"         "lprior"        "lp__"         
+ [9] "accept_stat__" "treedepth__"   "stepsize__"    "divergent__"  
+[13] "n_leapfrog__"  "energy__"     </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the prior predictive distribution</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="sc">|&gt;</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_predicted_draws</span>(fit.prior, <span class="at">ndraws =</span> <span class="dv">400</span>) <span class="sc">|&gt;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="fu">aes</span>(<span class="at">x =</span> .prediction, <span class="at">group =</span> .draw), <span class="at">alpha =</span> <span class="dv">0</span>, <span class="at">colour=</span><span class="fu">alpha</span>(<span class="st">"mediumorchid"</span>, .<span class="dv">1</span>)) <span class="sc">+</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlim</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">365</span>)) <span class="sc">+</span></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="bayesian-cfa_files/figure-html/prior-pred-1-densities-1.png" class="img-fluid figure-img" alt="Densities for 400 draws from the prior predictive distribution of event times." width="672"></p>
+<p></p><figcaption class="figure-caption">Densities for 400 draws from the prior predictive distribution of event times.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something <span class="citation" data-cites="Gelman2020">Gelman et al. (<a href="#ref-Gelman2020" role="doc-biblioref">2020</a>)</span> advocate for in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven’t told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could change the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let’s just stick with the plan.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="sc">|&gt;</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_predicted_draws</span>(fit.prior, <span class="at">ndraws =</span> <span class="dv">400</span>) <span class="sc">|&gt;</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(.draw) <span class="sc">|&gt;</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">draw_mean =</span> <span class="fu">mean</span>(.prediction)) <span class="sc">|&gt;</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(.draw, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="fu">aes</span>(<span class="at">x =</span> draw_mean), <span class="at">colour =</span> <span class="st">"white"</span>, <span class="at">fill =</span> <span class="st">"mediumorchid"</span>) <span class="sc">+</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Mean of draw from prior predictive distribution"</span>, <span class="at">y =</span> <span class="st">"n draws"</span>) <span class="sc">+</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1000</span>)) <span class="sc">+</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="bayesian-cfa_files/figure-html/prior-pred-1-means-1.png" class="img-fluid figure-img" alt="Mean event times of 400 draws from the prior predictive distribution of event times." width="672"></p>
+<p></p><figcaption class="figure-caption">Mean event times of 400 draws from the prior predictive distribution of event times.</figcaption><p></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+
+</div>
 </section>
 </section>
 <section id="multilevel-survival-analysis" class="level2" data-number="6.5">
@@ -1436,6 +1640,9 @@ Brown, Timothy A. 2006. <em>Confirmatory Factor Analysis for Applied Research</e
 </div>
 <div id="ref-Collett2003" class="csl-entry" role="doc-biblioentry">
 Collett, David. 2003. <em>Modelling Survival Data in Medical Research</em>. 2nd ed. Chapman; Hall/CRC.
+</div>
+<div id="ref-Gelman2020" class="csl-entry" role="doc-biblioentry">
+Gelman, Andrew, Aki Vehtari, Daniel Simpson, Charles C. Margossian, Bob Carpenter, Yuling Yao, Lauren Kennedy, Jonah Gabry, Paul-Christian Bürkner, and Martin Modrák. 2020. <span>“Bayesian Workflow.”</span> <a href="https://arxiv.org/abs/2011.01808">https://arxiv.org/abs/2011.01808</a>.
 </div>
 <div id="ref-Singer+Willett2003" class="csl-entry" role="doc-biblioentry">
 Singer, Judith D., and John B. Willett. 2003. <em>Applied Longitudinal Data Analysis - Modeling Change and Event Occurrence</em>. Oxford University Press.
