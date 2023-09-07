@@ -1318,25 +1318,6 @@ fake_dat <- fake_dat_measurement |>
 
 ```
 
-We can plot the event times to make sure they seem realistic:
-
-```{r}
-#| label: viz-weibull-samples
-#| message: false
-#| warning: false
-#| fig-cap: "Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time."
-#| fig-alt: "Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time."
-
-fake_dat |>
-
-  ggplot() + 
-  geom_density(aes(x = time)) +
-  geom_vline(aes(xintercept = mean(time)), linetype = 2) +
-  scale_y_continuous(expand=c(0, 0)) +
-  theme_minimal()
-
-```
-
 If we've done everything correctly then a basic survival analysis should be able to recover the true parameter estimates using the true model specification. Indeed, this is what we see:
 
 ```{r}
@@ -1356,6 +1337,31 @@ test |>
 
 ### Exploratory Data Analysis. Report the scale reliabilities?
 
+For starters, we can plot the raw distribution of event times: 
+
+```{r}
+#| label: viz-weibull-samples
+#| message: false
+#| warning: false
+#| fig-cap: "Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time."
+#| fig-alt: "Distribution of Weibull-distributed event times for all simulated participants. Vertical line shows the mean event time."
+
+fake_dat |>
+
+  ggplot() + 
+  geom_density(aes(x = time), fill = "mediumorchid", colour = "black") +
+  geom_vline(aes(xintercept = mean(time)), linetype = 2) +
+  scale_y_continuous(expand=c(0, 0)) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+```
+
+Stratified Kaplan Meier, etc?
+
 Now we'll adopt the conceit that the two factors `adapt` and `collab` are unmeasured, as would be the case in reality. 
 
 ```{r}
@@ -1367,9 +1373,7 @@ fake_dat |>
 
 ```
 
-Stratified Kaplan Meier, etc?
-
-### Prior Predictive Simulation. 
+### Prior Predictive Simulation {-}
 
 Unlike the factor analysis models we fit above, this model has substantive predictors about which we have background knowledge. So we can use prior predictive simulation to specify informative priors. One convenient workflow for doing this is to write some simple code to simulate from the prior distributions of interest, then transform the simulated values to check whether the priors make sense on the scale of interest. Once we arrive at reasonable-seeming priors for all of the parameters, we can use **brms** to sample from the prior predictive distribution of event times and make sure everything is making sense.
 
@@ -1450,8 +1454,8 @@ Now that we have some reasonable priors, we can sample from them to simulate fro
 #| label: prior-pred-1-densities
 #| message: false
 #| warning: false
-#| fig-cap: "Densities for 400 draws from the prior predictive distribution of event times."
-#| fig-alt: "Densities for 400 draws from the prior predictive distribution of event times."
+#| fig-cap: "Densities for 500 draws from the prior predictive distribution of event times."
+#| fig-alt: "Densities for 500 draws from the prior predictive distribution of event times."
 
 # Declare the formula
 bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status)
@@ -1484,35 +1488,48 @@ fit.prior <- brm(
   file = "fits/b07.04.priors.rds"
 )
 
+fit.prior$model
+
 # Figure out what brms has named everything so we can wrangle the draws
 get_variables(fit.prior)
     
 # Check the prior predictive distribution
-fake_dat |>
- 
-  add_predicted_draws(fit.prior, ndraws = 400) |>
+prior_preds <- fake_dat |>
+
+  add_predicted_draws(fit.prior, ndraws = 500) |>
+
+  group_by(rowid) |>
+
+  mutate(prior_pred_mean = mean(.prediction)) 
+
+prior_preds |>
 
   ggplot() + 
   geom_density(aes(x = .prediction, group = .draw), alpha = 0, colour=alpha("mediumorchid", .1)) +
+  geom_density(data = prior_preds |> distinct(rowid, .keep_all = TRUE), aes(x = prior_pred_mean)) +
   scale_y_continuous(expand=c(0, 0)) +
   xlim(c(0, 365)) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  ) 
 
 ```
  
 
- We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something @Gelman2020 advocate for in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven't told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could change the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let's just stick with the plan. 
+ We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something @Gelman2020 advocate in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven't told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could give the model this information in other ways, for example by changing the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let's just stick with the plan. 
 
 ```{r}
 #| label: prior-pred-1-means
 #| message: false
 #| warning: false
-#| fig-cap: "Mean event times of 400 draws from the prior predictive distribution of event times." 
-#| fig-alt: "Mean event times of 400 draws from the prior predictive distribution of event times."
+#| fig-cap: "Mean event times of 500 draws from the prior predictive distribution of event times." 
+#| fig-alt: "Mean event times of 500 draws from the prior predictive distribution of event times."
 
 fake_dat |>
  
-  add_predicted_draws(fit.prior, ndraws = 400) |>
+  add_predicted_draws(fit.prior, ndraws = 500) |>
 
   group_by(.draw) |>
 
@@ -1529,12 +1546,327 @@ fake_dat |>
 
 ```
 
+### Stan code {-}
 
+Now we're ready to fit the survival model using the latent factors as predictors. 
 
-```{r}
+```stan
+data {
+  // Factor Analysis
+  int N; // sample size for both models
+  int P; // number of variables in the factor analysis
+  int D; // number of factors
+  array[N] vector[P] X_factor; // data matrix for factor analysis
+  int n_lam; // how many factor loadings are estimated
+  
+  // Weibull Model
+  vector[N] Y; // response variable for Weibull model
+  array[N] int<lower=-1, upper=2> cens; // indicates censoring for Weibull model
+  int K; // number of predictors in Weibull model, now it should be D + 2 + intercept
+  matrix[N, K] X_weibull; // population-level design matrix for Weibull model
+  
+}
 
+parameters {
+  matrix[N, D] FS_UNC; // factor scores
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
+  vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+  
+  vector[K] b; // regression coefficients for Weibull model
+}
+
+transformed parameters {
+  // Factor Analysis transformed parameters
+  vector[D] M = rep_vector(0, D); // factor means
+  vector<lower=0>[D] Sd_d = rep_vector(1, D); // factor SDs
+  array[N] vector[P] mu_UNC; // A vector to hold the linear predictors for the manifest variables
+
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  cholesky_factor_cov[D] L_Sigma = diag_pre_multiply(Sd_d, L_corr_d); // var-covar matrix for the factors
+  cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
+  
+  // Weibull transformed parameters
+  real<lower=0> shape = 10; // shape parameter for Weibull model
+  vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
+  mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
+  mu_weibull = exp(mu_weibull);
+}
+
+model {
+  // Factor Analysis
+  L_corr_d ~ lkj_corr_cholesky(1);
+  L_corr_m1_m4 ~ lkj_corr_cholesky(1);
+  lam_UNC ~ normal(0, 10);
+  sd_p ~ cauchy(0, 2.5);
+  
+  for (i in 1 : N) {
+    for (j in {2,3,5,6}) {
+      X_factor[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    to_vector({X_factor[i, 1], X_factor[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+
+  // Weibull Survival Analysis
+  b[1] ~ normal(3.3, 0.4);
+  for (k in 2:K) {
+    b[k] ~ normal(0, 1);
+  }
+    
+  for (n in 1 : N) {
+    if (cens[n] == 0) {
+      target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    } else if (cens[n] == 1) {
+      target += weibull_lccdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    } else if (cens[n] == -1) {
+      target += weibull_lcdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    }
+  }
+}
+
+generated quantities {
+  corr_matrix[D] Rho_UNC; // correlation matrix for factors
+  corr_matrix[D] Rho_factors; // correlation matrix for factors
+  corr_matrix[D] Rho_m1_m4; // correlation matrix for m1 and m4
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores
+  
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho_factors = Rho_UNC;
+  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    if (lam_UNC[4] > 0) {
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    if (lam_UNC[1] > 0) {
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+}
 
 ```
+
+```{r}
+#| label: stan-string-surv
+#| eval: false
+#| include: false
+
+stan_model_code <- "
+data {
+  // Factor Analysis
+  int N; // sample size for both models
+  int P; // number of variables in the factor analysis
+  int D; // number of factors
+  array[N] vector[P] X_factor; // data matrix for factor analysis
+  int n_lam; // how many factor loadings are estimated
+  
+  // Weibull Model
+  vector[N] Y; // response variable for Weibull model
+  array[N] int<lower=-1, upper=2> cens; // indicates censoring for Weibull model
+  int K; // number of predictors in Weibull model, now it should be D + 2 + intercept
+  matrix[N, K] X_weibull; // population-level design matrix for Weibull model
+  
+}
+
+parameters {
+  matrix[N, D] FS_UNC; // factor scores
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
+  vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+  
+  vector[K] b; // regression coefficients for Weibull model
+}
+
+transformed parameters {
+  // Factor Analysis transformed parameters
+  vector[D] M = rep_vector(0, D); // factor means
+  vector<lower=0>[D] Sd_d = rep_vector(1, D); // factor SDs
+  array[N] vector[P] mu_UNC; // A vector to hold the linear predictors for the manifest variables
+
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  cholesky_factor_cov[D] L_Sigma = diag_pre_multiply(Sd_d, L_corr_d); // var-covar matrix for the factors
+  cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
+  
+  // Weibull transformed parameters
+  real<lower=0> shape = 10; // shape parameter for Weibull model
+  vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
+  mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
+  mu_weibull = exp(mu_weibull);
+}
+
+model {
+  // Factor Analysis
+  L_corr_d ~ lkj_corr_cholesky(1);
+  L_corr_m1_m4 ~ lkj_corr_cholesky(1);
+  lam_UNC ~ normal(0, 10);
+  sd_p ~ cauchy(0, 2.5);
+  
+  for (i in 1 : N) {
+    for (j in {2,3,5,6}) {
+      X_factor[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    to_vector({X_factor[i, 1], X_factor[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+
+  // Weibull Survival Analysis
+  b[1] ~ normal(3.3, 0.4);
+  for (k in 2:K) {
+    b[k] ~ normal(0, 1);
+  }
+    
+  for (n in 1 : N) {
+    if (cens[n] == 0) {
+      target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    } else if (cens[n] == 1) {
+      target += weibull_lccdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    } else if (cens[n] == -1) {
+      target += weibull_lcdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    }
+  }
+}
+
+generated quantities {
+  corr_matrix[D] Rho_UNC; // correlation matrix for factors
+  corr_matrix[D] Rho_factors; // correlation matrix for factors
+  corr_matrix[D] Rho_m1_m4; // correlation matrix for m1 and m4
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores
+  
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho_factors = Rho_UNC;
+  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    if (lam_UNC[4] > 0) {
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    if (lam_UNC[1] > 0) {
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+}
+
+"
+
+```
+
+Now compline the model and run. I've worked closely from the Stan code for the Weibull model we fit with **brms** above, essentially just grafting it onto the MTMM factor analysis model from before. This only involved a few steps:
+- **Data block:** add new vectors for the response variable `Y` and predictor variables `K` of the Weibull model, and for censoring status `cens`. Also declare the design matrix `X_weibull` of the necessary dimensions.
+- **Parameters block:** add a vector of coefficients `b` for the beta coefficients of the Weibull model.
+- **Transformed Parameters block:** declare the constant shape parameter for the Weibull model, as well as the linear predictor `mu` for each observation. Then exponentiate it. 
+- **Model block:** add the priors we simulated above, as well as the likelihood function conditional on censoring status.
+
+One thing to note is that because we adopted **brms**'s `0 + Intercept` syntax in generating the Stan code to allow us to set the intercept prior on the raw outcome scale, we can do what Paul Bürkner does under the hood and feed an extra column of 1s into the design matrix `X_weibull`.
+
+```{r}
+#| label: stanfit-surv
+#| eval: false
+
+# Write the raw Stan code from an R string to a Stan file
+stan_file <- cmdstanr::write_stan_file(stan_model_code)
+
+# Autoformat the model syntax to preempt any warnings at compile time
+model <- cmdstanr::cmdstan_model(stan_file, compile = FALSE)
+model$format(canonicalize = TRUE)
+
+# Compile the model from the Stan file
+model <- cmdstanr::cmdstan_model(stan_file)
+
+# Put the data into a list format Stan can understand
+P <- 8 # Because 6 measured variables + 2 factors 
+N <- nrow(fake_dat)
+D <- 2
+X_factor <- as.matrix(fake_dat |> select(matches("^m[1-9]$|^adapt$|^collab$")))
+
+Y <- fake_dat$time
+cens <- fake_dat$censored
+X_weibull <- as.matrix(
+  fake_dat |> 
+    mutate(intercept = 1) |>
+    select(
+      intercept,
+      age,
+      ei_status,
+      adapt,
+      collab
+    ) 
+)
+
+data_list <- list(
+  N=N,
+  P=P,
+  D=D,
+  X_factor=X_factor, 
+  n_lam=6,
+  Y=Y,
+  K=5, # four predictors plus a dummy column of 1s for the intercept
+  cens=cens,
+  X_weibull=X_weibull
+)
+
+# Fit the model
+fit <- model$sample(
+  data = data_list,
+  seed = 199,
+  chains = 4,
+  parallel_chains = 4,
+  iter_warmup = 1000,
+  iter_sampling = 6000,
+ # adapt_delta=0.99, 
+ # max_treedepth = 12,
+  refresh = 1 # print update at each iter
+)
+
+# Save the resulting model fit
+saveRDS(fit, "fits/b07.04.rds")
+
+```
+
 
 
 ## Multilevel Survival Analysis
