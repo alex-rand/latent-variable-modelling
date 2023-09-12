@@ -1526,6 +1526,9 @@ prior_preds |>
 #| fig-alt: "Mean event times of 500 draws from the prior predictive distribution of event times."
 
 fake_dat |>
+
+  distinct(censored)
+fake_dat |>
  
   add_predicted_draws(fit.prior, ndraws = 500) |>
 
@@ -1626,9 +1629,7 @@ model {
       target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
     } else if (cens[n] == 1) {
       target += weibull_lccdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
-    } else if (cens[n] == -1) {
-      target += weibull_lcdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
-    }
+    } 
   }
 }
 
@@ -1673,6 +1674,7 @@ generated quantities {
 #| include: false
 
 stan_model_code <- "
+```stan
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -1750,9 +1752,7 @@ model {
       target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
     } else if (cens[n] == 1) {
       target += weibull_lccdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
-    } else if (cens[n] == -1) {
-      target += weibull_lcdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
-    }
+    } 
   }
 }
 
@@ -1945,10 +1945,14 @@ what |>
     survival = exp(survival)
   )
 
+posterior_draws 
+
+what
+
+  
 
 
-
-
+# Plot
 draws |>
 
   # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
