@@ -997,6 +997,7 @@ draws |>
   facet_wrap(~.variable) +
   theme_minimal() + 
   theme(panel.grid.major = element_blank())
+
 ```
 
 
@@ -1076,7 +1077,7 @@ For this final section we won't be able to rely on `lavaan::simulateData()` to c
 ```{r}
 
 # Define sample size
-N <- 4000
+N <- 8000
 
 # Define the Fixed Parameters
 alpha <- c(0, 0)  # latent means
@@ -1087,12 +1088,12 @@ Phi <- matrix(c(1, 0.4,
 
 # factor loadings
 Lambda <- cbind(c(.8, .6, .9, 0, 0, 0), 
-                c(0, 0, 0, .1, .2, -.4))  
+                c(0, 0, 0, .9, .7, .8))  
 
 # Error structure of measured variables
-Theta <- diag(c(c(0.5, .2, .2, .3, .4, .5)))
-Theta[4, 1] <- .38
-Theta[1, 4] <- .38
+Theta <- diag(c(c(1, 1, 1, 1, 1, 1)))
+Theta[4, 1] <- .4
+Theta[1, 4] <- .4
 
 # Generate latent factor scores
 eta <- MASS::mvrnorm(N, mu = alpha, Sigma = Phi)
@@ -1328,7 +1329,7 @@ test |>
 
   broom::tidy() |> 
 
- # mutate(estimate = exp(estimate)) |>
+  mutate(estimate = exp(estimate)) |>
 
   knitr::kable()
 
@@ -1526,9 +1527,6 @@ prior_preds |>
 #| fig-alt: "Mean event times of 500 draws from the prior predictive distribution of event times."
 
 fake_dat |>
-
-  distinct(censored)
-fake_dat |>
  
   add_predicted_draws(fit.prior, ndraws = 500) |>
 
@@ -1664,6 +1662,12 @@ generated quantities {
       Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
+
+  // Draws from posterior predictive distribution
+  vector[N] y_pred;
+  for (n in 1:N) {
+    y_pred[n] = weibull_rng(shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+  }
 }
 
 ```
@@ -1674,7 +1678,6 @@ generated quantities {
 #| include: false
 
 stan_model_code <- "
-```stan
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -1787,7 +1790,13 @@ generated quantities {
       Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
-}
+
+  // Draws from posterior predictive distribution
+  vector[N] y_pred;
+  for (n in 1:N) {
+    y_pred[n] = weibull_rng(shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+  }
+} 
 "
 ```
 
@@ -1796,6 +1805,7 @@ Now compline the model and run. I've worked closely from the Stan code for the W
 - **Parameters block:** add a vector of coefficients `b` for the beta coefficients of the Weibull model.
 - **Transformed Parameters block:** declare the constant shape parameter for the Weibull model, as well as the linear predictor `mu` for each observation. Then exponentiate it. 
 - **Model block:** add the priors we simulated above, as well as the likelihood function conditional on censoring status.
+- **Generated Quantities block:** generate draws from the posterior predictive distribution, to help with model checking. 
 
 One thing to note is that because we adopted **brms**'s `0 + Intercept` syntax in generating the Stan code to allow us to set the intercept prior on the raw outcome scale, we can do what Paul Bürkner does under the hood and feed an extra column of 1s into the design matrix `X_weibull`.
 
@@ -1858,8 +1868,6 @@ fit <- model$sample(
  # max_treedepth = 12,
   refresh = 1 # print update at each iter
 )
-
-fit
 
 # Save the resulting model fit
 saveRDS(fit, "source/fits/b07.04.rds")
