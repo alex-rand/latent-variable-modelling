@@ -1881,6 +1881,8 @@ saveRDS(fit, "source/fits/b07.04.rds")
 
 fit <- readRDS("source/fits/b07.04.rds")
 
+test <- fit$summary()
+
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
   variables = c(
@@ -1896,8 +1898,14 @@ draws <- fit$draws(
   )
 )
 
+pp_draws <- fit$draws(
+  variables = c(
+    "y_pred"
+  )
+)
 # Save the result
 saveRDS(draws, "source/fits/b07.04.samples.rds")
+saveRDS(pp_draws, "source/fits/b07.04.post_pred_samples.rds")
 
 ```
 
@@ -2033,6 +2041,8 @@ draws |>
   facet_wrap(~.variable, scales = "free_x") 
 
 ```
+
+Bring the posterior checks code and saveRDS call down here for consistency
 
 ## Multilevel Survival Analysis
 
