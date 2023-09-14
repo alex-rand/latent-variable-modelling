@@ -1514,6 +1514,25 @@ prior_preds |>
     axis.ticks.y = element_blank()
   ) 
 
+
+
+# DELETE
+
+# Fit the model
+fit.test <- brm(
+  data = fake_dat,
+  formula = bf,
+  family = weibull(),
+ # prior = priors,
+  iter = 2000,
+  file = "source/fits/brmstest2-delete"
+)
+
+
+
+# /DELETE
+
+
 ```
  
 
@@ -1573,6 +1592,7 @@ parameters {
   vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
   vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
   
+  real<lower=0> shape; // shape parameter for Weibull model
   vector[K] b; // regression coefficients for Weibull model
 }
 
@@ -1595,7 +1615,6 @@ transformed parameters {
   cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
   
   // Weibull transformed parameters
-  real<lower=0> shape = 10; // shape parameter for Weibull model
   vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
   mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
   mu_weibull = exp(mu_weibull);
@@ -1617,11 +1636,7 @@ model {
   }
 
   // Weibull Survival Analysis
-  b[1] ~ normal(3.3, 0.4);
-  for (k in 2:K) {
-    b[k] ~ normal(0, 1);
-  }
-    
+  shape ~ cauchy(0, 2.5);
   for (n in 1 : N) {
     if (cens[n] == 0) {
       target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
@@ -1701,6 +1716,7 @@ parameters {
   vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
   vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
   
+  real<lower=0> shape; // shape parameter for Weibull model
   vector[K] b; // regression coefficients for Weibull model
 }
 
@@ -1723,7 +1739,6 @@ transformed parameters {
   cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
   
   // Weibull transformed parameters
-  real<lower=0> shape = 10; // shape parameter for Weibull model
   vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
   mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
   mu_weibull = exp(mu_weibull);
@@ -1745,11 +1760,7 @@ model {
   }
 
   // Weibull Survival Analysis
-  b[1] ~ normal(3.3, 0.4);
-  for (k in 2:K) {
-    b[k] ~ normal(0, 1);
-  }
-    
+  shape ~ cauchy(0, 2.5);
   for (n in 1 : N) {
     if (cens[n] == 0) {
       target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
@@ -1796,7 +1807,7 @@ generated quantities {
   for (n in 1:N) {
     y_pred[n] = weibull_rng(shape, mu_weibull[n] / tgamma(1 + 1 / shape));
   }
-} 
+}
 "
 ```
 
@@ -1881,7 +1892,8 @@ saveRDS(fit, "source/fits/b07.04.rds")
 
 fit <- readRDS("source/fits/b07.04.rds")
 
-test <- fit$summary()
+# If you need to check variable names, call this
+#test <- fit$summary()
 
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
@@ -1898,14 +1910,16 @@ draws <- fit$draws(
   )
 )
 
+fit$code()
+draws
 pp_draws <- fit$draws(
   variables = c(
     "y_pred"
   )
 )
 # Save the result
-saveRDS(draws, "source/fits/b07.04.samples.rds")
-saveRDS(pp_draws, "source/fits/b07.04.post_pred_samples.rds")
+saveRDS(draws, "source/fits/b07.04.samples_flat_priors.rds")
+saveRDS(pp_draws, "source/fits/b07.04.flat_priors_post_pred_samples.rds")
 
 ```
 
@@ -1956,9 +1970,21 @@ what |>
 
   ) |>
 
+  bind_cols(
+    fit.test |>
+
+    fixef() |>
+
+    as_tibble(rownames="Term") |>
+
+    select("brms" = Estimate) 
+
+  ) |>
+
   mutate(
     stan = exp(stan),
-    survival = exp(survival)
+    survival = exp(survival),
+    brms = exp(brms)
   )
 
 posterior_draws 
@@ -2042,7 +2068,9 @@ draws |>
 
 ```
 
-Bring the posterior checks code and saveRDS call down here for consistency
+Bring the posterior checks code and saveRDS call down here for consistency.
+
+Plot baseline hazard, etc, other conventional time-to-event model diagnostics. 
 
 ## Multilevel Survival Analysis
 
