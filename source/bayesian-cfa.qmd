@@ -861,7 +861,7 @@ generated quantities {
 
 ```
 
-Now we can compile and run the model
+Now we can compile and run the model:
 
 ```{r}
 #| label: stanfit-mtmm
@@ -1077,7 +1077,7 @@ For this final section we won't be able to rely on `lavaan::simulateData()` to c
 ```{r}
 
 # Define sample size
-N <- 8000
+N <- 4000
 
 # Define the Fixed Parameters
 alpha <- c(0, 0)  # latent means
@@ -1335,7 +1335,6 @@ test |>
 
 ```
 
-
 ### Exploratory Data Analysis. Report the scale reliabilities?
 
 For starters, we can plot the raw distribution of event times: 
@@ -1402,7 +1401,7 @@ We can start with the intercept, specifying a prior on the raw 'days-to-employme
 
 ```{r}
 # Simulate some data
-sim <- rnorm(10000, 0, .5) |>
+sim <- rnorm(10000, 3.3, .4) |>
 
   as_tibble() |>
 
@@ -1422,11 +1421,11 @@ sim |>
     stat_halfeye()  
 ```
 
-Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 5 or more in either direction (I.E. 5 or 0.2) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with `mean = 0, sd = 1` captures this 'factor of 5' intuition, with the a factor of 5 or greater being associated with a probability of about 5% in either direction. 
+Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 10 or more in either direction (I.E. 10 or 0.10) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with `mean = 0, sd = 1.45` captures this 'factor of 5' intuition, with a factor of 10 or greater being associated with a probability of only about 5% in either direction. 
 
 ```{r}
 # Simulate some data
-sim <- rnorm(10000, 0, 1) |>
+sim <- rnorm(10000, 0, 1.45) |>
 
   as_tibble() |>
 
@@ -1445,7 +1444,6 @@ sim |>
     ggplot(aes(x = value)) +
     stat_halfeye() +
     xlim(c(0, 10))
-
 
 ```
 
@@ -1471,11 +1469,11 @@ get_prior(
 # Declare the priors we want
 priors <- c(
     prior(normal(3.3, .4), class = "b", coef = "Intercept"), # The average time-to-employment. Use gamma because times are positive and continuous
-    prior(constant(10), class = "shape"), # Constrain the shape parameter, or else it thinks event times can go on basically forever.
-    prior(normal(0, 1), class = "b", coef = "adapt"),
-    prior(normal(0, 1), class = "b", coef = "age"),
-    prior(normal(0, 1), class = "b", coef = "collab"),
-    prior(normal(0, 1), class = "b", coef = "ei_status")
+    prior(cauchy(0, 2.5), class = "shape"), # Constrain the shape parameter, or else it thinks event times can go on basically forever.
+    prior(normal(0, 1.45), class = "b", coef = "adapt"),
+    prior(normal(0, 1.45), class = "b", coef = "age"),
+    prior(normal(0, 1.45), class = "b", coef = "collab"),
+    prior(normal(0, 1.45), class = "b", coef = "ei_status")
   )
 
 # Fit the model
@@ -1485,8 +1483,8 @@ fit.prior <- brm(
   family = weibull(),
   prior = priors,
   sample_prior = "only",
-  iter = 2000,
-  file = "fits/b07.04.priors.rds"
+  iter = 2000
+ # file = "fits/b07.04.priors.rds"
 )
 
 # Figure out what brms has named everything so we can wrangle the draws
@@ -1505,9 +1503,9 @@ prior_preds |>
 
   ggplot() + 
   geom_density(aes(x = .prediction, group = .draw), alpha = 0, colour=alpha("mediumorchid", .1)) +
-  geom_density(data = prior_preds |> distinct(rowid, .keep_all = TRUE), aes(x = prior_pred_mean)) +
+#  geom_density(data = prior_preds |> distinct(rowid, .keep_all = TRUE), aes(x = prior_pred_mean)) +
   scale_y_continuous(expand=c(0, 0)) +
-  xlim(c(0, 365)) +
+  xlim(c(1, 365)) +
   theme_minimal() +
   theme(
     axis.text.y = element_blank(),
@@ -1558,7 +1556,7 @@ fake_dat |>
   ggplot() + 
   geom_histogram(aes(x = draw_mean), colour = "white", fill = "mediumorchid") +
   labs(x = "Mean of draw from prior predictive distribution", y = "n draws") +
-  scale_x_continuous(expand=c(0, 0), limits = c(0, 1000)) +
+  scale_x_continuous(expand=c(0, 0), limits = c(0, 10000)) +
   scale_y_continuous(expand=c(0, 0)) +
   theme_minimal()
 
@@ -1617,7 +1615,6 @@ transformed parameters {
   // Weibull transformed parameters
   vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
   mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
-  mu_weibull = exp(mu_weibull);
 }
 
 model {
@@ -1637,11 +1634,15 @@ model {
 
   // Weibull Survival Analysis
   shape ~ cauchy(0, 2.5);
+  b[1] ~ normal(3.3, 0.4);
+  for (k in 2:K) {
+    b[k] ~ normal(0, 1.45);
+  }
   for (n in 1 : N) {
     if (cens[n] == 0) {
-      target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+      target += weibull_lpdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
     } else if (cens[n] == 1) {
-      target += weibull_lccdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+      target += weibull_lccdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
     } 
   }
 }
@@ -1681,7 +1682,7 @@ generated quantities {
   // Draws from posterior predictive distribution
   vector[N] y_pred;
   for (n in 1:N) {
-    y_pred[n] = weibull_rng(shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    y_pred[n] = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
   }
 }
 
@@ -1741,7 +1742,6 @@ transformed parameters {
   // Weibull transformed parameters
   vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
   mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
-  mu_weibull = exp(mu_weibull);
 }
 
 model {
@@ -1761,11 +1761,15 @@ model {
 
   // Weibull Survival Analysis
   shape ~ cauchy(0, 2.5);
+  b[1] ~ normal(3.3, 0.4);
+  for (k in 2:K) {
+    b[k] ~ normal(0, 1.45);
+  }
   for (n in 1 : N) {
     if (cens[n] == 0) {
-      target += weibull_lpdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+      target += weibull_lpdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
     } else if (cens[n] == 1) {
-      target += weibull_lccdf(Y[n] | shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+      target += weibull_lccdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
     } 
   }
 }
@@ -1805,7 +1809,7 @@ generated quantities {
   // Draws from posterior predictive distribution
   vector[N] y_pred;
   for (n in 1:N) {
-    y_pred[n] = weibull_rng(shape, mu_weibull[n] / tgamma(1 + 1 / shape));
+    y_pred[n] = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
   }
 }
 "
@@ -1881,7 +1885,7 @@ fit <- model$sample(
 )
 
 # Save the resulting model fit
-saveRDS(fit, "source/fits/b07.04.rds")
+saveRDS(fit, "source/fits/b07.04.informative.priors.rds")
 
 
 ```
@@ -1910,16 +1914,14 @@ draws <- fit$draws(
   )
 )
 
-fit$code()
-draws
 pp_draws <- fit$draws(
   variables = c(
     "y_pred"
   )
 )
 # Save the result
-saveRDS(draws, "source/fits/b07.04.samples.rds")
-saveRDS(pp_draws, "source/fits/b07.04.flat_priors_post_pred_samples.rds")
+saveRDS(draws, "source/fits/b07.04.rds")
+saveRDS(pp_draws, "source/fits/b07.04.post_pred_samples.rds")
 
 ```
 
@@ -1953,9 +1955,7 @@ what |>
 
   summarise_draws() |>
 
-  slice(1:5) 
-
-  view()
+  slice(1:5) |>
 
   select(variable, "stan" = mean) |>
 
@@ -1988,9 +1988,6 @@ what |>
     brms = exp(brms)
   )
 
-posterior_draws 
-
-what
 
   
 
@@ -2046,9 +2043,9 @@ draws |>
     .variable == "Loading for m1" ~ .8,
     .variable == "Loading for m2" ~ .6,
     .variable == "Loading for m3" ~ .9,
-    .variable == "Loading for m4" ~ .1,
-    .variable == "Loading for m5" ~ .2,
-    .variable == "Loading for m6" ~ -.4,
+    .variable == "Loading for m4" ~ .9,
+    .variable == "Loading for m5" ~ .7,
+    .variable == "Loading for m6" ~ .8,
     .variable == "Covariance for f1 ~ f2" ~ .4,
     .variable == "Covariance for m1 ~ m4" ~ .4
   )) |>
@@ -2067,6 +2064,7 @@ draws |>
   theme(panel.grid.major = element_blank()) +
   facet_wrap(~.variable, scales = "free_x") 
 
+ggplot() 
 ```
 
 Bring the posterior checks code and saveRDS call down here for consistency.
