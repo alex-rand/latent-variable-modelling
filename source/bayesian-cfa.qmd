@@ -1088,7 +1088,7 @@ Phi <- matrix(c(1, 0.4,
 
 # factor loadings
 Lambda <- cbind(c(.8, .6, .9, 0, 0, 0), 
-                c(0, 0, 0, .9, .7, .8))  
+                c(0, 0, 0, .1, .2, -.4))  
 
 # Error structure of measured variables
 Theta <- diag(c(c(1, 1, 1, 1, 1, 1)))
@@ -1323,7 +1323,9 @@ If we've done everything correctly then a basic survival analysis should be able
 
 ```{r}
 
-test <- survreg(Surv(time, status) ~ adapt + collab + age + ei_status, data=fake_dat, dist='weibull')
+surv_object <- Surv(fake_dat$time, fake_dat$status)
+
+test <- survreg(surv_object ~ adapt + collab + age + ei_status, data=fake_dat, dist='weibull')
 
 test |> 
 
@@ -1336,6 +1338,28 @@ test |>
 ```
 
 ### Exploratory Data Analysis. Report the scale reliabilities?
+
+```{r}
+library(survminer)
+
+km.full.sample <- survfit(surv_object ~ 1 + ei_status, data = fake_dat)
+
+survminer::ggsurvplot(
+  fit = km.full.sample,
+  conf.int = TRUE,
+  risk.table = TRUE,
+  surv.median.line = "v",
+  linetype = 1,
+  legend = "none",
+  #  palette = c("cadetblue4"),
+  title = "Kaplan-Meier Estimated Survival Curve",
+  xlab = "", 
+  ylab = "",
+  ggtheme = theme_bw()
+) 
+
+
+```
 
 For starters, we can plot the raw distribution of event times: 
 
@@ -1483,8 +1507,8 @@ fit.prior <- brm(
   family = weibull(),
   prior = priors,
   sample_prior = "only",
-  iter = 2000
- # file = "fits/b07.04.priors.rds"
+  iter = 2000,
+  file = "source/fits/b07.04.priors.rds"
 )
 
 # Figure out what brms has named everything so we can wrangle the draws
@@ -1884,8 +1908,9 @@ fit <- model$sample(
   refresh = 1 # print update at each iter
 )
 
+
 # Save the resulting model fit
-saveRDS(fit, "source/fits/b07.04.informative.priors.rds")
+saveRDS(fit, "source/fits/b07.04.rds")
 
 
 ```
@@ -1896,6 +1921,7 @@ saveRDS(fit, "source/fits/b07.04.informative.priors.rds")
 
 fit <- readRDS("source/fits/b07.04.rds")
 
+fit
 # If you need to check variable names, call this
 #test <- fit$summary()
 
@@ -1920,12 +1946,12 @@ pp_draws <- fit$draws(
   )
 )
 # Save the result
-saveRDS(draws, "source/fits/b07.04.rds")
+saveRDS(draws, "source/fits/b07.04.samples.rds")
 saveRDS(pp_draws, "source/fits/b07.04.post_pred_samples.rds")
 
 ```
 
-How did that go? We can plot the draws and look at the MCMC diagnostics like we did above.
+How did that go? We can plot the draws and look at the MCMC diagnostics like we did above. It looks like the model did a good job capturing all of the true parameter estimates in the form of acceleration factors. For example, where we simulated our true parameter value for the effect of a 1-year  It even did ok at recovering the true parameter estimates for `b_Collab`, even though the simulated factor loadings provide quite unreliable measurements of that latent predictor. This is all a big win for Bayes. 
 ```{r}
 
 # Load the draws saved in the previous block
@@ -1950,6 +1976,7 @@ what <- draws |>
     `Rho_factors[2,1]`,
     `Rho_m1_m4[2,1]`
   ) 
+
 
 what |> 
 
@@ -1989,7 +2016,10 @@ what |>
   )
 
 
-  
+
+draws |>
+
+summary()
 
 
 # Plot
@@ -2014,16 +2044,13 @@ draws |>
 
   mutate(.value = ifelse(.variable %in% c("b[1]", "b[2]", "b[3]", "b[4]", "b[5]"), exp(.value), .value)) |>
   
-  
- # mutate(estimate = exp(estimate)) |>
-
   # Do some renaming for clarity
   mutate(.variable = case_when(
    .variable == "b[1]" ~ "Intercept",
-   .variable == "b[2]" ~ "b_Age",
-   .variable == "b[3]" ~ "b_EI Status",
-   .variable == "b[4]" ~ "b_Adapt",
-   .variable == "b[5]" ~ "b_Collab",
+   .variable == "b[2]" ~ "b_Adapt",
+   .variable == "b[3]" ~ "b_Collab",
+   .variable == "b[4]" ~ "b_Age",
+   .variable == "b[5]" ~ "b_EI Status",
    .variable == "lam[1,1]" ~ "Loading for m1",
    .variable == "lam[2,1]" ~ "Loading for m2",
    .variable == "lam[3,1]" ~ "Loading for m3",
@@ -2034,23 +2061,23 @@ draws |>
    .variable == "Rho_m1_m4[2,1]" ~ "Covariance for m1 ~ m4"
  )) |>
 
+  filter(.variable != "Intercept") |>
+
   # Add the true factor loadings for plotting
   mutate(true_loading = case_when(
-    .variable == "b_Age" ~ .9,
-    .variable == "b_EI Status" ~ .5,
-    .variable == "b_Adapt" ~ 0,
-    .variable == "b_Collab" ~ .8,
+    .variable == "b_Age" ~ 1.1,
+    .variable == "b_Collab" ~ 0.8,
+    .variable == "b_Adapt" ~ 1,
+    .variable == "b_EI Status" ~ 0.5,
     .variable == "Loading for m1" ~ .8,
     .variable == "Loading for m2" ~ .6,
     .variable == "Loading for m3" ~ .9,
-    .variable == "Loading for m4" ~ .9,
-    .variable == "Loading for m5" ~ .7,
-    .variable == "Loading for m6" ~ .8,
+    .variable == "Loading for m4" ~ .1,
+    .variable == "Loading for m5" ~ .2,
+    .variable == "Loading for m6" ~ -.4,
     .variable == "Covariance for f1 ~ f2" ~ .4,
     .variable == "Covariance for m1 ~ m4" ~ .4
   )) |>
-
-    filter(.variable != "Intercept") |>
 
   ggplot(aes(x = .value, fill = .variable)) +
   stat_halfeye(fill = "mediumorchid") +
@@ -2064,7 +2091,7 @@ draws |>
   theme(panel.grid.major = element_blank()) +
   facet_wrap(~.variable, scales = "free_x") 
 
-ggplot() 
+
 ```
 
 Bring the posterior checks code and saveRDS call down here for consistency.
