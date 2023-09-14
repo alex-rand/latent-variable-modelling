@@ -1847,10 +1847,10 @@ X_weibull <- as.matrix(
     mutate(intercept = 1) |>
     select(
       intercept,
-      age,
-      ei_status,
       adapt,
-      collab
+      collab,
+      age,
+      ei_status
     ) 
 )
 
@@ -1918,7 +1918,7 @@ pp_draws <- fit$draws(
   )
 )
 # Save the result
-saveRDS(draws, "source/fits/b07.04.samples_flat_priors.rds")
+saveRDS(draws, "source/fits/b07.04.samples.rds")
 saveRDS(pp_draws, "source/fits/b07.04.flat_priors_post_pred_samples.rds")
 
 ```
@@ -1949,12 +1949,13 @@ what <- draws |>
     `Rho_m1_m4[2,1]`
   ) 
 
-
 what |> 
 
   summarise_draws() |>
 
-  slice(1:5) |>
+  slice(1:5) 
+
+  view()
 
   select(variable, "stan" = mean) |>
 
