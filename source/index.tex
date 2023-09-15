@@ -216,7 +216,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, frame hidden, boxrule=0pt, interior hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, breakable]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, boxrule=0pt, frame hidden, borderline west={3pt}{0pt}{shadecolor}, breakable, interior hidden, sharp corners]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -305,7 +305,7 @@ variables are confounded only by one unmeasured variable per group.
 
 So here's the archetypal DAG of a CFA, where the Xs are observed
 variables, and F1 is an unmeasured variable I am trying to convince you
-exists:
+exists. We can call this \textbf{The Primordial CFA DAG of Confounding}:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4344,35 +4344,207 @@ Great. Now let's plug them into the model.
 \end{Highlighting}
 \end{Shaded}
 
-Can brms replicate results from lavaan?
+\hypertarget{summary}{%
+\section*{Summary}\label{summary}}
+\addcontentsline{toc}{section}{Summary}
 
-\{\{brms\}\} doesn't officially have SEM capabilities
-\href{https://github.com/paul-buerkner/brms/issues/304}{(but they do
-seem to be coming soon!)}. But
-\href{https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139}{STAN
-forum contributer Jack Bailey} has `patanté' a solution using artful
-prior specifications.
+I recently did an analysis for a client who designs workforce skills
+training programs. The client was interested in the relationship between
+several latent skills for which they had collected measurements, and
+time-to-employment following a skills training program. This document
+presents the Bayesian workflow I used for that analysis, which involved
+simultaneously estimating the construct validity of the latent variables
+and including them as regressors in a time-to-event analysis. Along the
+way I show various approaches to simulating latent variable and
+time-to-event data for model validation, and demonstrate the advantages
+of the Bayesian approach compared to traditional two-stage approaches
+involving factor score point estimates.
 
-To demonstrate, we can simulate some data using \{\{lavaan\}\} and show
-that \texttt{brms::brm()} is able to recover the `true' factor loadings.
+\hypertarget{introduction}{%
+\section*{Introduction}\label{introduction}}
+\addcontentsline{toc}{section}{Introduction}
 
-\hypertarget{first-example-simple-factor-structure}{%
-\section{First Example: Simple Factor
-Structure}\label{first-example-simple-factor-structure}}
+In the previous sections we've explored various aspects of the
+traditional workflow for Confirmatory Factor Analysis, including the
+basic model structure, validity and reliability, model goodness of fit
+tests, tests for measurement invariance, and experimenting with custom
+error covariance structures. These are all helpful tools for specifying
+quantitative theories about imaginary constructs, and testing those
+theories with data.
 
-First we can simulate some data with a simple factor structure using
-lavaan's handy \texttt{simulateData()} function:
+But often you'll want to do more than just convince me the data are
+consistent with the Primordial CFA DAG of Confounding: you'll also have
+some theories about how those imagined constructs relate to other
+measurements or latent constructs. This opens the door to
+\textbf{Structural Equation Modelling (SEM)}, which is a framework for
+simultaneously convincing you that my data are consistent with the
+imaginary constructs I have in mind, \emph{and} that my data are
+consistent with those constructs relating to each other according to a
+specific causal structure. It basically allows us to do regression with
+latent variables.
+
+Before we explore a traditional SEM workflow that tests for causal
+relationships between unmeasured variables, we can first explore a more
+basic situation where we only have latent \emph{predictors}, and want to
+estimate the relationship between those latent predictors and an
+observed outcome. A traditional way of incorporating a CFA measurement
+model into a fuller regression analysis for a measured dependent
+variable proceeds in two steps:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  first you fit the CFA model;
+\item
+  then you fit the substantive regression, incorporating the latent
+  variable into the regression by generating factor scores from the CFA
+  model for each observation and including those as a regression
+  covariate.
+\end{enumerate}
+
+But this approach is unsatisfactory because factor scores are a function
+of the CFA model's parameter estimates (the estimates of the factor
+loadings), about which there is uncertainty. So if we only give our
+substantive regression model a point-estimate factor score from the CFA
+model, we ignore the uncertainty contained in the standard errors of the
+CFA model's factor loading estimates. This is the approach taken by
+Kankaraš, Feron, and Renbarger (2019); they use point-estimate factor
+scores as predictors in subsequent regressions. In some cases they even
+do this iteratively, fitting measurement models on point-estimate factor
+scores from measurement models fit on point-estimate factor scores, and
+using \emph{those} point-estimates as regression predictors! In their
+analysis they don't even report the standard errors of the factor
+loadings from their measurement models.
+
+A better option is to fit a Bayesian model that carries out both the
+measurement model and the substantive regression model simultaneously,
+so that the model can incorporate its uncertainty from the CFA model
+into its substantive parameter estimates and predictions. This approach
+is essentially just a Bayesian missing data analysis, where the factor
+scores are treated as missing data and the model estimates a unique
+parameter for each missing value, along with its own unique posterior
+distribution. In this document I demonstrate how to implement this
+approach with Stan, incorporating concepts from previous sections such
+as MTMM factor analysis. We'll proceed as follows:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Fit a simple Bayesian CFA with orthogonal covariates and a basic
+  measurement error covariance structure. We use the brms package to
+  illustrate how Bayesian factor analysis is the same as Bayesian
+  missing data analysis, but when \emph{all} of your observations are
+  missing;
+\item
+  Fit the same Bayesian CFA, but specifying correlated factors. The brms
+  package can't yet handle custom covariance structures for latent
+  factors, so we upgrade to raw Stan;
+\item
+  Update the model to include a custom error covariance structure à la
+  MTMM;
+\item
+  Combine the MTMM model from the previous step with a time-to-event
+  model.
+\item
+  Expand the model to include multilevel structure, with correlated
+  varying effects for the regression predictors.
+\end{enumerate}
+
+At each stage we'll stick with the same basic scenario: our client has
+invented scales for the latent skills ``adaptability'' and
+``collaboration'', and they're interested in testing the validity of
+those scales and estimating their relationship with time-to-employment
+for their program participants. At each stage of the analysis we'll
+simulate a new dataset reflecting our updated model, and show that the
+model can recover the true simulation parameter estimates.
+
+\hypertarget{first-example-simple-factor-structure-with-brms}{%
+\section*{First Example: Simple Factor Structure with
+brms}\label{first-example-simple-factor-structure-with-brms}}
+\addcontentsline{toc}{section}{First Example: Simple Factor Structure
+with brms}
+
+In this section we'll see how to specify a Bayesian CFA model in brms.
+Nothing fancy, just two orthogonal factors, each with three
+measurements. Here's the full model definition:
+
+\[
+\begin{aligned}
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & 0 \\
+0 & \sigma_\text{adapt}^2
+\end{bmatrix} \\
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & 0 & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+0 & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+\]
+
+I've worked from
+\href{https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139}{the
+approach shared by Jack Bailey in a post on the Stan forum}.
+
+First we can simulate some data with the given factor structure using
+the lavaan package's handy \texttt{simulateData()} function:
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\CommentTok{\# Specify the factor structure in classic lavaan syntax}
 \NormalTok{pop.model }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{} }
 \StringTok{  f1 =\textasciitilde{} .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + {-}.4*m6}
 \StringTok{\textquotesingle{}}
 
-\CommentTok{\# Simulate data from the model}
+\CommentTok{\# Simulate data from the specified model }
 \NormalTok{fake\_dat }\OtherTok{\textless{}{-}}\NormalTok{ lavaan}\SpecialCharTok{::}\FunctionTok{simulateData}\NormalTok{(}\AttributeTok{model =}\NormalTok{ pop.model, }\AttributeTok{sample.nobs =} \DecValTok{4000}\NormalTok{)}
 
-\CommentTok{\# Visualize the measured dat}
+\CommentTok{\# Visualize the measured data}
 \NormalTok{fake\_dat }\SpecialCharTok{|\textgreater{}}
 
   \FunctionTok{select}\NormalTok{(m1, m2, m3, m4, m5, m6) }\SpecialCharTok{|\textgreater{}}
@@ -4380,7 +4552,7 @@ lavaan's handy \texttt{simulateData()} function:
   \FunctionTok{pivot\_longer}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\AttributeTok{names\_to =} \StringTok{"var"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"measurement"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
 
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_histogram}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ measurement)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_histogram}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ measurement), }\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{var) }\SpecialCharTok{+}
   \FunctionTok{theme\_bw}\NormalTok{()}
 \end{Highlighting}
@@ -4394,45 +4566,14 @@ lavaan's handy \texttt{simulateData()} function:
 
 \end{figure}
 
-Unsurprisingly, the lavaan \texttt{cfa()} function is able to recover
-the true parameters for the data it generated.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Fit the model}
-\NormalTok{fit\_1 }\OtherTok{\textless{}{-}} \FunctionTok{cfa}\NormalTok{(pop.model, }\AttributeTok{data =}\NormalTok{ fake\_dat)}
-
-\CommentTok{\# Make sure it works}
-\NormalTok{fit\_1 }\SpecialCharTok{|\textgreater{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-# A tibble: 13 x 9
-   term     op    estimate std.error statistic p.value std.lv std.all std.nox
-   <chr>    <chr>    <dbl>     <dbl>     <dbl>   <dbl>  <dbl>   <dbl>   <dbl>
- 1 f1 =~ m1 =~       0.8      0           NA        NA  0.803  0.618   0.618 
- 2 f1 =~ m2 =~       0.1      0           NA        NA  0.100  0.0984  0.0984
- 3 f1 =~ m3 =~       0.6      0           NA        NA  0.602  0.522   0.522 
- 4 f1 =~ m4 =~       0.2      0           NA        NA  0.201  0.198   0.198 
- 5 f1 =~ m5 =~       0.9      0           NA        NA  0.903  0.679   0.679 
- 6 f1 =~ m6 =~      -0.4      0           NA        NA -0.401 -0.367  -0.367 
- 7 m1 ~~ m1 ~~       1.04     0.0295      35.3       0  1.04   0.618   0.618 
- 8 m2 ~~ m2 ~~       1.03     0.0231      44.6       0  1.03   0.990   0.990 
- 9 m3 ~~ m3 ~~       0.969    0.0248      39.1       0  0.969  0.728   0.728 
-10 m4 ~~ m4 ~~       0.992    0.0225      44.1       0  0.992  0.961   0.961 
-11 m5 ~~ m5 ~~       0.953    0.0303      31.5       0  0.953  0.539   0.539 
-12 m6 ~~ m6 ~~       1.04     0.0244      42.4       0  1.04   0.865   0.865 
-13 f1 ~~ f1 ~~       1.01     0.0344      29.3       0  1      1       1     
-\end{verbatim}
-
-But can brms recover the true parameter values? I like this approach
-because it gives a nice conceptual perspective on what we're actually
-doing when we're doing latant variable modelling: we're just doing a
-linear regression where the measured variables are all drawn from a
-sharedd multivariate normal distribution, and where the linear model
-component of their location parameters include a covariate for which we
-only have missing data. It's a pretty cool and weird thing.
+Here's how we can specify a Bayesian model in brms that recovers the
+simulation parameter values. I like this approach because it gives a
+nice conceptual perspective on what we're actually doing when we're
+doing latant variable modelling: we're just doing a linear regression
+where the measured variables are all drawn from a shared multivariate
+normal distribution, and where the linear model component of their
+location parameters include a covariate for which we only have missing
+data.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4568,8 +4709,68 @@ factors}\label{second-example-correlated-factors}}
 
 Now an example where we assume the latent vactors are themselves
 dependent, so that discriminant validity is questionable. So we can
-include a term for their correlation structure in the model. We'll need
-to amend the lavaan model structure to implement these changes.
+include a term for their correlation structure in the model. Here's the
+updated model definition:
+
+\[
+\begin{aligned}
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & 0 & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+0 & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+\]
+
+We'll need to amend the lavaan model structure to implement these
+changes.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4970,14 +5171,72 @@ measured variables in the variance-covariance matrix of the shared
 multivariable likelihood function. So now the off-diagonals are not
 entirely 0. This is what Brown (2006) calls a `correlated uniqueness
 model'. I have more detailed notes on these ideas in
-Chapter~\ref{sec-mtmm}.
+Chapter~\ref{sec-mtmm}. For example, say we have two latent factors each
+with 3 measurements. We're worried that the first measurement of each
+variable (m1 and m4) are confounded because they were both collected by
+participant survey, while the other four measures were each collected by
+different means. Here's the updated model, with the new parameter
+highlighted in blue:
 
-For example, say we have two latent factors each with 3 measurements.
-We're worried that the first measurement of each variable (m1 and m4)
-are confounded because they were both collected by participant survey,
-while the other four measures were each collected by different means. We
-can simulate data from this DAG using \{\{lavaan\}\} like we did for the
-two models above.
+\[
+\begin{aligned}
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+\]
+
+We can simulate data from this DAG using \{\{lavaan\}\} like we did for
+the two models above.
 
 First we'll need to add a new parameter to our Stan model to account for
 the possibility of shared method confounding. This only involves a few
@@ -5233,7 +5492,7 @@ like we did above.
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-17-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-16-1.pdf}
 
 }
 
@@ -5264,8 +5523,8 @@ the vector \(\boldsymbol{\beta}\).
 \$\$
 
 \begin{aligned}
-T_i &\sim \text{Weibull}(\theta_i, k) \\
-\theta_i &= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\color{orange}T_i &\color{orange}\sim \text{Weibull}(\theta_i, k) \\
+\color{orange}\theta_i &\color{orange}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -5306,16 +5565,16 @@ m_{6}
 \\
 \Sigma_f &=
 \begin{bmatrix}
-\sigma_\text{adapt}^2 & \rho \sigma_\text{adapt} \sigma_\text{collab} \\
-\rho \sigma_\text{adapt} \sigma_\text{collab} & \sigma_\text{adapt}^2
-\end{bmatrix} \\
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
 \\
 \Sigma_m &=
 \begin{bmatrix}
-\sigma_{m1}^2 & 0 & 0 & \rho \sigma_{m1} \sigma_{m4} & 0 & 0 \\
+\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
 0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
 0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
-\rho \sigma_{m1} \sigma_{m4} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
 0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
@@ -5434,22 +5693,22 @@ variables get messed up. Looks like everything works fine:
 term & estimate \\
 \midrule()
 \endhead
-f1 =\textasciitilde{} m1 & 0.8164359 \\
-f1 =\textasciitilde{} m2 & 0.5699761 \\
-f1 =\textasciitilde{} m3 & 0.9105741 \\
-f2 =\textasciitilde{} m4 & -0.1023457 \\
-f2 =\textasciitilde{} m5 & -0.1098879 \\
-f2 =\textasciitilde{} m6 & 0.5693858 \\
+f1 =\textasciitilde{} m1 & 0.8198281 \\
+f1 =\textasciitilde{} m2 & 0.5955132 \\
+f1 =\textasciitilde{} m3 & 0.8536641 \\
+f2 =\textasciitilde{} m4 & 0.0607140 \\
+f2 =\textasciitilde{} m5 & 0.2400272 \\
+f2 =\textasciitilde{} m6 & -0.3620342 \\
 f1 \textasciitilde\textasciitilde{} f1 & 1.0000000 \\
 f2 \textasciitilde\textasciitilde{} f2 & 1.0000000 \\
-m1 \textasciitilde\textasciitilde{} m4 & 0.4371072 \\
-m1 \textasciitilde\textasciitilde{} m1 & 0.9811954 \\
-m2 \textasciitilde\textasciitilde{} m2 & 0.9760196 \\
-m3 \textasciitilde\textasciitilde{} m3 & 1.0231783 \\
-m4 \textasciitilde\textasciitilde{} m4 & 1.0306869 \\
-m5 \textasciitilde\textasciitilde{} m5 & 0.9991192 \\
-m6 \textasciitilde\textasciitilde{} m6 & 0.8285447 \\
-f1 \textasciitilde\textasciitilde{} f2 & -0.3240730 \\
+m1 \textasciitilde\textasciitilde{} m4 & 0.3656692 \\
+m1 \textasciitilde\textasciitilde{} m1 & 0.9434914 \\
+m2 \textasciitilde\textasciitilde{} m2 & 0.9865352 \\
+m3 \textasciitilde\textasciitilde{} m3 & 1.0540411 \\
+m4 \textasciitilde\textasciitilde{} m4 & 0.9873786 \\
+m5 \textasciitilde\textasciitilde{} m5 & 0.9413584 \\
+m6 \textasciitilde\textasciitilde{} m6 & 1.0233323 \\
+f1 \textasciitilde\textasciitilde{} f2 & 0.3438123 \\
 \bottomrule()
 \end{longtable}
 
@@ -5736,12 +5995,12 @@ specification. Indeed, this is what we see:
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 51.3755132 & 0.0295053 & 133.5070515 & 0.0000000 \\
-adapt & 1.0073520 & 0.0227819 & 0.3215323 & 0.7478070 \\
-collab & 0.8445236 & 0.0230588 & -7.3283456 & 0.0000000 \\
-age & 1.1196435 & 0.0209928 & 5.3832888 & 0.0000001 \\
-ei\_status & 0.4897273 & 0.0422801 & -16.8851607 & 0.0000000 \\
-Log(scale) & 0.9946360 & 0.0164774 & -0.3264132 & 0.7441117 \\
+(Intercept) & 51.7489593 & 0.0287406 & 137.311057 & 0.0000000 \\
+adapt & 0.9769938 & 0.0224345 & -1.037463 & 0.2995202 \\
+collab & 0.8443064 & 0.0220928 & -7.660400 & 0.0000000 \\
+age & 1.1248235 & 0.0205337 & 5.728433 & 0.0000000 \\
+ei\_status & 0.4880109 & 0.0408208 & -17.574783 & 0.0000000 \\
+Log(scale) & 0.9646958 & 0.0162162 & -2.216450 & 0.0266607 \\
 \bottomrule()
 \end{longtable}
 
@@ -5771,7 +6030,7 @@ reliabilities?}\label{exploratory-data-analysis.-report-the-scale-reliabilities}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-22-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-21-1.pdf}
 
 }
 
@@ -5822,7 +6081,7 @@ Now we'll adopt the conceit that the two factors \texttt{adapt} and
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-24-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-23-1.pdf}
 
 }
 
@@ -5901,7 +6160,7 @@ characteristics:
 \end{Shaded}
 
 \begin{verbatim}
-[1] 29.47046
+[1] 29.46707
 \end{verbatim}
 
 \begin{Shaded}
@@ -5916,7 +6175,7 @@ characteristics:
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-25-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-24-1.pdf}
 
 }
 
@@ -5957,7 +6216,7 @@ probability of only about 5\% in either direction.
 # A tibble: 1 x 2
       q5   q95
    <num> <num>
-1 0.0888  10.9
+1 0.0952  10.3
 \end{verbatim}
 
 \begin{Shaded}
@@ -5972,12 +6231,12 @@ probability of only about 5\% in either direction.
 \end{Shaded}
 
 \begin{verbatim}
-Warning: Removed 559 rows containing missing values (`stat_slabinterval()`).
+Warning: Removed 518 rows containing missing values (`stat_slabinterval()`).
 \end{verbatim}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-26-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-25-1.pdf}
 
 }
 
@@ -6494,7 +6753,7 @@ big win for Bayes.
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-32-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-31-1.pdf}
 
 }
 
@@ -6831,19 +7090,19 @@ Parameter Estimates:
 Regressions:
                    Estimate  Std.Err  z-value  P(>|z|)
   communication ~                                     
-    communicatn_m1    3.867    0.196   19.746    0.000
-    communicatn_m2    3.711    0.197   18.839    0.000
-    communicatn_m3    3.917    0.198   19.744    0.000
-    communicatn_m4    3.651    0.197   18.498    0.000
-    communicatn_m5    3.753    0.196   19.131    0.000
+    communicatn_m1    3.670    0.202   18.211    0.000
+    communicatn_m2    3.723    0.199   18.730    0.000
+    communicatn_m3    3.761    0.200   18.804    0.000
+    communicatn_m4    3.791    0.199   19.091    0.000
+    communicatn_m5    3.872    0.200   19.320    0.000
 
 Intercepts:
                    Estimate  Std.Err  z-value  P(>|z|)
-   .communication   -10.529    0.112  -94.354    0.000
+   .communication   -10.167    0.113  -90.271    0.000
 
 Variances:
                    Estimate  Std.Err  z-value  P(>|z|)
-   .communication   114.102    0.435  262.335    0.000
+   .communication   113.724    0.435  261.540    0.000
 \end{verbatim}
 
 Lastly, we'll simulate the outcome variables for survival analysis.
@@ -6867,15 +7126,15 @@ formula: factor(communication_m1) ~ communication
 data:    dat
 
  link  threshold nobs  logLik   AIC      niter max.grad cond.H 
- logit flexible  60000 -7895.89 15801.78 12(0) 3.87e-10 8.0e+06
+ logit flexible  60000 -7733.88 15477.75 12(0) 6.21e-10 8.3e+06
 
 Coefficients:
 communication 
-        0.994 
+        1.014 
 
 Threshold coefficients:
-   1|2    2|3    3|4    4|5 
- 4.951 49.703 59.615 64.631 
+  1|2   2|3   3|4   4|5 
+ 5.09 50.74 60.89 65.91 
 \end{verbatim}
 
 \begin{Shaded}
@@ -6894,11 +7153,11 @@ Threshold coefficients:
 # A tibble: 5 x 3
   communication_m1     n      p
              <dbl> <int>  <dbl>
-1                1  3088 0.0515
-2                2 27225 0.454 
-3                3  5850 0.0975
-4                4  3015 0.0503
-5                5 20822 0.347 
+1                1  3041 0.0507
+2                2 26703 0.445 
+3                3  6009 0.100 
+4                4  2981 0.0497
+5                5 21266 0.354 
 \end{verbatim}
 
 The idea is that if the latent variables predict time-to-employment then

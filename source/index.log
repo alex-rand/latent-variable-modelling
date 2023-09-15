@@ -1,11 +1,11 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.8.12)  15 SEP 2023 11:20
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.9.15)  15 SEP 2023 14:11
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **index.tex
 (./index.tex
 LaTeX2e <2023-06-01> patch level 1
-L3 programming layer <2023-08-11>
+L3 programming layer <2023-08-29>
 (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/koma-script/scrreprt.cls
 Document Class: scrreprt 2023/07/07 v3.41 KOMA-Script document class (report)
 (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/koma-script/scrkbase.sty
@@ -230,7 +230,7 @@ LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
 ) (/Users/alex/Library/TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty
 Package: iftex 2022/02/03 v1.0f TeX engine tests
 ) (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/unicode-math/unicode-math.sty (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/l3kernel/expl3.sty
-Package: expl3 2023-08-11 L3 programming layer (loader) 
+Package: expl3 2023-08-29 L3 programming layer (loader) 
 (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-xetex.def
 File: l3backend-xetex.def 2023-04-19 L3 backend support: XeTeX
 \g__graphics_track_int=\count269
@@ -243,9 +243,9 @@ Package: unicode-math 2023/08/13 v0.8r Unicode maths in XeLaTeX and LuaLaTeX
 (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/unicode-math/unicode-math-xetex.sty
 Package: unicode-math-xetex 2023/08/13 v0.8r Unicode maths in XeLaTeX and LuaLaTeX
 (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
-Package: xparse 2023-02-02 L3 Experimental document command parser
+Package: xparse 2023-08-29 L3 Experimental document command parser
 ) (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/l3packages/l3keys2e/l3keys2e.sty
-Package: l3keys2e 2023-02-02 LaTeX2e option processing using LaTeX3 keys
+Package: l3keys2e 2023-08-29 LaTeX2e option processing using LaTeX3 keys
 ) (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/fontspec/fontspec.sty
 Package: fontspec 2022/01/15 v2.8a Font selection for XeLaTeX and LuaLaTeX
 (/Users/alex/Library/TinyTeX/texmf-dist/tex/latex/fontspec/fontspec-xetex.sty
@@ -1385,10 +1385,10 @@ Type  H <return>  for immediate help.
 l.4173 \end{align*}
                     
 Here is how much of TeX's memory you used:
- 38327 strings out of 477825
- 805486 string characters out of 5821221
- 1937885 words of memory out of 5000000
- 58716 multiletter control sequences out of 15000+600000
+ 38316 strings out of 477570
+ 805337 string characters out of 5817200
+ 1939438 words of memory out of 5000000
+ 58960 multiletter control sequences out of 15000+600000
  564548 words of font info for 92 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  108i,16n,120p,10900b,1017s stack positions out of 10000i,1000n,20000p,200000b,200000s

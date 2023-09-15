@@ -20,6 +20,7 @@ library(survminer)
 # MCMC specifications
 options(brms.backend = "cmdstanr")
 options(mc.cores = parallel::detectCores())
+
 ```
 
 ## Summary {-}
@@ -110,9 +111,6 @@ m_{6}
 \end{aligned}
 $$
 
-
-I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139).
-
 First we can simulate some data with the given factor structure using the lavaan package's handy `simulateData()` function:
 
 ```{r}
@@ -121,12 +119,13 @@ First we can simulate some data with the given factor structure using the lavaan
 #| warning: false
 
 # Specify the factor structure in classic lavaan syntax
-pop.model <- ' 
-  f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
+lavaan.model <- ' 
+  f1 =~ .8*m1 + .1*m2 + .6*m3 
+  f2 =~ .1*m4 + .2*m5 + -.4*m6
 '
 
 # Simulate data from the specified model 
-fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 4000)
+fake_dat <- lavaan::simulateData(model = lavaan.model, sample.nobs = 4000)
 
 # Visualize the measured data
 fake_dat |>
@@ -142,28 +141,29 @@ fake_dat |>
 
 ```
 
-Here's how we can specify a Bayesian model in brms that recovers the simulation parameter values. I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. 
+Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. 
 
 ```{r}
-#| label: brms-fit-1-fac
+#| label: brms-fit-basic
 #| eval: false
 
-# Add a latent variable to the dataset
+# Add the latent variables to the dataset as all NA columns
 fake_dat$f1 <- NA_real_
+fake_dat$f2 <- NA_real_
 
 bfit.1 <- brm(
     formula =
       bf(m1 ~ 0 + mi(f1)) +
       bf(m2 ~ 0 + mi(f1)) +
       bf(m3 ~ 0 + mi(f1)) +
-      bf(m4 ~ 0 + mi(f1)) +
-      bf(m5 ~ 0 + mi(f1)) +
-      bf(m6 ~ 0 + mi(f1)) +
+      bf(m4 ~ 0 + mi(f2)) +
+      bf(m5 ~ 0 + mi(f2)) +
+      bf(m6 ~ 0 + mi(f2)) +
       bf(f1| mi() ~ 1) + 
       set_rescor(rescor = FALSE),
     family = gaussian(),
     prior =
-      prior(constant(1), class = "b", resp = "m1") +
+      prior(normal(0, 10), class = "b", resp = "m1") +
       prior(constant(1), class = "sigma", resp = "m1") +
       prior(normal(0, 10), class = "b", resp = "m2") +
       prior(constant(1), class = "sigma", resp = "m2") +
@@ -175,8 +175,10 @@ bfit.1 <- brm(
       prior(constant(1), class = "sigma", resp = "m5") +
       prior(normal(0, 10), class = "b", resp = "m6") +
       prior(constant(1), class = "sigma", resp = "m6") +
-      prior(normal(0, 10), class = "Intercept", resp = "f1") +
-      prior(cauchy(0, 1), class = "sigma", resp = "f1"),
+      prior(constant(0), class = "Intercept", resp = "f1") +
+      prior(constant(1), class = "sigma", resp = "f1"),
+      prior(constant(0), class = "Intercept", resp = "f2") +
+      prior(constant(1), class = "sigma", resp = "f2"),
     data = fake_dat,
     warmup = 1000,
     iter = 6000,
@@ -185,12 +187,12 @@ bfit.1 <- brm(
 
 ```
 
-A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to replicate the figure below.
+A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to replicate the figure below. 
 
 First we can put the draws we need into a tidy format and do some cleaning:
 
 ```{r}
-#| label: wrangle-draws-1-fac
+#| label: wrangle-draws-basic
 #| eval: false
 
 bfit.1.samples <- bfit.1 |>
@@ -226,10 +228,10 @@ bfit.1.samples <- bfit.1 |>
 saveRDS(bfit.1.samples, "fits/b07.01.samples.rds")
 ```
 
-Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since it was held constant at 1 to provide the scale for the latent variable):
+Now we can plot. Looks like brms does an OK job at recovering the true factor loadings:
 
 ```{r}
-#| label: viz-draws-1-fac
+#| label: viz-draws-basic
 #| message: false
 #| warning: false
 #| fig-cap: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
@@ -398,17 +400,6 @@ model {
   }
 }
 generated quantities {
-  array[N] real log_lik; // log likelihood of each datapoint
-  real dev; // global deviance
-  real log_lik0; // global log likelihood
-  vector[N] log_lik_row;
-  
-  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
-  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
-  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
-  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
-  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
-  
   corr_matrix[D] Rho_UNC; /// correlation matrix
   corr_matrix[D] Rho; /// correlation matrix
   matrix[P, D] lam; // factor loadings
@@ -445,21 +436,6 @@ generated quantities {
       Rho[1, 2] = -1 * Rho_UNC[1, 2];
     }
   }
-  
-  /// marginal log-likelihood based on signed corrected parameters
-  Phi_lv = quad_form_diag(Rho, Sd_d);
-  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));
-  theta_del = diag_matrix(sd_p);
-  
-  Sigma = lambda_phi_lambda + theta_del;
-  L_Sigma_model = cholesky_decompose(Sigma);
-  
-  for (i in 1 : N) {
-    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(0, P), L_Sigma_model);
-  }
-  
-  log_lik0 = sum(log_lik); // global log-likelihood
-  dev = -2 * log_lik0; // model deviance
 }
 
 ```
@@ -526,17 +502,6 @@ model {
   }
 }
 generated quantities {
-  array[N] real log_lik; // log likelihood of each datapoint
-  real dev; // global deviance
-  real log_lik0; // global log likelihood
-  vector[N] log_lik_row;
-  
-  cov_matrix[P] Sigma; // Covariance matrix of the manifest variables
-  cov_matrix[D] Phi_lv; // Covariance matrix of the latent factors
-  matrix[P, P] lambda_phi_lambda; // I think these are the terms of the reconstructed var-covar matrix of the data?
-  cholesky_factor_cov[P] L_Sigma_model; // I think this is the cholesky decomposition of the reconstructued var-covar matrix above?
-  matrix[P, P] theta_del; // I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?
-  
   corr_matrix[D] Rho_UNC; /// correlation matrix
   corr_matrix[D] Rho; /// correlation matrix
   matrix[P, D] lam; // factor loadings
@@ -545,7 +510,7 @@ generated quantities {
   // Do some fancy things to sign-correct the parameter estimates.
   // The idea seems to be that when we estimate the loadings with unconstrained signs
   // It can lead to identification issues. So we take these steps to correct the signs.
-  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10
+  // See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?
   Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
   Rho = Rho_UNC;
   FS = FS_UNC;
@@ -601,8 +566,6 @@ N <- nrow(fake_dat)
 D <- 2
 
 data_list <- list(N=N,P=P,D=D,X=X, n_lam=6)
-param <- c("lam","Rho","sd_p","M","Sd_d",
-           "log_lik0","dev","log_lik")
 
 # Fit the model
 fit <- model$sample(
@@ -814,10 +777,10 @@ m_{6}
 \\
 \Sigma_m &=
 \begin{bmatrix}
-\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+\sigma_{m1}^2 & 0 & 0 & \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
 0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
 0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
-\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
 0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
@@ -1199,8 +1162,8 @@ The updated model is shown below. The only change from the MTMM model above is t
 
 $$
 \begin{aligned}
-\color{orange}T_i &\color{orange}\sim \text{Weibull}(\theta_i, k) \\
-\color{orange}\theta_i &\color{orange}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
+\color{teal}\theta_i &\color{teal}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -1247,10 +1210,10 @@ m_{6}
 \\
 \Sigma_m &=
 \begin{bmatrix}
-\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+\sigma_{m1}^2 & 0 & 0 & \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
 0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
 0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
-\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
 0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
