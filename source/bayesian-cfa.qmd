@@ -15,34 +15,120 @@ library(blavaan)
 library(brms)
 library(tidybayes)
 library(survival)
+library(survminer)
 
 # MCMC specifications
 options(brms.backend = "cmdstanr")
 options(mc.cores = parallel::detectCores())
 ```
 
-Can brms replicate results from lavaan?
+## Summary {-}
 
-{{brms}} doesn't officially have SEM capabilities [(but they do seem to be coming soon!)](https://github.com/paul-buerkner/brms/issues/304). But [STAN forum contributer Jack Bailey](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139) has 'patanté' a solution using artful prior specifications.
+I recently did an analysis for a client who designs workforce skills training programs. The client was interested in the relationship between several latent skills for which they had collected measurements, and time-to-employment following a skills training program. This document presents the Bayesian workflow I used for that analysis, which involved simultaneously estimating the construct validity of the latent variables and including them as regressors in a time-to-event analysis. Along the way I show various approaches to simulating latent variable and time-to-event data for model validation, and demonstrate the advantages of the Bayesian approach compared to traditional two-stage approaches involving factor score point estimates.
 
-To demonstrate, we can simulate some data using {{lavaan}} and show that `brms::brm()` is able to recover the 'true' factor loadings.
+## Introduction {-}
 
-## First Example: Simple Factor Structure
+In the previous sections we've explored various aspects of the traditional workflow for Confirmatory Factor Analysis, including the basic model structure, validity and reliability, model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data. 
 
-First we can simulate some data with a simple factor structure using lavaan's handy `simulateData()` function:
+But often you'll want to do more than just convince me the data are consistent with the Primordial CFA DAG of Confounding: you'll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to **Structural Equation Modelling (SEM)**, which is a framework for simultaneously convincing you that my data are consistent with the imaginary constructs I have in mind, _and_ that my data are consistent with those constructs relating to each other according to a specific causal structure. It basically allows us to do regression with latent variables. 
+
+Before we explore a traditional SEM workflow that tests for causal relationships between unmeasured variables, we can first explore a more basic situation where we only have latent _predictors_, and want to estimate the relationship between those latent predictors and an observed outcome. A traditional way of incorporating a CFA measurement model into a fuller regression analysis for a measured dependent variable proceeds in two steps: 
+
+1. first you fit the CFA model;
+2. then you fit the substantive regression, incorporating the latent variable into the regression by generating factor scores from the CFA model for each observation and including those as a regression covariate. 
+
+But this approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates (the estimates of the factor loadings), about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model's factor loading estimates. This is the approach taken by @Kankaraš-et-all-2019; they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using _those_ point-estimates as regression predictors! In their analysis they don't even report the standard errors of the factor loadings from their measurement models.
+
+A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This approach is essentially just a Bayesian missing data analysis, where the factor scores are treated as missing data and the model estimates a unique parameter for each missing value, along with its own unique posterior distribution. In this document I demonstrate how to implement this approach with Stan, incorporating concepts from previous sections such as MTMM factor analysis. We'll proceed as follows:
+
+1. Fit a simple Bayesian CFA with orthogonal covariates and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but when _all_ of your observations are missing;
+2. Fit the same Bayesian CFA, but specifying correlated factors. The brms package can't yet handle custom covariance structures for latent factors, so we upgrade to raw Stan;
+3. Update the model to include a custom error covariance structure à la MTMM;
+4. Combine the MTMM model from the previous step with a time-to-event model. 
+5. Expand the model to include multilevel structure, with correlated varying effects for the regression predictors. 
+
+At each stage we'll stick with the same basic scenario: our client has invented scales for the latent skills "adaptability" and "collaboration", and they're interested in testing the validity of those scales and estimating their relationship with time-to-employment for their program participants. At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. 
+
+## First Example: Simple Factor Structure with brms {-}
+
+In this section we'll see how to specify a Bayesian CFA model in brms. Nothing fancy, just two orthogonal factors, each with three measurements. Here's the full model definition:
+
+$$
+\begin{aligned}
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & 0 \\
+0 & \sigma_\text{adapt}^2
+\end{bmatrix} \\
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & 0 & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+0 & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+$$
+
+
+I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139).
+
+First we can simulate some data with the given factor structure using the lavaan package's handy `simulateData()` function:
+
 ```{r}
 #| label: sim-1-fac
 #| message: false
 #| warning: false
 
+# Specify the factor structure in classic lavaan syntax
 pop.model <- ' 
   f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
 '
 
-# Simulate data from the model
+# Simulate data from the specified model 
 fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 4000)
 
-# Visualize the measured dat
+# Visualize the measured data
 fake_dat |>
 
   select(m1, m2, m3, m4, m5, m6) |>
@@ -50,28 +136,13 @@ fake_dat |>
   pivot_longer(everything(), names_to = "var", values_to = "measurement") |>
 
   ggplot() +
-  geom_histogram(aes(x = measurement)) +
+  geom_histogram(aes(x = measurement), fill = "mediumorchid") +
   facet_wrap(~var) +
   theme_bw()
 
 ```
 
-Unsurprisingly, the lavaan `cfa()` function is able to recover the true parameters for the data it generated.
-
-```{r}
-#| label: lavaan-fit-1-fac
-#| message: false
-#| warning: false
-
-# Fit the model
-fit_1 <- cfa(pop.model, data = fake_dat)
-
-# Make sure it works
-fit_1 |> broom::tidy()
-
-```
-
-But can brms recover the true parameter values? I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a sharedd multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. It's a pretty cool and weird thing.
+Here's how we can specify a Bayesian model in brms that recovers the simulation parameter values. I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. 
 
 ```{r}
 #| label: brms-fit-1-fac
@@ -156,6 +227,7 @@ saveRDS(bfit.1.samples, "fits/b07.01.samples.rds")
 ```
 
 Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since it was held constant at 1 to provide the scale for the latent variable):
+
 ```{r}
 #| label: viz-draws-1-fac
 #| message: false
@@ -188,7 +260,67 @@ In all cases the model is __pretty close__ to the true parameter value. It's a b
 
 ## Second Example: Correlated factors
 
-Now an example where we assume the latent vactors are themselves dependent, so that discriminant validity is questionable. So we can include a term for their correlation structure in the model. We'll need to amend the lavaan model structure to implement these changes.
+Now an example where we assume the latent vactors are themselves dependent, so that discriminant validity is questionable. So we can include a term for their correlation structure in the model. Here's the updated model definition:
+
+$$
+\begin{aligned}
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & 0 & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+0 & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+$$
+
+
+We'll need to amend the lavaan model structure to implement these changes.
 
 ```{r}
 #| label: sim-2-fac
@@ -633,9 +765,67 @@ blavInspect(blavfit.1, "mcobj")
 
 ## Third Example: MTMM 
 
-In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm]. 
+In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm]. For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. Here's the updated model, with the new parameter highlighted in blue:
 
-For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. We can simulate data from this DAG using {{lavaan}} like we did for the two models above.
+$$
+\begin{aligned}
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\end{aligned}
+$$
+
+
+We can simulate data from this DAG using {{lavaan}} like we did for the two models above.
 
 First we'll need to add a new parameter to our Stan model to account for the possibility of shared method confounding. This only involves a few changes, namely:
 
@@ -1009,8 +1199,8 @@ The updated model is shown below. The only change from the MTMM model above is t
 
 $$
 \begin{aligned}
-T_i &\sim \text{Weibull}(\theta_i, k) \\
-\theta_i &= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\color{orange}T_i &\color{orange}\sim \text{Weibull}(\theta_i, k) \\
+\color{orange}\theta_i &\color{orange}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -1051,16 +1241,16 @@ m_{6}
 \\
 \Sigma_f &=
 \begin{bmatrix}
-\sigma_\text{adapt}^2 & \rho \sigma_\text{adapt} \sigma_\text{collab} \\
-\rho \sigma_\text{adapt} \sigma_\text{collab} & \sigma_\text{adapt}^2
-\end{bmatrix} \\
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
 \\
 \Sigma_m &=
 \begin{bmatrix}
-\sigma_{m1}^2 & 0 & 0 & \rho \sigma_{m1} \sigma_{m4} & 0 & 0 \\
+\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
 0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
 0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
-\rho \sigma_{m1} \sigma_{m4} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
 0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
@@ -1345,7 +1535,6 @@ test |>
 ### Exploratory Data Analysis. Report the scale reliabilities?
 
 ```{r}
-library(survminer)
 
 km.full.sample <- survfit(surv_object ~ 1 + ei_status, data = fake_dat)
 
@@ -1513,7 +1702,7 @@ fit.prior <- brm(
   prior = priors,
   sample_prior = "only",
   iter = 2000,
-  file = "source/fits/b07.04.priors.rds"
+  file = "fits/b07.04.priors.rds"
 )
 
 # Figure out what brms has named everything so we can wrangle the draws
@@ -1552,7 +1741,7 @@ fit.test <- brm(
   family = weibull(),
  # prior = priors,
   iter = 2000,
-  file = "source/fits/brmstest2-delete"
+  file = "fits/brmstest2-delete"
 )
 
 
@@ -1907,15 +2096,13 @@ fit <- model$sample(
   parallel_chains = 4,
   iter_warmup = 1000,
   iter_sampling = 6000,
-  output_dir = "source/fits",
- # adapt_delta=0.99, 
- # max_treedepth = 12,
+  output_dir = "fits",
   refresh = 1 # print update at each iter
 )
 
 
 # Save the resulting model fit
-saveRDS(fit, "source/fits/b07.04.rds")
+saveRDS(fit, "fits/b07.04.rds")
 
 
 ```
@@ -1924,7 +2111,7 @@ saveRDS(fit, "source/fits/b07.04.rds")
 #| label: wrangle-draws-surv
 #| eval: false
 
-fit <- readRDS("source/fits/b07.04.rds")
+fit <- readRDS("fits/b07.04.rds")
 
 # If you need to check variable names, call this and inspect the resulting object
 #summary <- fit$summary()
@@ -1950,8 +2137,8 @@ pp_draws <- fit$draws(
   )
 )
 # Save the result
-saveRDS(draws, "source/fits/b07.04.samples.rds")
-saveRDS(pp_draws, "source/fits/b07.04.post_pred_samples.rds")
+saveRDS(draws, "fits/b07.04.samples.rds")
+saveRDS(pp_draws, "fits/b07.04.post_pred_samples.rds")
 
 ```
 
@@ -1960,7 +2147,7 @@ How did that go? We can plot the draws and look at the MCMC diagnostics like we 
 ```{r}
 
 # Load the draws saved in the previous block
-draws <- readRDS("source/fits/b07.04.samples.rds")
+draws <- readRDS("fits/b07.04.samples.rds")
 
 # Plot
 draws |>
