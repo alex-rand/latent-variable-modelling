@@ -1262,7 +1262,12 @@ This is the parameterization we can implement when we go to create our event tim
 
 We can start by choosing values for the Weibull distribution's `rho` and `lambda` parameters that generate a realistic-seeming distribution of times-to-employment in the absence of a linear model. This is simpler conceptually if we define `rho = 1`. After some trial and error I settled on `lambda = .02`, which results in a mean time-to-employment of 22 days, as shown in the plot below. 
 
-Now we can choose the simulated parameter estimates for the linear model. There's some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios *or* acceleration factors. [This nice markdown document](https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html) provides a walkthrough of the transformations required to move between these two interpretations. The canonical **survival** package implements Weibull regression as an accelerated failure time model by default, and I find this interpretation more user-friendly so I will stick with it for our purposes here. This means that when we declare our 'true' parameter estimtes we'll need to keep this interpretation in mind: the exponentiated parameter estimate reflects a multiplicative scaling of estimate survival time among people who are the same along all other measured covariates, but differ by 1 for this covariate. For example, for this simulation we can imagine that being on employment insurance is associated with twice-as-fast time-to-employment because it means you have recent work experience. We simulate this by setting the coefficient of `beta_ie <- log(2)`. 
+Now we can choose the simulated parameter estimates for the linear model. There's some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios *or* acceleration factors. [This nice markdown document](https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html) provides a walkthrough of the transformations required to move between these two interpretations. The canonical **survival** package implements Weibull regression as an accelerated failure time model by default, and I find this interpretation more user-friendly so I will stick with it for our purposes here. But in declaring the simulation parameter estimates we need to keep in mind that there are two different but equivalent ways of transforming the parameter estimates when interpretting the results of this sort of model. @Brilleman2020 provide a clear overview:
+
+- $\exp(-\beta_p(t))$ is an **acceleration factor**: Sub-zero values of the transformed parameter estimates correspond to _slower_ event times. 
+- $\exp(\beta_p(t))$ is a **survival time ratio**: Sub-zero values of the transformed parameter estimates correspond to _faster_ event times.
+
+This is important to keep in mind when we declare our 'true' simulation parameter estimates. We can declare them as survival time ratios for simplicity when implementing the simulation, even though the {{survival}} package and Stan will return acceleration factors by default. For example, for this simulation we can imagine that being on employment insurance is associated with twice-as-fast time-to-employment because it means you have recent work experience. We simulate this by setting the coefficient `beta_ie <- log(2)`, which corresponds to an acceleration factor of .5. Likewise, we can imagine that a one-unit increase in the latent trait 'Collaboration Skills' is associated with 20% faster job attainment, so we set `beta_collab <- log(1.2)`, which corresponds to an acceleration factor of `exp(-log(1.2)) ~ 0.833`. We can proceed in the same way for the other parameter estimates. 
 
 ```{r}
 
@@ -1921,9 +1926,8 @@ saveRDS(fit, "source/fits/b07.04.rds")
 
 fit <- readRDS("source/fits/b07.04.rds")
 
-fit
-# If you need to check variable names, call this
-#test <- fit$summary()
+# If you need to check variable names, call this and inspect the resulting object
+#summary <- fit$summary()
 
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
@@ -1952,75 +1956,11 @@ saveRDS(pp_draws, "source/fits/b07.04.post_pred_samples.rds")
 ```
 
 How did that go? We can plot the draws and look at the MCMC diagnostics like we did above. It looks like the model did a good job capturing all of the true parameter estimates in the form of acceleration factors. For example, where we simulated our true parameter value for the effect of a 1-year  It even did ok at recovering the true parameter estimates for `b_Collab`, even though the simulated factor loadings provide quite unreliable measurements of that latent predictor. This is all a big win for Bayes. 
+
 ```{r}
 
 # Load the draws saved in the previous block
 draws <- readRDS("source/fits/b07.04.samples.rds")
-
-# Plot
-what <- draws |>
-
-  # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
-  spread_draws(
-    `b[1]`,
-    `b[2]`,
-    `b[3]`,
-    `b[4]`,
-    `b[5]`,
-    `lam[1,1]`,
-    `lam[2,1]`,
-    `lam[3,1]`,
-    `lam[4,2]`,
-    `lam[5,2]`,
-    `lam[6,2]`,
-    `Rho_factors[2,1]`,
-    `Rho_m1_m4[2,1]`
-  ) 
-
-
-what |> 
-
-  summarise_draws() |>
-
-  slice(1:5) |>
-
-  select(variable, "stan" = mean) |>
-
-  bind_cols(
-
-    test |> 
-
-      broom::tidy() |>
-
-      slice(1:5) |>
-
-      select("survival" = estimate) 
-
-  ) |>
-
-  bind_cols(
-    fit.test |>
-
-    fixef() |>
-
-    as_tibble(rownames="Term") |>
-
-    select("brms" = Estimate) 
-
-  ) |>
-
-  mutate(
-    stan = exp(stan),
-    survival = exp(survival),
-    brms = exp(brms)
-  )
-
-
-
-draws |>
-
-summary()
-
 
 # Plot
 draws |>
@@ -2065,8 +2005,8 @@ draws |>
 
   # Add the true factor loadings for plotting
   mutate(true_loading = case_when(
-    .variable == "b_Age" ~ 1.1,
-    .variable == "b_Collab" ~ 0.8,
+    .variable == "b_Age" ~ 1.11,
+    .variable == "b_Collab" ~ 0.833,
     .variable == "b_Adapt" ~ 1,
     .variable == "b_EI Status" ~ 0.5,
     .variable == "Loading for m1" ~ .8,
