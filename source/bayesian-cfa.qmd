@@ -57,8 +57,6 @@ At each stage of the analysis we'll simulate a new dataset reflecting our update
 4. Combine the MTMM model from the previous step with a parametric proportional hazards regression model;
 5. Expand the model to include multilevel structure, with correlated varying effects for the regression predictors. 
 
-
-
 ## Simple Bayesian CFA with brms {-}
 
 Before diving into the full model with our two factors for "adaptability" and "collabortion", in this section we'll see how to fit a simple Bayesian CFA model in brms. Nothing fancy, just one factor with 6 measurements. Here's the full model definition:
@@ -748,36 +746,29 @@ draws |>
 
 ```
 
-The trace plots also look a bit weird at times for a few of the parameters, with some occasional spikes and some parts where one chain goes berzerk relative to the others. But overall they seem healthy.  
+The trace plots seem healthy overall, albeit with some occasional spikes and some parts where one chain goes berzerk relative to the others. Chain 4 for the between-factor correlation seems especially problematic, with it following a strange trajectory during its final iterations. Perhaps this explains why that variable has the highest rhat and displays some irregularity in the tail of its approximated posterior. Still, even for that parameter the chains seem generally healthy overall. 
 
 ```{r}
-#| label: diagnostics-2-fac
+#| label: trace-2-fac
 #| message: false
 #| warnings: false
 
 # Create a summary table
 draws |>
 
-  trace()
-
-  summary() |>
-
-  select(variable, rhat, ess_bulk, ess_tail) |>
-
-  mutate(across(where(is.numeric), ~round(., 2))) |>
-
-  knitr::kable()
-
-# Look at traceplots
-# fit |> 
-
-#  bayesplot::mcmc_trace()
+  bayesplot::mcmc_trace() + 
+  scale_color_manual(values = c("blue", "red", "orange", "mediumorchid")) + 
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
 
 ```
 
-Or instead we can go with {{blavaan}}. The model fits way faster than under the raw Stan approach and recovers the true parameter estimates, but is less flexible overall. Crucially for the present analysis, there is no way to do survival analysis with {{blavaan}}. 
+As mentioned above, we could have instead gone with blavaan for this model. This fits way faster than under the raw Stan approach and recovers the true parameter estimates, but is less flexible overall. And again, crucially for the present analysis, there is no way to do survival analysis with blavaan. 
 
-But for posterity, below is the syntax we would use to fit the model with {{blavaan}}. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. So it doesn't seem practical to really get in there and customize things directly. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
+But for posterity, below is the syntax we would use to fit the model with blavaan. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
 
 ```{r}
 #| label: blavaan-2-fac
@@ -785,7 +776,7 @@ But for posterity, below is the syntax we would use to fit the model with {{blav
 #| warnings: false
 #| eval: false
 
-# Fit the model
+# Fit the model using the same lavaan-syntax model use used above to simulate the dataset
 blavfit.1 <- bcfa(correlated.factors.model, data=fake_dat, mcmcfile = T)
 
 # Gaze at parameter estimates
@@ -796,7 +787,7 @@ blavInspect(blavfit.1, "mcobj")
 
 ```
 
-## Third Example: MTMM 
+## Bayesian MTMM CFA with Custom Covariance Structure
 
 In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm]. For example, say we have two latent factors each with 3 measurements. We're worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. Here's the updated model, with the new parameter highlighted in blue:
 
