@@ -48,11 +48,11 @@ A better option is to fit a Bayesian model that carries out both the measurement
 4. Combine the MTMM model from the previous step with a time-to-event model. 
 5. Expand the model to include multilevel structure, with correlated varying effects for the regression predictors. 
 
-At each stage we'll stick with the same basic scenario: our client has invented scales for the latent skills "adaptability" and "collaboration", and they're interested in testing the validity of those scales and estimating their relationship with time-to-employment for their program participants. At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. 
+At each stage we'll stick with the same basic scenario: our pretend client has invented scales for the latent skills "adaptability" and "collaboration". The client wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates. At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. 
 
-## First Example: Simple Factor Structure with brms {-}
+## Simple Bayesian CFA with brms {-}
 
-In this section we'll see how to specify a Bayesian CFA model in brms. Nothing fancy, just two orthogonal factors, each with three measurements. Here's the full model definition:
+Before diving into the full model with our two factors for "adaptability" and "collabortion", in this section we'll see how to specify a simple Bayesian CFA model in brms. Nothing fancy, just one factor with 6 measurements. Here's the full model definition:
 
 $$
 \begin{aligned}
@@ -93,11 +93,7 @@ m_{6}
 \Sigma_f
 \right) \\
 \\
-\Sigma_f &=
-\begin{bmatrix}
-\sigma_\text{adapt}^2 & 0 \\
-0 & \sigma_\text{adapt}^2
-\end{bmatrix} \\
+f_1 \sim \text{Normal}(\mu_f, \sigma_f^2)
 \\
 \Sigma_m &=
 \begin{bmatrix}
@@ -114,18 +110,17 @@ $$
 First we can simulate some data with the given factor structure using the lavaan package's handy `simulateData()` function:
 
 ```{r}
-#| label: sim-1-fac
+#| label: sim-basic
 #| message: false
 #| warning: false
 
 # Specify the factor structure in classic lavaan syntax
-lavaan.model <- ' 
-  f1 =~ .8*m1 + .1*m2 + .6*m3 
-  f2 =~ .1*m4 + .2*m5 + -.4*m6
+pop.model <- ' 
+  f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
 '
 
 # Simulate data from the specified model 
-fake_dat <- lavaan::simulateData(model = lavaan.model, sample.nobs = 4000)
+fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 4000)
 
 # Visualize the measured data
 fake_dat |>
@@ -141,49 +136,47 @@ fake_dat |>
 
 ```
 
-Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. 
+Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. Then we define the model with the same identifiability constraints that lavaan imposes by default, I.E. taking the first loading and constraining it to be constant:
 
 ```{r}
 #| label: brms-fit-basic
 #| eval: false
 
-# Add the latent variables to the dataset as all NA columns
+# Add the latent variable to the dataset as an all NA column
 fake_dat$f1 <- NA_real_
-fake_dat$f2 <- NA_real_
 
+# Define the model, with the coefficient for m1 fied to a constant for identifiability
 bfit.1 <- brm(
-    formula =
-      bf(m1 ~ 0 + mi(f1)) +
-      bf(m2 ~ 0 + mi(f1)) +
-      bf(m3 ~ 0 + mi(f1)) +
-      bf(m4 ~ 0 + mi(f2)) +
-      bf(m5 ~ 0 + mi(f2)) +
-      bf(m6 ~ 0 + mi(f2)) +
-      bf(f1| mi() ~ 1) + 
-      set_rescor(rescor = FALSE),
-    family = gaussian(),
-    prior =
-      prior(normal(0, 10), class = "b", resp = "m1") +
-      prior(constant(1), class = "sigma", resp = "m1") +
-      prior(normal(0, 10), class = "b", resp = "m2") +
-      prior(constant(1), class = "sigma", resp = "m2") +
-      prior(normal(0, 10), class = "b", resp = "m3") +
-      prior(constant(1), class = "sigma", resp = "m3") +
-      prior(normal(0, 10), class = "b", resp = "m4") +
-      prior(constant(1), class = "sigma", resp = "m4") +
-      prior(normal(0, 10), class = "b", resp = "m5") +
-      prior(constant(1), class = "sigma", resp = "m5") +
-      prior(normal(0, 10), class = "b", resp = "m6") +
-      prior(constant(1), class = "sigma", resp = "m6") +
-      prior(constant(0), class = "Intercept", resp = "f1") +
-      prior(constant(1), class = "sigma", resp = "f1"),
-      prior(constant(0), class = "Intercept", resp = "f2") +
-      prior(constant(1), class = "sigma", resp = "f2"),
-    data = fake_dat,
-    warmup = 1000,
-    iter = 6000,
-    file = "fits/b07.01.rds"
-  )
+  formula =
+    bf(m1 ~ 0 + mi(f1)) +
+    bf(m2 ~ 0 + mi(f1)) +
+    bf(m3 ~ 0 + mi(f1)) +
+    bf(m4 ~ 0 + mi(f1)) +
+    bf(m5 ~ 0 + mi(f1)) +
+    bf(m6 ~ 0 + mi(f1)) +
+    bf(f1| mi() ~ 1) + 
+    set_rescor(rescor = FALSE),
+  family = gaussian(),
+  prior =
+    prior(constant(1), class = "b", resp = "m1") +
+    prior(constant(1), class = "sigma", resp = "m1") +
+    prior(normal(0, 10), class = "b", resp = "m2") +
+    prior(constant(1), class = "sigma", resp = "m2") +
+    prior(normal(0, 10), class = "b", resp = "m3") +
+    prior(constant(1), class = "sigma", resp = "m3") +
+    prior(normal(0, 10), class = "b", resp = "m4") +
+    prior(constant(1), class = "sigma", resp = "m4") +
+    prior(normal(0, 10), class = "b", resp = "m5") +
+    prior(constant(1), class = "sigma", resp = "m5") +
+    prior(normal(0, 10), class = "b", resp = "m6") +
+    prior(constant(1), class = "sigma", resp = "m6") +
+    prior(normal(0, 10), class = "Intercept", resp = "f1") +
+    prior(cauchy(0, 1), class = "sigma", resp = "f1"),
+  data = fake_dat,
+  warmup = 1000,
+  iter = 6000,
+  file = "source/fits/b07.01.rds"
+)
 
 ```
 
@@ -226,6 +219,7 @@ bfit.1.samples <- bfit.1 |>
 
 # Save the tidy draws for reproducibility
 saveRDS(bfit.1.samples, "fits/b07.01.samples.rds")
+
 ```
 
 Now we can plot. Looks like brms does an OK job at recovering the true factor loadings:
@@ -237,9 +231,8 @@ Now we can plot. Looks like brms does an OK job at recovering the true factor lo
 #| fig-cap: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
 #| fig-alt: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
 
-
 # Load the tidy samples
-bfit.1.samples <- readRDS("fits/b07.01.samples.rds")
+bfit.1.samples <- readRDS("source/fits/b07.01.samples.rds")
 
 # Plot
 bfit.1.samples|>
@@ -258,11 +251,13 @@ bfit.1.samples|>
   
 ```
 
-In all cases the model is __pretty close__ to the true parameter value. It's a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty good CFA in {{brms}}.
+In all cases the model is __pretty close__ to the true parameter value. It's a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty decent CFA in brms. 
 
-## Second Example: Correlated factors
+In practice I would probably not choose brms for a simple CFA of this kind, where we have no prior information to inform the parameter estimates and no need to incorporate uncertainty in factor score estimates into models of other variables. If I were committed to doing this sort of model Bayesianly then I would use the amazing blavaan package, which works with lavaan syntax, allows you to specify custom priors, and is lightening-fast compared to the brms version implemented above. But blavaan is limited in the types of models it can handle, and cannot fit the type of time-to-event model we are heading towards here. Stan offers greater flexibility. 
 
-Now an example where we assume the latent vactors are themselves dependent, so that discriminant validity is questionable. So we can include a term for their correlation structure in the model. Here's the updated model definition:
+## Bayesian CFA with Correlated Factors {-}
+
+Now let's introduce our two factors "adaptability" and "collaboration", and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors. All we need to change from the model in the previous section is imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation rho and the two factor-specific variances. Here's the updated model definition, with the covariance terms highlighted:
 
 $$
 \begin{aligned}
@@ -321,8 +316,7 @@ m_{6}
 \end{aligned}
 $$
 
-
-We'll need to amend the lavaan model structure to implement these changes.
+We can update the lavaan model structure from the previous section to simulate new data with correlated factors:
 
 ```{r}
 #| label: sim-2-fac
@@ -341,9 +335,9 @@ fake_dat <- lavaan::simulateData(model = correlated.factors.model, sample.nobs =
 
 ```
 
-The complication here is that brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but for now we'll need to specify the model using raw Stan code. There seem to be a few strategies for avoiding convergence issues when fitting this kind of model in Stan. I worked closely from the strategy provided in [this Stan forum comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by Mauricio Garnier-Villarre, making a few minor adjustments such as removing latent intercepts from the linear predictors to better align this model with the {{lavaan}} defaults. 
+Now to fit the model on the simulated data. The complication here is that brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but we do better to dive into raw Stan anyway for added flexibility. 
 
-Here is the raw Stan code. I also declare it as a string in a hidden R block so we can use {{cmdstanr}}'s autoformatting function before we compile. 
+Factor analysis models can face convergence issues, and things get even more complicated in a Bayesian context where we're using MCMC to approximate the posterior. On the Stan Forum I found a few strategies for avoiding convergence issues when fitting this kind of model, and I have worked closely from the strategy provided in [this comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by [Mauricio Garnier-Villarre](https://research.vu.nl/en/persons/mauricio-garnier-villarreal), making a few minor adjustments such as removing intercepts from the linear predictors of the factors to better align the model with the lavaan defaults. Here is the Stan code:
 
 ```stan
 data {
