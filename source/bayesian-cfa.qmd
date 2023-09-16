@@ -25,34 +25,43 @@ options(mc.cores = parallel::detectCores())
 
 ## Summary {-}
 
-I recently did an analysis for a client who designs workforce skills training programs. The client was interested in the relationship between several latent skills for which they had collected measurements, and time-to-employment following a skills training program. This document presents the Bayesian workflow I used for that analysis, which involved simultaneously estimating the construct validity of the latent variables and including them as regressors in a time-to-event analysis. Along the way I show various approaches to simulating latent variable and time-to-event data for model validation, and demonstrate the advantages of the Bayesian approach compared to traditional two-stage approaches involving factor score point estimates.
+I recently did an analysis for a client who designs workforce skills training programs. The client was interested in the relationship between several latent skills for which they had collected measurements, and time-to-employment following a skills training program. This document presents the Bayesian workflow I used for that analysis, which involved simultaneously estimating a factor model for the latent variables and including them as regressors in a time-to-event analysis. Along the way I show various approaches to simulating latent variable and time-to-event data for model validation, and demonstrate the advantages of the Bayesian approach to including latent regressors in a statistical model, compared to traditional two-stage approaches involving factor score point estimates.
 
 ## Introduction {-}
 
-In the previous sections we've explored various aspects of the traditional workflow for Confirmatory Factor Analysis, including the basic model structure, validity and reliability, model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data. 
+In the previous sections we've explored various aspects of the traditional workflow for Confirmatory Factor Analysis, including the basic model structure, the concepts of validity and reliability, classic model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data. 
 
-But often you'll want to do more than just convince me the data are consistent with the Primordial CFA DAG of Confounding: you'll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to **Structural Equation Modelling (SEM)**, which is a framework for simultaneously convincing you that my data are consistent with the imaginary constructs I have in mind, _and_ that my data are consistent with those constructs relating to each other according to a specific causal structure. It basically allows us to do regression with latent variables. 
+But often you'll want to do more than just convince me the data are consistent with the Primordial CFA DAG of Confounding: you'll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to **Structural Equation Modelling (SEM)**, which is a framework for simultaneously arguing that my data are consistent with the imaginary constructs I have in mind, _and_ that my data are consistent with those constructs relating to each other according to a specific causal structure.
 
-Before we explore a traditional SEM workflow that tests for causal relationships between unmeasured variables, we can first explore a more basic situation where we only have latent _predictors_, and want to estimate the relationship between those latent predictors and an observed outcome. A traditional way of incorporating a CFA measurement model into a fuller regression analysis for a measured dependent variable proceeds in two steps: 
+In later chapters I'll be adding notes on the traditional SEM workflow culled from various sources. But first it is interesting to explore a more basic situation where we only have latent _predictors_, and want to estimate the relationship between those latent predictors and an observed outcome. A traditional way of incorporating a CFA measurement model into a fuller regression analysis for a measured dependent variable proceeds in two steps: 
 
-1. first you fit the CFA model;
-2. then you fit the substantive regression, incorporating the latent variable into the regression by generating factor scores from the CFA model for each observation and including those as a regression covariate. 
+1. Fit the CFA model;
+2. Generate factor scores for each observation;
+2. Use those factor scores as predictors in a regression. 
 
-But this approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates (the estimates of the factor loadings), about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model's factor loading estimates. This is the approach taken by @Kankaraš-et-all-2019; they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using _those_ point-estimates as regression predictors! In their analysis they don't even report the standard errors of the factor loadings from their measurement models.
+This is the approach taken by @Kankaraš-et-all-2019; they use point-estimate factor scores as predictors in subsequent regressions. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using _those_ point-estimates as regression predictors!
 
-A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This approach is essentially just a Bayesian missing data analysis, where the factor scores are treated as missing data and the model estimates a unique parameter for each missing value, along with its own unique posterior distribution. In this document I demonstrate how to implement this approach with Stan, incorporating concepts from previous sections such as MTMM factor analysis. We'll proceed as follows:
+This approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates, about which there is uncertainty. So if we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore the uncertainty contained in the standard errors of the CFA model's factor loading estimates.  In the above-linked analysis they don't even report the standard errors of the factor loadings from their measurement models!
 
-1. Fit a simple Bayesian CFA with orthogonal covariates and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but when _all_ of your observations are missing;
-2. Fit the same Bayesian CFA, but specifying correlated factors. The brms package can't yet handle custom covariance structures for latent factors, so we upgrade to raw Stan;
+A better option is to fit a Bayesian model that carries out both the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. This approach is essentially just a Bayesian missing data analysis, where the factor scores for each observation are treated as missing data for which the model estimates a unique observation-specific parameter, along with its own unique posterior distribution. 
+
+## The Plan {-}
+
+In this document I'll demonstrate how to implement this Bayesian approach with Stan, incorporating concepts from previous chapters such as MTMM factor analysis. At each stage we'll stick with the same invented scenario: our client has designedd scales for the latent skills "adaptability" and "collaboration", and wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates. 
+
+At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. We'll proceed as follows:
+
+1. Fit a simple Bayesian CFA with one factor and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but where _all_ of your observations are missing;
+2. Fit a Bayesian CFA with two correlated factors. The brms package can't yet handle custom covariance structures for latent factors, so we swtich to raw Stan;
 3. Update the model to include a custom error covariance structure à la MTMM;
-4. Combine the MTMM model from the previous step with a time-to-event model. 
+4. Combine the MTMM model from the previous step with a parametric proportional hazards regression model;
 5. Expand the model to include multilevel structure, with correlated varying effects for the regression predictors. 
 
-At each stage we'll stick with the same basic scenario: our pretend client has invented scales for the latent skills "adaptability" and "collaboration". The client wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates. At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. 
+
 
 ## Simple Bayesian CFA with brms {-}
 
-Before diving into the full model with our two factors for "adaptability" and "collabortion", in this section we'll see how to specify a simple Bayesian CFA model in brms. Nothing fancy, just one factor with 6 measurements. Here's the full model definition:
+Before diving into the full model with our two factors for "adaptability" and "collabortion", in this section we'll see how to fit a simple Bayesian CFA model in brms. Nothing fancy, just one factor with 6 measurements. Here's the full model definition:
 
 $$
 \begin{aligned}
@@ -93,7 +102,7 @@ m_{6}
 \Sigma_f
 \right) \\
 \\
-f_1 \sim \text{Normal}(\mu_f, \sigma_f^2)
+f_1 &\sim \text{Normal}(\mu_f, \sigma_f^2)
 \\
 \Sigma_m &=
 \begin{bmatrix}
@@ -115,12 +124,18 @@ First we can simulate some data with the given factor structure using the lavaan
 #| warning: false
 
 # Specify the factor structure in classic lavaan syntax
-pop.model <- ' 
+basic.model <- ' 
   f1 =~ .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + -.4*m6
 '
 
 # Simulate data from the specified model 
-fake_dat <- lavaan::simulateData(model = pop.model, sample.nobs = 4000)
+fake_dat <- lavaan::simulateData(model = basic.model, sample.nobs = 4000)
+
+```
+
+We can take a peak at the resulting dataset to make sure everything looks kosher. Looks like some simple normal densities, as expected:
+
+```{r}
 
 # Visualize the measured data
 fake_dat |>
@@ -130,13 +145,13 @@ fake_dat |>
   pivot_longer(everything(), names_to = "var", values_to = "measurement") |>
 
   ggplot() +
-  geom_histogram(aes(x = measurement), fill = "mediumorchid") +
+  geom_density(aes(x = measurement), fill = "mediumorchid") +
   facet_wrap(~var) +
-  theme_bw()
+  theme_minimal()
 
 ```
 
-Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. Then we define the model with the same identifiability constraints that lavaan imposes by default, I.E. taking the first loading and constraining it to be constant:
+Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just fitting a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate _for which we only have missing data_. So the first thing we need to do is add a column of all missing data for each of the latent variables. Then we define the model with the same approach to identifiability constraints that lavaan imposes by default, I.E. constraining the first loading to be constant. The jargon term for this approach to ensuring identifiability is the **marker variable approach**:
 
 ```{r}
 #| label: brms-fit-basic
@@ -158,7 +173,7 @@ bfit.1 <- brm(
     set_rescor(rescor = FALSE),
   family = gaussian(),
   prior =
-    prior(constant(1), class = "b", resp = "m1") +
+    prior(constant(1), class = "b", resp = "m1") + ## First loading fixed at 1, per the 'marker variable' approach. 
     prior(constant(1), class = "sigma", resp = "m1") +
     prior(normal(0, 10), class = "b", resp = "m2") +
     prior(constant(1), class = "sigma", resp = "m2") +
@@ -175,14 +190,14 @@ bfit.1 <- brm(
   data = fake_dat,
   warmup = 1000,
   iter = 6000,
-  file = "source/fits/b07.01.rds"
+  file = "fits/b07.01.rds"
 )
 
 ```
 
-A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to replicate the figure below. 
+A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is 100% missing data, this means we end up with 4000 rows of data * 6000 samples * 4 chains = 96,000,000 MCMC samples for the factor scores alone, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to make sure the model recovered the true parameter estimates. 
 
-First we can put the draws we need into a tidy format and do some cleaning:
+First we can put the draws we need into a tidy format and do some cleaning, then we can plot the draws to visualize the approximated posteriors:
 
 ```{r}
 #| label: wrangle-draws-basic
@@ -222,14 +237,10 @@ saveRDS(bfit.1.samples, "fits/b07.01.samples.rds")
 
 ```
 
-Now we can plot. Looks like brms does an OK job at recovering the true factor loadings:
-
 ```{r}
 #| label: viz-draws-basic
 #| message: false
 #| warning: false
-#| fig-cap: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
-#| fig-alt: "Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable."
 
 # Load the tidy samples
 bfit.1.samples <- readRDS("source/fits/b07.01.samples.rds")
@@ -251,13 +262,13 @@ bfit.1.samples|>
   
 ```
 
-In all cases the model is __pretty close__ to the true parameter value. It's a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty decent CFA in brms. 
+In all cases the model is __pretty close__ to the true parameter values, shown by the dashed lines. It's a bit worrying that the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty decent CFA in brms. 
 
 In practice I would probably not choose brms for a simple CFA of this kind, where we have no prior information to inform the parameter estimates and no need to incorporate uncertainty in factor score estimates into models of other variables. If I were committed to doing this sort of model Bayesianly then I would use the amazing blavaan package, which works with lavaan syntax, allows you to specify custom priors, and is lightening-fast compared to the brms version implemented above. But blavaan is limited in the types of models it can handle, and cannot fit the type of time-to-event model we are heading towards here. Stan offers greater flexibility. 
 
 ## Bayesian CFA with Correlated Factors {-}
 
-Now let's introduce our two factors "adaptability" and "collaboration", and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors. All we need to change from the model in the previous section is imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation rho and the two factor-specific variances. Here's the updated model definition, with the covariance terms highlighted:
+Now let's introduce our two factors "adaptability" and "collaboration", and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors. The only change from the model in the previous section is that we now imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation $\rho$ and the two factor-specific variances. Here's the updated model definition, with the covariance terms highlighted:
 
 $$
 \begin{aligned}
@@ -335,9 +346,9 @@ fake_dat <- lavaan::simulateData(model = correlated.factors.model, sample.nobs =
 
 ```
 
-Now to fit the model on the simulated data. The complication here is that brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but we do better to dive into raw Stan anyway for added flexibility. 
+Now to fit a model to the simulated data. The complication here is that brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but we do better to dive into raw Stan anyway for added flexibility. 
 
-Factor analysis models can face convergence issues, and things get even more complicated in a Bayesian context where we're using MCMC to approximate the posterior. On the Stan Forum I found a few strategies for avoiding convergence issues when fitting this kind of model, and I have worked closely from the strategy provided in [this comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by [Mauricio Garnier-Villarre](https://research.vu.nl/en/persons/mauricio-garnier-villarreal), making a few minor adjustments such as removing intercepts from the linear predictors of the factors to better align the model with the lavaan defaults. Here is the Stan code:
+Another complication is that factor analysis models can face convergence issues, and things get even more complicated in a Bayesian context where we're using MCMC to approximate the posterior. On the Stan Forum I found a few strategies for avoiding convergence issues when fitting this kind of model, and I have worked closely from the strategy provided in [this comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by [Mauricio Garnier-Villarre](https://research.vu.nl/en/persons/mauricio-garnier-villarreal). Instead of the lavaan-default 'marker variable approach' to identifiability we used above in our brms model, Mauricio fixes the factor means and variances at 0 and 1, respectively, which has the benefit of letting the model freely estimate the _all_ of the factor loadings. He also adds some code to sign-correct the estimated loadings in the `generated quantities{}` block, which apparently helps align estimates across chains. I just make a few minor adjustments such as removing intercepts from the linear predictors of the factors to better align the model with the lavaan defaults. Here is the Stan code:
 
 ```stan
 data {
@@ -580,7 +591,7 @@ saveRDS(fit, "fits/b07.02.rds")
 
 ```
 
-The model took about 5 hours to sample and the resulting files are enormous -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're directly interested in, so we have no problem just working in memory. 
+The model took about 5 hours to sample and the resulting .csv files containing the MCMC samples are large -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're directly interested in, so we have no problem just working in memory. 
 
 ```{r}
 #| label: wrangle-draws-2-fac
@@ -607,17 +618,31 @@ saveRDS(draws, "fits/b07.02.samples.rds")
 
 ```
 
-Now we can explore the results. One important point is that we can interpret the Stan model's estimates of the correlation coefficient between the two factors directly as covariances (IE analogous to the true parameter simulated with lavaan), because we fixed the factor standard deviations to be equal to 1. 
-IE because our sigmas are both equal to 1, this equation:
-$\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}$
+Now we can explore the results. One important point is that we can interpret the Stan model's estimates of the correlation coefficient between the two factors directly as covariances (IE analogous to the true parameter simulated with lavaan), because we fixed the factor standard deviations to be equal to 1. Put differently, because our sigmas are both equal to 1, this equation:
+
+$$
+
+\begin{aligned}
+\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}
+\end{aligned}
+
+$$
+
 
 Just becomes this:
-$\rho(X, Y) = \text{Cov}(X, Y)$
+$$
 
-We're interested in the loadings and the between-factor covariance. So we can wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. Based on this plot it looks like the model did pretty well -- the posterior peak is close to the true value for all of the loadings:
+\begin{aligned}
+\rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 * 1} = \text{Cov}(X, Y)
+\end{aligned}
+
+$$
+
+
+We're interested in the loadings and the between-factor covariance. So we can wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. First let's look at the loadings. Based on this plot it looks like the model did pretty well -- the posterior peak is close to the true value for all of the loadings:
 
 ```{r}
-#| label: viz-draws-2-fac
+#| label: viz-loadings-2-fac
 #| message: false
 #| warnings: false
 
@@ -625,7 +650,7 @@ We're interested in the loadings and the between-factor covariance. So we can wr
 draws <- readRDS("fits/b07.02.samples.rds")
 
 # Plot
-draws |>
+dplt <- draws |>
 
   # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
   gather_draws(
@@ -658,7 +683,11 @@ draws |>
     .variable == "Loading for m5" ~ .2,
     .variable == "Loading for m6" ~ -.4,
     .variable == "Covariance for f1 ~ f2" ~ .4
-  )) |>
+  )) 
+
+dplt |>
+
+  filter(.variable != "Covariance for f1 ~ f2") |>
 
   ggplot(aes(x = .value, fill = .variable)) +
   stat_halfeye(fill = "mediumorchid") +
@@ -674,7 +703,52 @@ draws |>
 
 ```
 
-In this exampe we can feel good about model performance because it successfully recovered the true simulation parameter estimates for the samples of interest. But in a real application where we don't know the true parameter values we would also want to look at the model convergence diagnostics such as rhat and effective number of samples. Here we see that we have rhats slightly greater than 1 for a few of the loadings and for rho. We also see that loading 4, loading 6, and rho have a pretty low number of effective samples. This is cause for concern, and in a real application I would probably increase the number of MCMC iterations to see if we can improve that sample size. The trace plots also look a bit weird at times for a few of the parameters, with some occasional spikes and some parts where one chain goes berzerk relative to the others. But overall they seem to show healthy mixing. 
+The model seems to have accurately recovered the true between-factor covariance as well, albeit with some unwholesome weirdness in the tail of its approximated posterior:
+
+```{r}
+#| label: viz-cov-2-fac
+#| message: false
+#| warnings: false
+
+dplt |>
+
+  filter(.variable == "Covariance for f1 ~ f2") |>
+
+  ggplot(aes(x = .value, fill = .variable)) +
+  stat_halfeye(fill = "mediumorchid") +
+  geom_vline(aes(xintercept = true_loading), linetype = 2) + 
+  scale_x_continuous(expand = c(0, 0.015)) +
+  scale_y_continuous(expand = c(0, 0.015)) +
+  guides(fill = "none") +
+  labs(x = "lab",
+     y = NULL)  +
+  facet_wrap(~.variable) +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank())
+
+
+```
+
+In this exampe we can feel generally good about model performance because it successfully recovered the true simulation parameter estimates for the samples of interest. But in a real application where we don't know the true parameter values we would also want to look at the model convergence diagnostics such as rhat and effective number of samples. Here we see that we have rhats slightly greater than 1 for a few of the loadings and for rho. We also see that loading 4, loading 6, and rho have a pretty low number of effective samples. This is cause for concern, and in a real application I would probably increase the number of MCMC iterations to see if we can improve that effective sample size. 
+
+```{r}
+#| label: convergence-2-fac
+#| message: false
+#| warnings: false
+
+draws |> 
+
+  summary() |>
+
+  select(variable, rhat, ess_bulk, ess_tail) |>
+
+  mutate(across(where(is.numeric), ~round(.x, 2))) |>
+
+  knitr::kable()
+
+```
+
+The trace plots also look a bit weird at times for a few of the parameters, with some occasional spikes and some parts where one chain goes berzerk relative to the others. But overall they seem healthy.  
 
 ```{r}
 #| label: diagnostics-2-fac
@@ -683,6 +757,8 @@ In this exampe we can feel good about model performance because it successfully 
 
 # Create a summary table
 draws |>
+
+  trace()
 
   summary() |>
 

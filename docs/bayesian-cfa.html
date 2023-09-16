@@ -247,17 +247,17 @@ div.csl-indent {
   <ul>
   <li><a href="#summary" id="toc-summary" class="nav-link active" data-scroll-target="#summary">Summary</a></li>
   <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#first-example-simple-factor-structure-with-brms" id="toc-first-example-simple-factor-structure-with-brms" class="nav-link" data-scroll-target="#first-example-simple-factor-structure-with-brms">First Example: Simple Factor Structure with brms</a></li>
-  <li><a href="#second-example-correlated-factors" id="toc-second-example-correlated-factors" class="nav-link" data-scroll-target="#second-example-correlated-factors"><span class="toc-section-number">6.1</span>  Second Example: Correlated factors</a></li>
-  <li><a href="#third-example-mtmm" id="toc-third-example-mtmm" class="nav-link" data-scroll-target="#third-example-mtmm"><span class="toc-section-number">6.2</span>  Third Example: MTMM</a></li>
-  <li><a href="#fourth-example-survival-analysis" id="toc-fourth-example-survival-analysis" class="nav-link" data-scroll-target="#fourth-example-survival-analysis"><span class="toc-section-number">6.3</span>  Fourth Example: Survival Analysis</a>
+  <li><a href="#simple-bayesian-cfa-with-brms" id="toc-simple-bayesian-cfa-with-brms" class="nav-link" data-scroll-target="#simple-bayesian-cfa-with-brms">Simple Bayesian CFA with brms</a></li>
+  <li><a href="#bayesian-cfa-with-correlated-factors" id="toc-bayesian-cfa-with-correlated-factors" class="nav-link" data-scroll-target="#bayesian-cfa-with-correlated-factors">Bayesian CFA with Correlated Factors</a></li>
+  <li><a href="#third-example-mtmm" id="toc-third-example-mtmm" class="nav-link" data-scroll-target="#third-example-mtmm"><span class="toc-section-number">6.1</span>  Third Example: MTMM</a></li>
+  <li><a href="#fourth-example-survival-analysis" id="toc-fourth-example-survival-analysis" class="nav-link" data-scroll-target="#fourth-example-survival-analysis"><span class="toc-section-number">6.2</span>  Fourth Example: Survival Analysis</a>
   <ul class="collapse">
-  <li><a href="#simulating-data" id="toc-simulating-data" class="nav-link" data-scroll-target="#simulating-data"><span class="toc-section-number">6.3.1</span>  Simulating data</a></li>
-  <li><a href="#exploratory-data-analysis.-report-the-scale-reliabilities" id="toc-exploratory-data-analysis.-report-the-scale-reliabilities" class="nav-link" data-scroll-target="#exploratory-data-analysis.-report-the-scale-reliabilities"><span class="toc-section-number">6.3.2</span>  Exploratory Data Analysis. Report the scale reliabilities?</a></li>
+  <li><a href="#simulating-data" id="toc-simulating-data" class="nav-link" data-scroll-target="#simulating-data"><span class="toc-section-number">6.2.1</span>  Simulating data</a></li>
+  <li><a href="#exploratory-data-analysis.-report-the-scale-reliabilities" id="toc-exploratory-data-analysis.-report-the-scale-reliabilities" class="nav-link" data-scroll-target="#exploratory-data-analysis.-report-the-scale-reliabilities"><span class="toc-section-number">6.2.2</span>  Exploratory Data Analysis. Report the scale reliabilities?</a></li>
   <li><a href="#prior-predictive-simulation" id="toc-prior-predictive-simulation" class="nav-link" data-scroll-target="#prior-predictive-simulation">Prior Predictive Simulation</a></li>
   <li><a href="#stan-code" id="toc-stan-code" class="nav-link" data-scroll-target="#stan-code">Stan code</a></li>
   </ul></li>
-  <li><a href="#multilevel-survival-analysis" id="toc-multilevel-survival-analysis" class="nav-link" data-scroll-target="#multilevel-survival-analysis"><span class="toc-section-number">6.4</span>  Multilevel Survival Analysis</a></li>
+  <li><a href="#multilevel-survival-analysis" id="toc-multilevel-survival-analysis" class="nav-link" data-scroll-target="#multilevel-survival-analysis"><span class="toc-section-number">6.3</span>  Multilevel Survival Analysis</a></li>
   </ul>
 </nav>
     </div>
@@ -315,11 +315,11 @@ div.csl-indent {
 <li>Combine the MTMM model from the previous step with a time-to-event model.</li>
 <li>Expand the model to include multilevel structure, with correlated varying effects for the regression predictors.</li>
 </ol>
-<p>At each stage we’ll stick with the same basic scenario: our client has invented scales for the latent skills “adaptability” and “collaboration”, and they’re interested in testing the validity of those scales and estimating their relationship with time-to-employment for their program participants. At each stage of the analysis we’ll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates.</p>
+<p>At each stage we’ll stick with the same basic scenario: our pretend client has invented scales for the latent skills “adaptability” and “collaboration”. The client wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates. At each stage of the analysis we’ll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates.</p>
 </section>
-<section id="first-example-simple-factor-structure-with-brms" class="level2 unnumbered">
-<h2 class="unnumbered anchored" data-anchor-id="first-example-simple-factor-structure-with-brms">First Example: Simple Factor Structure with brms</h2>
-<p>In this section we’ll see how to specify a Bayesian CFA model in brms. Nothing fancy, just two orthogonal factors, each with three measurements. Here’s the full model definition:</p>
+<section id="simple-bayesian-cfa-with-brms" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="simple-bayesian-cfa-with-brms">Simple Bayesian CFA with brms</h2>
+<p>Before diving into the full model with our two factors for “adaptability” and “collabortion”, in this section we’ll see how to specify a simple Bayesian CFA model in brms. Nothing fancy, just one factor with 6 measurements. Here’s the full model definition:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \begin{bmatrix}
@@ -359,11 +359,7 @@ m_{6}
 \Sigma_f
 \right) \\
 \\
-\Sigma_f &amp;=
-\begin{bmatrix}
-\sigma_\text{adapt}^2 &amp; 0 \\
-0 &amp; \sigma_\text{adapt}^2
-\end{bmatrix} \\
+f_1 \sim \text{Normal}(\mu_f, \sigma_f^2)
 \\
 \Sigma_m &amp;=
 \begin{bmatrix}
@@ -376,7 +372,6 @@ m_{6}
 \end{bmatrix}
 \end{aligned}
 \]</span></p>
-<p>I’ve worked from <a href="https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139">the approach shared by Jack Bailey in a post on the Stan forum</a>.</p>
 <p>First we can simulate some data with the given factor structure using the lavaan package’s handy <code>simulateData()</code> function:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Specify the factor structure in classic lavaan syntax</span></span>
@@ -399,45 +394,46 @@ m_{6}
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>var) <span class="sc">+</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/sim-1-fac-1.png" class="img-fluid" width="672"></p>
+<p><img src="bayesian-cfa_files/figure-html/sim-basic-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>Here’s how we can specify a Bayesian model in brms that recovers the simulation parameter values. I like this approach because it gives a nice conceptual perspective on what we’re actually doing when we’re doing latant variable modelling: we’re just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data.</p>
+<p>Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I’ve worked from <a href="https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139">the approach shared by Jack Bailey in a post on the Stan forum</a>. I like this approach because it gives a nice conceptual perspective on what we’re actually doing when we’re doing latant variable modelling: we’re just doing a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model component of their location parameters include a covariate for which we only have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. Then we define the model with the same identifiability constraints that lavaan imposes by default, I.E. taking the first loading and constraining it to be constant:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add a latent variable to the dataset</span></span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the latent variable to the dataset as an all NA column</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fake_dat<span class="sc">$</span>f1 <span class="ot">&lt;-</span> <span class="cn">NA_real_</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>bfit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m2 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m3 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m4 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m5 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(m6 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bf</span>(f1<span class="sc">|</span> <span class="fu">mi</span>() <span class="sc">~</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">set_rescor</span>(<span class="at">rescor =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">prior =</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"Intercept"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>) <span class="sc">+</span></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prior</span>(<span class="fu">cauchy</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>),</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> fake_dat,</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">warmup =</span> <span class="dv">1000</span>,</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">iter =</span> <span class="dv">6000</span>,</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">file =</span> <span class="st">"fits/b07.01.rds"</span></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the model, with the coefficient for m1 fied to a constant for identifiability</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>bfit<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fu">brm</span>(</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(m1 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(m2 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(m3 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(m4 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(m5 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(m6 <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> <span class="fu">mi</span>(f1)) <span class="sc">+</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bf</span>(f1<span class="sc">|</span> <span class="fu">mi</span>() <span class="sc">~</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set_rescor</span>(<span class="at">rescor =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">prior =</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m1"</span>) <span class="sc">+</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m2"</span>) <span class="sc">+</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m3"</span>) <span class="sc">+</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m4"</span>) <span class="sc">+</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m5"</span>) <span class="sc">+</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"b"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">constant</span>(<span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"m6"</span>) <span class="sc">+</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>, <span class="dv">10</span>), <span class="at">class =</span> <span class="st">"Intercept"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>) <span class="sc">+</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prior</span>(<span class="fu">cauchy</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">class =</span> <span class="st">"sigma"</span>, <span class="at">resp =</span> <span class="st">"f1"</span>),</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> fake_dat,</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">warmup =</span> <span class="dv">1000</span>,</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">6000</span>,</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"fits/b07.01.rds"</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is missing in each row of the dataset, this means we end up with 6000 samples for each row of data we have, resulting in a pretty big model file. This is too big for Github, so I’ll only push the draws we need to replicate the figure below.</p>
 <p>First we can put the draws we need into a tidy format and do some cleaning:</p>
@@ -474,7 +470,7 @@ m_{6}
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the tidy draws for reproducibility</span></span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(bfit.<span class="fl">1.</span>samples, <span class="st">"fits/b07.01.samples.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Now we can plot. Looks like STAN does an OK job at recovering the true factor loadings (we exclude the first loading since it was held constant at 1 to provide the scale for the latent variable):</p>
+<p>Now we can plot. Looks like brms does an OK job at recovering the true factor loadings:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load the tidy samples</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>bfit.<span class="fl">1.</span>samples <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"fits/b07.01.samples.rds"</span>)</span>
@@ -496,17 +492,18 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-draws-1-fac-1.png" class="img-fluid figure-img" alt="Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable." width="672"></p>
+<p><img src="bayesian-cfa_files/figure-html/viz-draws-basic-1.png" class="img-fluid figure-img" alt="Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the 'true' simulated loading for each variable." width="672"></p>
 <p></p><figcaption class="figure-caption">Posterior distributions of estimated factor loadings for measured variables 2-6. The dashed line is the ‘true’ simulated loading for each variable.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>In all cases the model is <strong>pretty close</strong> to the true parameter value. It’s a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty good CFA in {{brms}}.</p>
+<p>In all cases the model is <strong>pretty close</strong> to the true parameter value. It’s a bit concerning when the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty decent CFA in brms.</p>
+<p>In practice I would probably not choose brms for a simple CFA of this kind, where we have no prior information to inform the parameter estimates and no need to incorporate uncertainty in factor score estimates into models of other variables. If I were committed to doing this sort of model Bayesianly then I would use the amazing blavaan package, which works with lavaan syntax, allows you to specify custom priors, and is lightening-fast compared to the brms version implemented above. But blavaan is limited in the types of models it can handle, and cannot fit the type of time-to-event model we are heading towards here. Stan offers greater flexibility.</p>
 </section>
-<section id="second-example-correlated-factors" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="second-example-correlated-factors"><span class="header-section-number">6.1</span> Second Example: Correlated factors</h2>
-<p>Now an example where we assume the latent vactors are themselves dependent, so that discriminant validity is questionable. So we can include a term for their correlation structure in the model. Here’s the updated model definition:</p>
+<section id="bayesian-cfa-with-correlated-factors" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bayesian-cfa-with-correlated-factors">Bayesian CFA with Correlated Factors</h2>
+<p>Now let’s introduce our two factors “adaptability” and “collaboration”, and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors. All we need to change from the model in the previous section is imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation rho and the two factor-specific variances. Here’s the updated model definition, with the covariance terms highlighted:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \begin{bmatrix}
@@ -563,7 +560,7 @@ m_{6}
 \end{bmatrix}
 \end{aligned}
 \]</span></p>
-<p>We’ll need to amend the lavaan model structure to implement these changes.</p>
+<p>We can update the lavaan model structure from the previous section to simulate new data with correlated factors:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare the new model with correlated factors</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>correlated.factors.model <span class="ot">&lt;-</span> <span class="st">' </span></span>
@@ -575,8 +572,8 @@ m_{6}
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate data from the model</span></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>fake_dat <span class="ot">&lt;-</span> lavaan<span class="sc">::</span><span class="fu">simulateData</span>(<span class="at">model =</span> correlated.factors.model, <span class="at">sample.nobs =</span> <span class="dv">4000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The complication here is that brms doesn’t currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. <a href="https://github.com/paul-buerkner/brms/issues/957">There seems to be a plan</a> to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but for now we’ll need to specify the model using raw Stan code. There seem to be a few strategies for avoiding convergence issues when fitting this kind of model in Stan. I worked closely from the strategy provided in <a href="https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13">this Stan forum comment</a> by Mauricio Garnier-Villarre, making a few minor adjustments such as removing latent intercepts from the linear predictors to better align this model with the {{lavaan}} defaults.</p>
-<p>Here is the raw Stan code. I also declare it as a string in a hidden R block so we can use {{cmdstanr}}’s autoformatting function before we compile.</p>
+<p>Now to fit the model on the simulated data. The complication here is that brms doesn’t currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. <a href="https://github.com/paul-buerkner/brms/issues/957">There seems to be a plan</a> to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but we do better to dive into raw Stan anyway for added flexibility.</p>
+<p>Factor analysis models can face convergence issues, and things get even more complicated in a Bayesian context where we’re using MCMC to approximate the posterior. On the Stan Forum I found a few strategies for avoiding convergence issues when fitting this kind of model, and I have worked closely from the strategy provided in <a href="https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13">this comment</a> by <a href="https://research.vu.nl/en/persons/mauricio-garnier-villarreal">Mauricio Garnier-Villarre</a>, making a few minor adjustments such as removing intercepts from the linear predictors of the factors to better align the model with the lavaan defaults. Here is the Stan code:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> N; <span class="co">// sample size</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span> P; <span class="co">// number of variables</span></span>
@@ -631,69 +628,43 @@ m_{6}
 <span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a><span class="kw">generated quantities</span> {</span>
-<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">real</span> log_lik; <span class="co">// log likelihood of each datapoint</span></span>
-<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span> dev; <span class="co">// global deviance</span></span>
-<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span> log_lik0; <span class="co">// global log likelihood</span></span>
-<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[N] log_lik_row;</span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>  <span class="dt">corr_matrix</span>[D] Rho_UNC; <span class="co">/// correlation matrix</span></span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>  <span class="dt">corr_matrix</span>[D] Rho; <span class="co">/// correlation matrix</span></span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[P, D] lam; <span class="co">// factor loadings</span></span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[N, D] FS; <span class="co">// factor scores, matrix of order [N,D]</span></span>
 <span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>  <span class="dt">cov_matrix</span>[P] Sigma; <span class="co">// Covariance matrix of the manifest variables</span></span>
-<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>  <span class="dt">cov_matrix</span>[D] Phi_lv; <span class="co">// Covariance matrix of the latent factors</span></span>
-<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[P, P] lambda_phi_lambda; <span class="co">// I think these are the terms of the reconstructed var-covar matrix of the data?</span></span>
-<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a>  <span class="dt">cholesky_factor_cov</span>[P] L_Sigma_model; <span class="co">// I think this is the cholesky decomposition of the reconstructued var-covar matrix above?</span></span>
-<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[P, P] theta_del; <span class="co">// I think this is Matrix containing the error terms for the reconstructed empirical var-covar matrix?</span></span>
-<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>  <span class="dt">corr_matrix</span>[D] Rho_UNC; <span class="co">/// correlation matrix</span></span>
-<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  <span class="dt">corr_matrix</span>[D] Rho; <span class="co">/// correlation matrix</span></span>
-<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[P, D] lam; <span class="co">// factor loadings</span></span>
-<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[N, D] FS; <span class="co">// factor scores, matrix of order [N,D]</span></span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Do some fancy things to sign-correct the parameter estimates.</span></span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>  <span class="co">// The idea seems to be that when we estimate the loadings with unconstrained signs</span></span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>  <span class="co">// It can lead to identification issues. So we take these steps to correct the signs.</span></span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a>  <span class="co">// See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?</span></span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);</span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>  Rho = Rho_UNC;</span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>  FS = FS_UNC;</span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>  lam = rep_matrix(<span class="dv">0</span>, P, D);</span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a>  lam[<span class="dv">1</span> : <span class="dv">3</span>, <span class="dv">1</span>] = to_vector(lam_UNC[<span class="dv">1</span> : <span class="dv">3</span>]);</span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a>  lam[<span class="dv">4</span> : <span class="dv">6</span>, <span class="dv">2</span>] = to_vector(lam_UNC[<span class="dv">4</span> : <span class="dv">6</span>]);</span>
 <span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Do some fancy things to sign-correct the parameter estimates.</span></span>
-<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a>  <span class="co">// The idea seems to be that when we estimate the loadings with unconstrained signs</span></span>
-<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>  <span class="co">// It can lead to identification issues. So we take these steps to correct the signs.</span></span>
-<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a>  <span class="co">// See this Stan forum comment for more: https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/10?</span></span>
-<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a>  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);</span>
-<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>  Rho = Rho_UNC;</span>
-<span id="cb7-77"><a href="#cb7-77" aria-hidden="true" tabindex="-1"></a>  FS = FS_UNC;</span>
-<span id="cb7-78"><a href="#cb7-78" aria-hidden="true" tabindex="-1"></a>  lam = rep_matrix(<span class="dv">0</span>, P, D);</span>
-<span id="cb7-79"><a href="#cb7-79" aria-hidden="true" tabindex="-1"></a>  lam[<span class="dv">1</span> : <span class="dv">3</span>, <span class="dv">1</span>] = to_vector(lam_UNC[<span class="dv">1</span> : <span class="dv">3</span>]);</span>
-<span id="cb7-80"><a href="#cb7-80" aria-hidden="true" tabindex="-1"></a>  lam[<span class="dv">4</span> : <span class="dv">6</span>, <span class="dv">2</span>] = to_vector(lam_UNC[<span class="dv">4</span> : <span class="dv">6</span>]);</span>
-<span id="cb7-81"><a href="#cb7-81" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-82"><a href="#cb7-82" aria-hidden="true" tabindex="-1"></a>  <span class="co">// factor 1</span></span>
-<span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (lam_UNC[<span class="dv">1</span>] &lt; <span class="dv">0</span>) {</span>
-<span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a>    lam[<span class="dv">1</span> : <span class="dv">3</span>, <span class="dv">1</span>] = to_vector(-<span class="dv">1</span> * lam_UNC[<span class="dv">1</span> : <span class="dv">3</span>]);</span>
-<span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>    FS[ : , <span class="dv">1</span>] = to_vector(-<span class="dv">1</span> * FS_UNC[ : , <span class="dv">1</span>]);</span>
-<span id="cb7-86"><a href="#cb7-86" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb7-87"><a href="#cb7-87" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (lam_UNC[<span class="dv">4</span>] &gt; <span class="dv">0</span>) {</span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>  <span class="co">// factor 1</span></span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (lam_UNC[<span class="dv">1</span>] &lt; <span class="dv">0</span>) {</span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>    lam[<span class="dv">1</span> : <span class="dv">3</span>, <span class="dv">1</span>] = to_vector(-<span class="dv">1</span> * lam_UNC[<span class="dv">1</span> : <span class="dv">3</span>]);</span>
+<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a>    FS[ : , <span class="dv">1</span>] = to_vector(-<span class="dv">1</span> * FS_UNC[ : , <span class="dv">1</span>]);</span>
+<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (lam_UNC[<span class="dv">4</span>] &gt; <span class="dv">0</span>) {</span>
+<span id="cb7-77"><a href="#cb7-77" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">1</span>, <span class="dv">2</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">1</span>, <span class="dv">2</span>];</span>
+<span id="cb7-78"><a href="#cb7-78" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">2</span>, <span class="dv">1</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">2</span>, <span class="dv">1</span>];</span>
+<span id="cb7-79"><a href="#cb7-79" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb7-80"><a href="#cb7-80" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-81"><a href="#cb7-81" aria-hidden="true" tabindex="-1"></a>  <span class="co">// factor 2</span></span>
+<span id="cb7-82"><a href="#cb7-82" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (lam_UNC[<span class="dv">4</span>] &lt; <span class="dv">0</span>) {</span>
+<span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>    lam[<span class="dv">4</span> : <span class="dv">6</span>, <span class="dv">2</span>] = to_vector(-<span class="dv">1</span> * lam_UNC[<span class="dv">4</span> : <span class="dv">6</span>]);</span>
+<span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a>    FS[ : , <span class="dv">2</span>] = to_vector(-<span class="dv">1</span> * FS_UNC[ : , <span class="dv">2</span>]);</span>
+<span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb7-86"><a href="#cb7-86" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (lam_UNC[<span class="dv">1</span>] &gt; <span class="dv">0</span>) {</span>
+<span id="cb7-87"><a href="#cb7-87" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">2</span>, <span class="dv">1</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">2</span>, <span class="dv">1</span>];</span>
 <span id="cb7-88"><a href="#cb7-88" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">1</span>, <span class="dv">2</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">1</span>, <span class="dv">2</span>];</span>
-<span id="cb7-89"><a href="#cb7-89" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">2</span>, <span class="dv">1</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">2</span>, <span class="dv">1</span>];</span>
-<span id="cb7-90"><a href="#cb7-90" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb7-91"><a href="#cb7-91" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-92"><a href="#cb7-92" aria-hidden="true" tabindex="-1"></a>  <span class="co">// factor 2</span></span>
-<span id="cb7-93"><a href="#cb7-93" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (lam_UNC[<span class="dv">4</span>] &lt; <span class="dv">0</span>) {</span>
-<span id="cb7-94"><a href="#cb7-94" aria-hidden="true" tabindex="-1"></a>    lam[<span class="dv">4</span> : <span class="dv">6</span>, <span class="dv">2</span>] = to_vector(-<span class="dv">1</span> * lam_UNC[<span class="dv">4</span> : <span class="dv">6</span>]);</span>
-<span id="cb7-95"><a href="#cb7-95" aria-hidden="true" tabindex="-1"></a>    FS[ : , <span class="dv">2</span>] = to_vector(-<span class="dv">1</span> * FS_UNC[ : , <span class="dv">2</span>]);</span>
-<span id="cb7-96"><a href="#cb7-96" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb7-97"><a href="#cb7-97" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (lam_UNC[<span class="dv">1</span>] &gt; <span class="dv">0</span>) {</span>
-<span id="cb7-98"><a href="#cb7-98" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">2</span>, <span class="dv">1</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">2</span>, <span class="dv">1</span>];</span>
-<span id="cb7-99"><a href="#cb7-99" aria-hidden="true" tabindex="-1"></a>      Rho[<span class="dv">1</span>, <span class="dv">2</span>] = -<span class="dv">1</span> * Rho_UNC[<span class="dv">1</span>, <span class="dv">2</span>];</span>
-<span id="cb7-100"><a href="#cb7-100" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb7-101"><a href="#cb7-101" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-102"><a href="#cb7-102" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-103"><a href="#cb7-103" aria-hidden="true" tabindex="-1"></a>  <span class="co">/// marginal log-likelihood based on signed corrected parameters</span></span>
-<span id="cb7-104"><a href="#cb7-104" aria-hidden="true" tabindex="-1"></a>  Phi_lv = quad_form_diag(Rho, Sd_d);</span>
-<span id="cb7-105"><a href="#cb7-105" aria-hidden="true" tabindex="-1"></a>  lambda_phi_lambda = quad_form_sym(Phi_lv, transpose(lam));</span>
-<span id="cb7-106"><a href="#cb7-106" aria-hidden="true" tabindex="-1"></a>  theta_del = diag_matrix(sd_p);</span>
-<span id="cb7-107"><a href="#cb7-107" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-108"><a href="#cb7-108" aria-hidden="true" tabindex="-1"></a>  Sigma = lambda_phi_lambda + theta_del;</span>
-<span id="cb7-109"><a href="#cb7-109" aria-hidden="true" tabindex="-1"></a>  L_Sigma_model = cholesky_decompose(Sigma);</span>
-<span id="cb7-110"><a href="#cb7-110" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-111"><a href="#cb7-111" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span> : N) {</span>
-<span id="cb7-112"><a href="#cb7-112" aria-hidden="true" tabindex="-1"></a>    log_lik[i] = multi_normal_cholesky_lpdf(X[i] | rep_vector(<span class="dv">0</span>, P), L_Sigma_model);</span>
-<span id="cb7-113"><a href="#cb7-113" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb7-114"><a href="#cb7-114" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb7-115"><a href="#cb7-115" aria-hidden="true" tabindex="-1"></a>  log_lik0 = sum(log_lik); <span class="co">// global log-likelihood</span></span>
-<span id="cb7-116"><a href="#cb7-116" aria-hidden="true" tabindex="-1"></a>  dev = -<span class="dv">2</span> * log_lik0; <span class="co">// model deviance</span></span>
-<span id="cb7-117"><a href="#cb7-117" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-89"><a href="#cb7-89" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb7-90"><a href="#cb7-90" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-91"><a href="#cb7-91" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Now we can compile and run the model</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write the raw Stan code from an R string to a Stan file</span></span>
@@ -713,24 +684,22 @@ m_{6}
 <span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>D <span class="ot">&lt;-</span> <span class="dv">2</span></span>
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>data_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">N=</span>N,<span class="at">P=</span>P,<span class="at">D=</span>D,<span class="at">X=</span>X, <span class="at">n_lam=</span><span class="dv">6</span>)</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"lam"</span>,<span class="st">"Rho"</span>,<span class="st">"sd_p"</span>,<span class="st">"M"</span>,<span class="st">"Sd_d"</span>,</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>           <span class="st">"log_lik0"</span>,<span class="st">"dev"</span>,<span class="st">"log_lik"</span>)</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model<span class="sc">$</span><span class="fu">sample</span>(</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data_list,</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">199</span>,</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">chains =</span> <span class="dv">4</span>,</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">parallel_chains =</span> <span class="dv">4</span>,</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter_warmup =</span> <span class="dv">1000</span>,</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter_sampling =</span> <span class="dv">6000</span>,</span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">adapt_delta=</span><span class="fl">0.99</span>, </span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_treedepth =</span> <span class="dv">12</span>,</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">refresh =</span> <span class="dv">1</span> <span class="co"># print update every 500 iters</span></span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the resulting model fit</span></span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="st">"fits/b07.02.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit the model</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> model<span class="sc">$</span><span class="fu">sample</span>(</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data_list,</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">199</span>,</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">chains =</span> <span class="dv">4</span>,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">parallel_chains =</span> <span class="dv">4</span>,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter_warmup =</span> <span class="dv">1000</span>,</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter_sampling =</span> <span class="dv">6000</span>,</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">adapt_delta=</span><span class="fl">0.99</span>, </span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_treedepth =</span> <span class="dv">12</span>,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">refresh =</span> <span class="dv">1</span> <span class="co"># print update every 500 iters</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the resulting model fit</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="st">"fits/b07.02.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The model took about 5 hours to sample and the resulting files are enormous – on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we’re directly interested in, so we have no problem just working in memory.</p>
 <div class="cell">
@@ -897,9 +866,9 @@ m_{6}
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="fu">blavInspect</span>(blavfit<span class="fl">.1</span>, <span class="st">"mcobj"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="third-example-mtmm" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="third-example-mtmm"><span class="header-section-number">6.2</span> Third Example: MTMM</h2>
-<p>In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> calls a ‘correlated uniqueness model’. I have more detailed notes on these ideas in <a href="#sec-mtmm">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-mtmm</span></a>. For example, say we have two latent factors each with 3 measurements. We’re worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. Here’s the updated model, with the new parameter highlighted in blue:</p>
+<section id="third-example-mtmm" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="third-example-mtmm"><span class="header-section-number">6.1</span> Third Example: MTMM</h2>
+<p>In the previous section we moved beyond {{brms}} into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by unmeasured features. And rather than declaring a new factor for these unmeasured features, it can be simpler to estimate a covariance term for these measured variables in the variance-covariance matrix of the shared multivariable likelihood function. So now the off-diagonals are not entirely 0. This is what <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> calls a ‘correlated uniqueness model’. I have more detailed notes on these ideas in <a href="mtmm-and-error-structure-modelling.html">Chapter&nbsp;<span>3</span></a>. For example, say we have two latent factors each with 3 measurements. We’re worried that the first measurement of each variable (m1 and m4) are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. Here’s the updated model, with the new parameter highlighted in blue:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \begin{bmatrix}
@@ -947,10 +916,10 @@ m_{6}
 \\
 \Sigma_m &amp;=
 \begin{bmatrix}
-\sigma_{m1}^2 &amp; 0 &amp; 0 &amp; \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 \\
+\sigma_{m1}^2 &amp; 0 &amp; 0 &amp; \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 \\
 0 &amp; \sigma_{m2}^2 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
 0 &amp; 0 &amp; \sigma_{m3}^2 &amp; 0 &amp; 0 &amp; 0 \\
-\color{teal}{\rho \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 &amp; \sigma_{m4}^2 &amp; 0 &amp; 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 &amp; \sigma_{m4}^2 &amp; 0 &amp; 0 \\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; \sigma_{m5}^2 &amp; 0 \\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; \sigma_{m6}^2
 \end{bmatrix}
@@ -1191,14 +1160,14 @@ m_{6}
 </div>
 </div>
 </section>
-<section id="fourth-example-survival-analysis" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="fourth-example-survival-analysis"><span class="header-section-number">6.3</span> Fourth Example: Survival Analysis</h2>
+<section id="fourth-example-survival-analysis" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="fourth-example-survival-analysis"><span class="header-section-number">6.2</span> Fourth Example: Survival Analysis</h2>
 <p>Now that we’re confident our measurement model for the correlated factors is well-specified, we can move on to modelling the outcome of interest: time to employment. Let’s say our client has designed two scales for measuring the latent features ‘Adaptability’ <code>adapt</code> and ‘Collaboration Skills’ <code>collab</code>, which are thought to be correlated but distinct constructs. Each is measured by 3 instruments, and as above we assume <code>m1</code> and <code>m4</code> are confounded by their shared measurement approach, so we estimate their residual covariance to account for this.</p>
 <p>The updated model is shown below. The only change from the MTMM model above is the two top lines: now we imagine time-to-event <span class="math inline">\(T\)</span> for each person <span class="math inline">\(i\)</span> to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors <span class="math inline">\(\text{adapt}\)</span> and <span class="math inline">\(\text{collab}\)</span>, as well as other measured variables in the matrix <span class="math inline">\(\mathbf{X}\)</span>, each with its own coefficient in the vector <span class="math inline">\(\boldsymbol{\beta}\)</span>.</p>
 $$
 <span class="math display">\[\begin{aligned}
-\color{orange}T_i &amp;\color{orange}\sim \text{Weibull}(\theta_i, k) \\
-\color{orange}\theta_i &amp;\color{orange}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\color{teal}T_i &amp;\color{teal}\sim \text{Weibull}(\theta_i, k) \\
+\color{teal}\theta_i &amp;\color{teal}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -1245,18 +1214,18 @@ m_{6}
 \\
 \Sigma_m &amp;=
 \begin{bmatrix}
-\sigma_{m1}^2 &amp; 0 &amp; 0 &amp; \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 \\
+\sigma_{m1}^2 &amp; 0 &amp; 0 &amp; \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 \\
 0 &amp; \sigma_{m2}^2 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \\
 0 &amp; 0 &amp; \sigma_{m3}^2 &amp; 0 &amp; 0 &amp; 0 \\
-\color{teal}{\rho \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 &amp; \sigma_{m4}^2 &amp; 0 &amp; 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} &amp; 0 &amp; 0 &amp; \sigma_{m4}^2 &amp; 0 &amp; 0 \\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; \sigma_{m5}^2 &amp; 0 \\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; \sigma_{m6}^2
 \end{bmatrix}
 \end{aligned}\]</span>
 <p>$$</p>
 <p>Why a Weibull likelihood? According to <span class="citation" data-cites="Collett2003">Collett (<a href="#ref-Collett2003" role="doc-biblioref">2003</a>)</span>, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we communicate about the parameter estimates, and allows us to not worry too much about the proportional hazards assumption.</p>
-<section id="simulating-data" class="level3" data-number="6.3.1">
-<h3 data-number="6.3.1" class="anchored" data-anchor-id="simulating-data"><span class="header-section-number">6.3.1</span> Simulating data</h3>
+<section id="simulating-data" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="simulating-data"><span class="header-section-number">6.2.1</span> Simulating data</h3>
 <p>For this final section we won’t be able to rely on <code>lavaan::simulateData()</code> to create our simulated data, because it can’t generate time-to-event data. So we’ll need to generate the data ourselves. <a href="https://scholar.google.com/citations?user=s2LhwXAAAAAJ&amp;hl=en">Mark Lai</a> has shared <a href="https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html#full-example-of-a-small-scale-simulation">some nice code</a> to do this, so we can take his approach, adapting it slightly allow for covariance between m1 and m4 as in the MTMM model above. For now we’ll simulate the measured variables as continuous and gaussian, even though it is more realistic that in this context they would be ordinal likert-style.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define sample size</span></span>
@@ -1333,27 +1302,27 @@ m_{6}
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m1</td>
-<td style="text-align: right;">0.8024932</td>
+<td style="text-align: right;">0.7795664</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 =~ m2</td>
-<td style="text-align: right;">0.5993325</td>
+<td style="text-align: right;">0.5910037</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m3</td>
-<td style="text-align: right;">0.8869311</td>
+<td style="text-align: right;">0.9160145</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m4</td>
-<td style="text-align: right;">0.1050922</td>
+<td style="text-align: right;">0.0820737</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f2 =~ m5</td>
-<td style="text-align: right;">0.2146103</td>
+<td style="text-align: right;">0.1398999</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m6</td>
-<td style="text-align: right;">-0.3939018</td>
+<td style="text-align: right;">-0.4773580</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 ~~ f1</td>
@@ -1365,35 +1334,35 @@ m_{6}
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m1 ~~ m4</td>
-<td style="text-align: right;">0.4005957</td>
+<td style="text-align: right;">0.4248428</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m1 ~~ m1</td>
-<td style="text-align: right;">0.9483916</td>
+<td style="text-align: right;">1.0028137</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m2 ~~ m2</td>
-<td style="text-align: right;">0.9978270</td>
+<td style="text-align: right;">1.0193690</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m3 ~~ m3</td>
-<td style="text-align: right;">1.0072133</td>
+<td style="text-align: right;">0.9228686</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m4 ~~ m4</td>
-<td style="text-align: right;">0.9874540</td>
+<td style="text-align: right;">0.9814737</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m5 ~~ m5</td>
-<td style="text-align: right;">0.9580966</td>
+<td style="text-align: right;">1.0373971</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m6 ~~ m6</td>
-<td style="text-align: right;">0.9801618</td>
+<td style="text-align: right;">0.9009942</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 ~~ f2</td>
-<td style="text-align: right;">0.3729678</td>
+<td style="text-align: right;">0.3197164</td>
 </tr>
 </tbody>
 </table>
@@ -1555,53 +1524,53 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: right;">52.8165368</td>
-<td style="text-align: right;">0.0316214</td>
-<td style="text-align: right;">125.4473670</td>
+<td style="text-align: right;">50.5416656</td>
+<td style="text-align: right;">0.0293831</td>
+<td style="text-align: right;">133.5050288</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">adapt</td>
-<td style="text-align: right;">0.9947461</td>
-<td style="text-align: right;">0.0240588</td>
-<td style="text-align: right;">-0.2189517</td>
-<td style="text-align: right;">0.8266876</td>
+<td style="text-align: right;">0.9609231</td>
+<td style="text-align: right;">0.0230530</td>
+<td style="text-align: right;">-1.7290973</td>
+<td style="text-align: right;">0.0837917</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">collab</td>
-<td style="text-align: right;">0.8372814</td>
-<td style="text-align: right;">0.0244874</td>
-<td style="text-align: right;">-7.2525075</td>
+<td style="text-align: right;">0.8484298</td>
+<td style="text-align: right;">0.0231145</td>
+<td style="text-align: right;">-7.1110279</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">age</td>
-<td style="text-align: right;">1.0470620</td>
-<td style="text-align: right;">0.0221170</td>
-<td style="text-align: right;">2.0793156</td>
-<td style="text-align: right;">0.0375884</td>
+<td style="text-align: right;">1.0688085</td>
+<td style="text-align: right;">0.0215119</td>
+<td style="text-align: right;">3.0933719</td>
+<td style="text-align: right;">0.0019790</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ei_status</td>
-<td style="text-align: right;">0.4661108</td>
-<td style="text-align: right;">0.0446989</td>
-<td style="text-align: right;">-17.0772115</td>
+<td style="text-align: right;">0.5051284</td>
+<td style="text-align: right;">0.0431141</td>
+<td style="text-align: right;">-15.8403518</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Log(scale)</td>
-<td style="text-align: right;">1.0394186</td>
-<td style="text-align: right;">0.0167577</td>
-<td style="text-align: right;">2.3070857</td>
-<td style="text-align: right;">0.0210500</td>
+<td style="text-align: right;">1.0115735</td>
+<td style="text-align: right;">0.0165287</td>
+<td style="text-align: right;">0.6961845</td>
+<td style="text-align: right;">0.4863133</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 </section>
-<section id="exploratory-data-analysis.-report-the-scale-reliabilities" class="level3" data-number="6.3.2">
-<h3 data-number="6.3.2" class="anchored" data-anchor-id="exploratory-data-analysis.-report-the-scale-reliabilities"><span class="header-section-number">6.3.2</span> Exploratory Data Analysis. Report the scale reliabilities?</h3>
+<section id="exploratory-data-analysis.-report-the-scale-reliabilities" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="exploratory-data-analysis.-report-the-scale-reliabilities"><span class="header-section-number">6.2.2</span> Exploratory Data Analysis. Report the scale reliabilities?</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>km.full.sample <span class="ot">&lt;-</span> <span class="fu">survfit</span>(surv_object <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> ei_status, <span class="at">data =</span> fake_dat)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1685,7 +1654,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 29.23251</code></pre>
+<pre><code>[1] 29.15693</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the distribution</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span></span>
@@ -1715,7 +1684,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <pre><code># A tibble: 1 × 2
       q5   q95
    &lt;num&gt; &lt;num&gt;
-1 0.0874  11.0</code></pre>
+1 0.0985  11.1</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the distribution</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span></span>
@@ -1724,7 +1693,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>() <span class="sc">+</span></span>
 <span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">xlim</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 578 rows containing missing values (`stat_slabinterval()`).</code></pre>
+<pre><code>Warning: Removed 589 rows containing missing values (`stat_slabinterval()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
@@ -2146,8 +2115,8 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <p>Plot baseline hazard, etc, other conventional time-to-event model diagnostics.</p>
 </section>
 </section>
-<section id="multilevel-survival-analysis" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="multilevel-survival-analysis"><span class="header-section-number">6.4</span> Multilevel Survival Analysis</h2>
+<section id="multilevel-survival-analysis" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="multilevel-survival-analysis"><span class="header-section-number">6.3</span> Multilevel Survival Analysis</h2>
 <p>Let’s say like 30 clusters. How to simulate? Vary cluster N to illustrate shrinkage in posterior predictions.</p>
 <p>Do a secret weapon plot for the cluster-specific estimates before fitting the full model!</p>
 
