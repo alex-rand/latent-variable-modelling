@@ -623,7 +623,7 @@ Just becomes this:
 $$
 
 \begin{aligned}
-\rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 * 1} = \text{Cov}(X, Y)
+\rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 x 1} = \text{Cov}(X, Y)
 \end{aligned}
 
 $$
@@ -711,7 +711,7 @@ dplt |>
   guides(fill = "none") +
   labs(x = "lab",
      y = NULL)  +
-  facet_wrap(~.variable) +
+  facet_wrap(~.variable, scales = "free_x") +
   theme_minimal() + 
   theme(panel.grid.major = element_blank())
 
@@ -1225,7 +1225,7 @@ dplt |>
   guides(fill = "none") +
   labs(x = "lab",
      y = NULL)  +
-  facet_wrap(~.variable) +
+  facet_wrap(~.variable, scales = "free_x") +
   theme_minimal() + 
   theme(panel.grid.major = element_blank())
 
