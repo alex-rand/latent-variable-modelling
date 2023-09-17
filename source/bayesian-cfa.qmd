@@ -1799,7 +1799,7 @@ sim |>
 Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 10 or more in either direction (I.E. 10 or 0.10) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with `mean = 0, sd = 1.45` captures this 'factor of 5' intuition, with a factor of 10 or greater being associated with a probability of only about 5% in either direction. 
 
 ```{r}
-#| label: prior-pred-weibull-intercept
+#| label: prior-pred-weibull-coefs
 #| message: false
 #| warning: false
 #| fig-cap: "Exponentiated draws from a gaussian distribution with mean = 0, and sd = 1.45"

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Latent Variable Modelling Workflow Reference - Confirmatory Factor Analysis</title>
+<title>Latent Variable Modelling Workflow Reference - Introduction to CFA</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -133,7 +133,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title">Confirmatory Factor Analysis</h1>
+      <h1 class="quarto-secondary-nav-title">Introduction to CFA</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -163,7 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link active">Confirmatory Factor Analysis</a>
+            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link active">Introduction to CFA</a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -234,7 +234,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">Confirmatory Factor Analysis</h1>
+<h1 class="title"><span id="sec-intro" class="quarto-section-identifier d-none d-lg-block">Introduction to CFA</span></h1>
 </div>
 
 
@@ -255,7 +255,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="the-whole-game" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="the-whole-game">The Whole Game</h2>
 <p>The Whole Game of Confirmatory Factor Analysis (CFA) is that I’m trying to convince you my observed variables are confounded by some unmeasured variables. Usually I’m trying to show that the observed ariables are confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.</p>
-<p>So here’s the archetypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am trying to convince you exists. We can call this <strong>The Primordial CFA DAG of Confounding</strong>:</p>
+<p>So here’s the archetypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am trying to convince you exists. We can call this <strong>The Primordial CFA DAG</strong>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set DAG coordinates</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>

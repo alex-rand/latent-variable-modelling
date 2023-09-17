@@ -216,7 +216,7 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, boxrule=0pt, frame hidden, borderline west={3pt}{0pt}{shadecolor}, breakable, interior hidden, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, frame hidden, enhanced, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, breakable, interior hidden]}{\end{tcolorbox}}\fi
 
 \renewcommand*\contentsname{Table of contents}
 {
@@ -288,7 +288,7 @@ workflows.
 I'll mostly be using \textbf{lavaan} and \textbf{tidyverse}, but maybe
 also some \textbf{brms} at some point.
 
-\part{Confirmatory Factor Analysis}
+\part{Introduction to CFA}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -296,6 +296,10 @@ also some \textbf{brms} at some point.
 \FunctionTok{library}\NormalTok{(ggdag)}
 \end{Highlighting}
 \end{Shaded}
+
+\hypertarget{the-whole-game}{%
+\section*{The Whole Game}\label{the-whole-game}}
+\addcontentsline{toc}{section}{The Whole Game}
 
 The Whole Game of Confirmatory Factor Analysis (CFA) is that I'm trying
 to convince you my observed variables are confounded by some unmeasured
@@ -305,7 +309,7 @@ variables are confounded only by one unmeasured variable per group.
 
 So here's the archetypal DAG of a CFA, where the Xs are observed
 variables, and F1 is an unmeasured variable I am trying to convince you
-exists. We can call this \textbf{The Primordial CFA DAG of Confounding}:
+exists. We can call this \textbf{The Primordial CFA DAG}:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -388,8 +392,8 @@ by a single unmeasured variable. In the next few chapters we'll look at
 some examples of how people have liked to make the case for their
 unmeasured-confounder DAG.
 
-\hypertarget{traditional-cfa-workflow}{%
-\chapter{Traditional CFA Workflow}\label{traditional-cfa-workflow}}
+\hypertarget{sec-basic-workflow}{%
+\chapter{Traditional CFA Workflow}\label{sec-basic-workflow}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4353,41 +4357,41 @@ training programs. The client was interested in the relationship between
 several latent skills for which they had collected measurements, and
 time-to-employment following a skills training program. This document
 presents the Bayesian workflow I used for that analysis, which involved
-simultaneously estimating the construct validity of the latent variables
-and including them as regressors in a time-to-event analysis. Along the
-way I show various approaches to simulating latent variable and
+simultaneously estimating a factor model for the latent variables and
+including them as regressors in a time-to-event analysis. Along the way
+I show various approaches to simulating latent variable and
 time-to-event data for model validation, and demonstrate the advantages
-of the Bayesian approach compared to traditional two-stage approaches
-involving factor score point estimates.
+of the Bayesian approach to including latent regressors in a statistical
+model, compared to traditional two-stage approaches involving factor
+score point estimates.
 
 \hypertarget{introduction}{%
-\section*{Introduction}\label{introduction}}
-\addcontentsline{toc}{section}{Introduction}
+\section{Introduction}\label{introduction}}
 
 In the previous sections we've explored various aspects of the
 traditional workflow for Confirmatory Factor Analysis, including the
-basic model structure, validity and reliability, model goodness of fit
-tests, tests for measurement invariance, and experimenting with custom
-error covariance structures. These are all helpful tools for specifying
-quantitative theories about imaginary constructs, and testing those
-theories with data.
+basic model structure, the concepts of validity and reliability, classic
+model goodness of fit tests, tests for measurement invariance, and
+experimenting with custom error covariance structures. These are all
+helpful tools for specifying quantitative theories about imaginary
+constructs, and testing those theories with data.
 
 But often you'll want to do more than just convince me the data are
-consistent with the Primordial CFA DAG of Confounding: you'll also have
-some theories about how those imagined constructs relate to other
-measurements or latent constructs. This opens the door to
-\textbf{Structural Equation Modelling (SEM)}, which is a framework for
-simultaneously convincing you that my data are consistent with the
-imaginary constructs I have in mind, \emph{and} that my data are
-consistent with those constructs relating to each other according to a
-specific causal structure. It basically allows us to do regression with
-latent variables.
+consistent with \textbf{?@sec-intro}: you'll also have some theories
+about how those imagined constructs relate to other measurements or
+latent constructs. This opens the door to \textbf{Structural Equation
+Modelling (SEM)}, which is a framework for simultaneously arguing that
+my data are consistent with the imaginary constructs I have in mind,
+\emph{and} that my data are consistent with the idea that those
+constructs relate to each other according to a specific causal
+structure.
 
-Before we explore a traditional SEM workflow that tests for causal
-relationships between unmeasured variables, we can first explore a more
+In later chapters I'll be adding notes on the traditional SEM workflow.
+But as a first step towards full SEM it is interesting to explore a more
 basic situation where we only have latent \emph{predictors}, and want to
 estimate the relationship between those latent predictors and an
-observed outcome. A traditional way of incorporating a CFA measurement
+\emph{observed outcome}, as opposed to a latent outcome with its own
+measurement model. A traditional way of incorporating a CFA measurement
 model into a fuller regression analysis for a measured dependent
 variable proceeds in two steps:
 
@@ -4395,80 +4399,85 @@ variable proceeds in two steps:
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  first you fit the CFA model;
+  Fit the CFA model;
 \item
-  then you fit the substantive regression, incorporating the latent
-  variable into the regression by generating factor scores from the CFA
-  model for each observation and including those as a regression
-  covariate.
+  Generate factor scores for each observation;
+\item
+  Use those factor scores as predictors in a regression.
 \end{enumerate}
 
-But this approach is unsatisfactory because factor scores are a function
-of the CFA model's parameter estimates (the estimates of the factor
-loadings), about which there is uncertainty. So if we only give our
-substantive regression model a point-estimate factor score from the CFA
-model, we ignore the uncertainty contained in the standard errors of the
-CFA model's factor loading estimates. This is the approach taken by
-Kankaraš, Feron, and Renbarger (2019); they use point-estimate factor
-scores as predictors in subsequent regressions. In some cases they even
-do this iteratively, fitting measurement models on point-estimate factor
-scores from measurement models fit on point-estimate factor scores, and
-using \emph{those} point-estimates as regression predictors! In their
-analysis they don't even report the standard errors of the factor
-loadings from their measurement models.
+For example, this is the approach taken by Kankaraš, Feron, and
+Renbarger (2019) in their study of the relationship between latent
+social/emotional skills and life outcomes such as academic achievement;
+they use point-estimate factor scores for the latent variables as
+predictors in the subsequent regressions on life outcome data. In some
+cases they even do this iteratively, fitting measurement models on
+point-estimate factor scores from measurement models fit on
+point-estimate factor scores, and using \emph{those} point-estimates as
+regression predictors! This approach is unsatisfactory because factor
+scores are a function of the CFA model's parameter estimates, about
+which there is uncertainty. If we only give our substantive regression
+model a point-estimate factor score from the CFA model, we ignore this
+uncertainty.
 
-A better option is to fit a Bayesian model that carries out both the
-measurement model and the substantive regression model simultaneously,
-so that the model can incorporate its uncertainty from the CFA model
-into its substantive parameter estimates and predictions. This approach
-is essentially just a Bayesian missing data analysis, where the factor
-scores are treated as missing data and the model estimates a unique
-parameter for each missing value, along with its own unique posterior
-distribution. In this document I demonstrate how to implement this
-approach with Stan, incorporating concepts from previous sections such
-as MTMM factor analysis. We'll proceed as follows:
+A better option is to fit a Bayesian model that fits the measurement
+model and the substantive regression model simultaneously, so that the
+model can incorporate its uncertainty from the CFA model into its
+substantive parameter estimates and predictions. As we'll see below,
+this approach is essentially just a Bayesian missing data analysis,
+where the factor scores for each observation are treated as missing data
+for which the model estimates a unique observation-specific parameter,
+along with its own unique posterior distribution.
+
+\hypertarget{the-plan}{%
+\section{The Plan}\label{the-plan}}
+
+In this document I'll demonstrate how to implement this Bayesian
+approach with Stan. We'll iterate on this model a few times, gradually
+incorporating concepts from previous chapters such as MTMM factor
+analysis. At each stage we'll stick the following invented scenario: our
+client has designed scales for the latent skills ``adaptability'' and
+``collaboration'', and wants to test the validity of those scales and
+estimate their relationship with time-to-employment for their program
+graduates.
+
+At each stage of the analysis we'll simulate a new dataset reflecting
+our updated model, and show that the model can recover the true
+simulation parameter estimates. We'll proceed as follows:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  Fit a simple Bayesian CFA with orthogonal covariates and a basic
-  measurement error covariance structure. We use the brms package to
-  illustrate how Bayesian factor analysis is the same as Bayesian
-  missing data analysis, but when \emph{all} of your observations are
-  missing;
+  Fit a simple Bayesian CFA with one factor and a basic measurement
+  error covariance structure. We use the brms package to illustrate how
+  Bayesian factor analysis is the same as Bayesian missing data
+  analysis, but where \emph{all} of your observations are missing;
 \item
-  Fit the same Bayesian CFA, but specifying correlated factors. The brms
-  package can't yet handle custom covariance structures for latent
-  factors, so we upgrade to raw Stan;
+  Fit a Bayesian CFA with two correlated factors. The brms package can't
+  yet handle custom covariance structures for latent factors, so we
+  swtich to raw Stan;
 \item
   Update the model to include a custom error covariance structure à la
   MTMM;
 \item
-  Combine the MTMM model from the previous step with a time-to-event
-  model.
+  Combine the MTMM model from the previous step with a parametric
+  proportional hazards regression model;
 \item
   Expand the model to include multilevel structure, with correlated
   varying effects for the regression predictors.
 \end{enumerate}
 
-At each stage we'll stick with the same basic scenario: our client has
-invented scales for the latent skills ``adaptability'' and
-``collaboration'', and they're interested in testing the validity of
-those scales and estimating their relationship with time-to-employment
-for their program participants. At each stage of the analysis we'll
-simulate a new dataset reflecting our updated model, and show that the
-model can recover the true simulation parameter estimates.
+I assume basic knowledge of R, Stan, and survial analysis.
 
-\hypertarget{first-example-simple-factor-structure-with-brms}{%
-\section*{First Example: Simple Factor Structure with
-brms}\label{first-example-simple-factor-structure-with-brms}}
-\addcontentsline{toc}{section}{First Example: Simple Factor Structure
-with brms}
+\hypertarget{simple-bayesian-cfa-with-brms}{%
+\section{Simple Bayesian CFA with
+brms}\label{simple-bayesian-cfa-with-brms}}
 
-In this section we'll see how to specify a Bayesian CFA model in brms.
-Nothing fancy, just two orthogonal factors, each with three
-measurements. Here's the full model definition:
+Before diving into a full model with our two factors for
+``adaptability'' and ``collabortion'' in raw Stan, in this section we'll
+see how to fit a simple Bayesian CFA model in brms. Nothing fancy, just
+one factor with 6 measurements. Here's the full model definition:
 
 \[
 \begin{aligned}
@@ -4493,27 +4502,10 @@ m_{6}
 \Sigma_m
 \right) \\
 \\
-\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
-\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\mu_{m1} &= \lambda_1 \text{f}_1, \quad \mu_{m2} = \lambda_2 \text{f}_1, \quad \mu_{m3} = \lambda_3 \text{f}_1 \\
+\mu_{m4} &= \lambda_4 \text{f}_1, \quad \mu_{m5} = \lambda_5 \text{f}_1, \quad \mu_{m6} = \lambda_6 \text{f}_1 \\
 \\
-\begin{bmatrix}
-\text{adapt}_{i} \\
-\text{collab}_{i}
-\end{bmatrix}
-&\sim \text{MVNormal}
-\left(
-\begin{bmatrix}
-\mu_\text{adapt} \\
-\mu_\text{collab}
-\end{bmatrix},
-\Sigma_f
-\right) \\
-\\
-\Sigma_f &=
-\begin{bmatrix}
-\sigma_\text{adapt}^2 & 0 \\
-0 & \sigma_\text{adapt}^2
-\end{bmatrix} \\
+\text{f} &\sim \text{Normal}(\mu_\text{f}, \sigma_\text{f}^2) \\
 \\
 \Sigma_m &=
 \begin{bmatrix}
@@ -4527,23 +4519,26 @@ m_{6}
 \end{aligned}
 \]
 
-I've worked from
-\href{https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139}{the
-approach shared by Jack Bailey in a post on the Stan forum}.
-
 First we can simulate some data with the given factor structure using
 the lavaan package's handy \texttt{simulateData()} function:
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Specify the factor structure in classic lavaan syntax}
-\NormalTok{pop.model }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{} }
+\NormalTok{basic.model }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{} }
 \StringTok{  f1 =\textasciitilde{} .8*m1 + .1*m2 + .6*m3 + .2*m4 + .9*m5 + {-}.4*m6}
 \StringTok{\textquotesingle{}}
 
 \CommentTok{\# Simulate data from the specified model }
-\NormalTok{fake\_dat }\OtherTok{\textless{}{-}}\NormalTok{ lavaan}\SpecialCharTok{::}\FunctionTok{simulateData}\NormalTok{(}\AttributeTok{model =}\NormalTok{ pop.model, }\AttributeTok{sample.nobs =} \DecValTok{4000}\NormalTok{)}
+\NormalTok{fake\_dat }\OtherTok{\textless{}{-}}\NormalTok{ lavaan}\SpecialCharTok{::}\FunctionTok{simulateData}\NormalTok{(}\AttributeTok{model =}\NormalTok{ basic.model, }\AttributeTok{sample.nobs =} \DecValTok{4000}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
 
+We can take a peak at the resulting dataset to make sure everything
+looks kosher. Looks like some simple normal densities, as expected:
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \CommentTok{\# Visualize the measured data}
 \NormalTok{fake\_dat }\SpecialCharTok{|\textgreater{}}
 
@@ -4552,77 +4547,91 @@ the lavaan package's handy \texttt{simulateData()} function:
   \FunctionTok{pivot\_longer}\NormalTok{(}\FunctionTok{everything}\NormalTok{(), }\AttributeTok{names\_to =} \StringTok{"var"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"measurement"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
 
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_histogram}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ measurement), }\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_density}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ measurement), }\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{var) }\SpecialCharTok{+}
-  \FunctionTok{theme\_bw}\NormalTok{()}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}
+    \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{()}
+\NormalTok{  )}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/sim-1-fac-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-3-1.pdf}
 
 }
 
 \end{figure}
 
-Here's how we can specify a Bayesian model in brms that recovers the
-simulation parameter values. I like this approach because it gives a
-nice conceptual perspective on what we're actually doing when we're
-doing latant variable modelling: we're just doing a linear regression
-where the measured variables are all drawn from a shared multivariate
-normal distribution, and where the linear model component of their
-location parameters include a covariate for which we only have missing
-data.
+Now we can specify a Bayesian model in brms that recovers the simulation
+parameter values. I've worked from
+\href{https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139}{the
+approach shared by Jack Bailey in a post on the Stan forum}. I like this
+approach because it gives a nice conceptual perspective on what we're
+actually doing when we're doing latant variable modelling: we're just
+fitting a linear regression where the measured variables are all drawn
+from a shared multivariate normal distribution, and where the linear
+model components of their location parameters include a covariate for
+which we \emph{only} have missing data. So the first thing we need to do
+is add a column of all missing data for each of the latent variables.
+Then we define the model with the same approach to identifiability
+constraints that lavaan imposes by default, I.E. constraining the first
+loading to be constant. The jargon term for this approach to ensuring
+identifiability is the `marker variable approach':
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Add a latent variable to the dataset}
+\CommentTok{\# Add the latent variable to the dataset as an all NA column}
 \NormalTok{fake\_dat}\SpecialCharTok{$}\NormalTok{f1 }\OtherTok{\textless{}{-}} \ConstantTok{NA\_real\_}
 
+\CommentTok{\# Define the model, with the coefficient for m1 fied to a constant for identifiability}
 \NormalTok{bfit}\FloatTok{.1} \OtherTok{\textless{}{-}} \FunctionTok{brm}\NormalTok{(}
-    \AttributeTok{formula =}
-      \FunctionTok{bf}\NormalTok{(m1 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
-      \FunctionTok{bf}\NormalTok{(m2 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
-      \FunctionTok{bf}\NormalTok{(m3 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
-      \FunctionTok{bf}\NormalTok{(m4 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
-      \FunctionTok{bf}\NormalTok{(m5 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
-      \FunctionTok{bf}\NormalTok{(m6 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
-      \FunctionTok{bf}\NormalTok{(f1}\SpecialCharTok{|} \FunctionTok{mi}\NormalTok{() }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+} 
-      \FunctionTok{set\_rescor}\NormalTok{(}\AttributeTok{rescor =} \ConstantTok{FALSE}\NormalTok{),}
-    \AttributeTok{family =} \FunctionTok{gaussian}\NormalTok{(),}
-    \AttributeTok{prior =}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m1"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m1"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m2"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m2"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m3"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m3"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m4"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m4"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m5"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m5"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m6"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m6"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"Intercept"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"f1"}\NormalTok{) }\SpecialCharTok{+}
-      \FunctionTok{prior}\NormalTok{(}\FunctionTok{cauchy}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"f1"}\NormalTok{),}
-    \AttributeTok{data =}\NormalTok{ fake\_dat,}
-    \AttributeTok{warmup =} \DecValTok{1000}\NormalTok{,}
-    \AttributeTok{iter =} \DecValTok{6000}\NormalTok{,}
-    \AttributeTok{file =} \StringTok{"fits/b07.01.rds"}
-\NormalTok{  )}
+  \AttributeTok{formula =}
+    \FunctionTok{bf}\NormalTok{(m1 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
+    \FunctionTok{bf}\NormalTok{(m2 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
+    \FunctionTok{bf}\NormalTok{(m3 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
+    \FunctionTok{bf}\NormalTok{(m4 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
+    \FunctionTok{bf}\NormalTok{(m5 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
+    \FunctionTok{bf}\NormalTok{(m6 }\SpecialCharTok{\textasciitilde{}} \DecValTok{0} \SpecialCharTok{+} \FunctionTok{mi}\NormalTok{(f1)) }\SpecialCharTok{+}
+    \FunctionTok{bf}\NormalTok{(f1}\SpecialCharTok{|} \FunctionTok{mi}\NormalTok{() }\SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+} 
+    \FunctionTok{set\_rescor}\NormalTok{(}\AttributeTok{rescor =} \ConstantTok{FALSE}\NormalTok{),}
+  \AttributeTok{family =} \FunctionTok{gaussian}\NormalTok{(),}
+  \AttributeTok{prior =}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m1"}\NormalTok{) }\SpecialCharTok{+} \DocumentationTok{\#\# First loading fixed at 1, per the \textquotesingle{}marker variable\textquotesingle{} approach. }
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m1"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m2"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m2"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m3"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m3"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m4"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m4"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m5"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m5"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"b"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m6"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{constant}\NormalTok{(}\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"m6"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{normal}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{), }\AttributeTok{class =} \StringTok{"Intercept"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"f1"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{prior}\NormalTok{(}\FunctionTok{cauchy}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{), }\AttributeTok{class =} \StringTok{"sigma"}\NormalTok{, }\AttributeTok{resp =} \StringTok{"f1"}\NormalTok{),}
+  \AttributeTok{data =}\NormalTok{ fake\_dat,}
+  \AttributeTok{warmup =} \DecValTok{1000}\NormalTok{,}
+  \AttributeTok{iter =} \DecValTok{6000}\NormalTok{,}
+  \AttributeTok{file =} \StringTok{"fits/b07.01.rds"}
+\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
 A Bayesian missing data model treats each missing observation as a
-parameter to estimate. And since the factor is missing in each row of
-the dataset, this means we end up with 6000 samples for each row of data
-we have, resulting in a pretty big model file. This is too big for
-Github, so I'll only push the draws we need to replicate the figure
-below.
+parameter to estimate. And since the factor is 100\% missing data, this
+means we end up with 4000 rows of data x 6000 samples x 4 chains =
+96,000,000 MCMC samples for the factor scores alone, resulting in a
+pretty big model file. This is too big for Github, so I'll only push the
+draws we need to make sure the model recovered the true parameter
+estimates.
 
 First we can put the draws we need into a tidy format and do some
-cleaning:
+cleaning, then we can plot the draws to visualize the approximated
+posteriors:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4660,10 +4669,6 @@ cleaning:
 \end{Highlighting}
 \end{Shaded}
 
-Now we can plot. Looks like STAN does an OK job at recovering the true
-factor loadings (we exclude the first loading since it was held constant
-at 1 to provide the scale for the latent variable):
-
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Load the tidy samples}
@@ -4688,29 +4693,44 @@ at 1 to provide the scale for the latent variable):
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-draws-1-fac-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-draws-basic-1.pdf}
 
 }
 
-\caption{Posterior distributions of estimated factor loadings for
-measured variables 2-6. The dashed line is the `true' simulated loading
-for each variable.}
-
 \end{figure}
 
-In all cases the model is \textbf{pretty close} to the true parameter
-value. It's a bit concerning when the standard errors are so small they
-fail to capture the true values, but this illustrates the general proof
-of concept: we can do a pretty good CFA in \{\{brms\}\}.
+In all cases the model is \emph{pretty close} to the true parameter
+values, shown by the dashed lines. It's a bit worrying that the standard
+errors are so small they fail to capture the true values, but this
+illustrates the general proof of concept: we can do a pretty decent CFA
+in brms.
 
-\hypertarget{second-example-correlated-factors}{%
-\section{Second Example: Correlated
-factors}\label{second-example-correlated-factors}}
+In practice I would probably not choose brms for a simple CFA of this
+kind, where we have no prior information to inform the parameter
+estimates and no need to incorporate uncertainty in factor score
+estimates into models of other variables. If I were committed to doing
+this sort of model Bayesianly then I would use the amazing blavaan
+package, which works with lavaan syntax, allows you to specify custom
+priors, and is lightening-fast compared to the brms version implemented
+above. But blavaan is limited in the types of models it can handle, and
+cannot fit the type of time-to-event model we are heading towards here.
+Stan offers greater flexibility.
 
-Now an example where we assume the latent vactors are themselves
-dependent, so that discriminant validity is questionable. So we can
-include a term for their correlation structure in the model. Here's the
-updated model definition:
+\hypertarget{bayesian-cfa-with-correlated-factors}{%
+\section{Bayesian CFA with Correlated
+Factors}\label{bayesian-cfa-with-correlated-factors}}
+
+Now let's introduce our two factors ``adaptability'' and
+``collaboration'', and expand the model to assume these two latent
+factors may be correlated. People traditionally use this type of model
+to assess the discriminant validity of their factors, as we saw in
+Chapter~\ref{sec-basic-workflow}. The only change from the model in the
+previous section is that now we imagine the two factors to be drawn from
+a shared bivariate normal distribution in which the diagonals are the
+factor-specific residual variances and the off-diagonals are the
+between-factor covariance, given as the product of their estimated
+correlation \(\rho\) and the two factor-specific variances. Here's the
+updated model definition, with the covariance terms highlighted:
 
 \[
 \begin{aligned}
@@ -4769,8 +4789,12 @@ m_{6}
 \end{aligned}
 \]
 
-We'll need to amend the lavaan model structure to implement these
-changes.
+We can update the lavaan model structure from the previous section to
+simulate new data with correlated factors. Note that in the lavaan
+syntax \texttt{f1\ \textasciitilde{}\textasciitilde{}\ .4*f2} we are
+specifying the \emph{covariance} between the factors, not the
+correlation. But as we'll see later, the distinction doesn't matter in
+this case.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4786,23 +4810,34 @@ changes.
 \end{Highlighting}
 \end{Shaded}
 
-The complication here is that brms doesn't currently support setting
-constraints on individual correlation terms in the model, even in the
-form of constant priors.
-\href{https://github.com/paul-buerkner/brms/issues/957}{There seems to
-be a plan} to include more SEM-like flexibility of covariance matrixes
-in general in brms 3.0, but for now we'll need to specify the model
-using raw Stan code. There seem to be a few strategies for avoiding
-convergence issues when fitting this kind of model in Stan. I worked
-closely from the strategy provided in
-\href{https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13}{this
-Stan forum comment} by Mauricio Garnier-Villarre, making a few minor
-adjustments such as removing latent intercepts from the linear
-predictors to better align this model with the \{\{lavaan\}\} defaults.
+Now to fit a model to the simulated data. We'll use raw Stan from now
+on, because brms doesn't currently support setting constraints on
+individual correlation terms in the model, even in the form of constant
+priors. \href{https://github.com/paul-buerkner/brms/issues/957}{There
+seems to be a plan} to include more SEM-like flexibility of covariance
+matrixes in general in brms 3.0, but we do better to dive into raw Stan
+anyway for added flexibility.
 
-Here is the raw Stan code. I also declare it as a string in a hidden R
-block so we can use \{\{cmdstanr\}\}'s autoformatting function before we
-compile.
+I tried a few different model definitions in Stan, but they all had
+convergence issues and failed to recover the true parameter estimates.
+Convergence in fitting a factor analysis can be tricky in general, and
+things get even more complicated in a Bayesian context where we're using
+MCMC to approximate the posterior. So I took to the Stan Forums, where I
+found a few strategies for avoiding convergence issues when fitting this
+kind of model. I have worked closely from the strategy provided in
+\href{https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13}{this
+comment} by
+\href{https://research.vu.nl/en/persons/mauricio-garnier-villarreal}{Mauricio
+Garnier-Villarre}. Instead of the lavaan-default `marker variable
+approach' to identifiability we used above in our brms model, Mauricio
+fixes the factor means and variances at 0 and 1, respectively, which has
+the benefit of letting the model freely estimate the \emph{all} of the
+factor loadings. He also adds some code to sign-correct the estimated
+loadings in the \texttt{generated\ quantities\{\}} block, which
+apparently helps align estimates across chains. I just make a few minor
+adjustments such as removing intercepts from the linear predictors of
+the factors to better align the model with the lavaan defaults. Here is
+the Stan code:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4860,17 +4895,6 @@ compile.
 \NormalTok{  \}}
 \NormalTok{\}}
 \KeywordTok{generated quantities}\NormalTok{ \{}
-  \DataTypeTok{array}\NormalTok{[N] }\DataTypeTok{real}\NormalTok{ log\_lik; }\CommentTok{// log likelihood of each datapoint}
-  \DataTypeTok{real}\NormalTok{ dev; }\CommentTok{// global deviance}
-  \DataTypeTok{real}\NormalTok{ log\_lik0; }\CommentTok{// global log likelihood}
-  \DataTypeTok{vector}\NormalTok{[N] log\_lik\_row;}
-  
-  \DataTypeTok{cov\_matrix}\NormalTok{[P] Sigma; }\CommentTok{// Covariance matrix of the manifest variables}
-  \DataTypeTok{cov\_matrix}\NormalTok{[D] Phi\_lv; }\CommentTok{// Covariance matrix of the latent factors}
-  \DataTypeTok{matrix}\NormalTok{[P, P] lambda\_phi\_lambda; }\CommentTok{// I think these are the terms of the reconstructed var{-}covar matrix of the data?}
-  \DataTypeTok{cholesky\_factor\_cov}\NormalTok{[P] L\_Sigma\_model; }\CommentTok{// I think this is the cholesky decomposition of the reconstructued var{-}covar matrix above?}
-  \DataTypeTok{matrix}\NormalTok{[P, P] theta\_del; }\CommentTok{// I think this is Matrix containing the error terms for the reconstructed empirical var{-}covar matrix?}
-  
   \DataTypeTok{corr\_matrix}\NormalTok{[D] Rho\_UNC; }\CommentTok{/// correlation matrix}
   \DataTypeTok{corr\_matrix}\NormalTok{[D] Rho; }\CommentTok{/// correlation matrix}
   \DataTypeTok{matrix}\NormalTok{[P, D] lam; }\CommentTok{// factor loadings}
@@ -4907,26 +4931,11 @@ compile.
 \NormalTok{      Rho[}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{] = {-}}\DecValTok{1}\NormalTok{ * Rho\_UNC[}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{];}
 \NormalTok{    \}}
 \NormalTok{  \}}
-  
-  \CommentTok{/// marginal log{-}likelihood based on signed corrected parameters}
-\NormalTok{  Phi\_lv = quad\_form\_diag(Rho, Sd\_d);}
-\NormalTok{  lambda\_phi\_lambda = quad\_form\_sym(Phi\_lv, transpose(lam));}
-\NormalTok{  theta\_del = diag\_matrix(sd\_p);}
-  
-\NormalTok{  Sigma = lambda\_phi\_lambda + theta\_del;}
-\NormalTok{  L\_Sigma\_model = cholesky\_decompose(Sigma);}
-  
-  \ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\NormalTok{ : N) \{}
-\NormalTok{    log\_lik[i] = multi\_normal\_cholesky\_lpdf(X[i] | rep\_vector(}\DecValTok{0}\NormalTok{, P), L\_Sigma\_model);}
-\NormalTok{  \}}
-  
-\NormalTok{  log\_lik0 = sum(log\_lik); }\CommentTok{// global log{-}likelihood}
-\NormalTok{  dev = {-}}\DecValTok{2}\NormalTok{ * log\_lik0; }\CommentTok{// model deviance}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
 
-Now we can compile and run the model
+Now we can compile and run the model:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -4947,8 +4956,6 @@ Now we can compile and run the model
 \NormalTok{D }\OtherTok{\textless{}{-}} \DecValTok{2}
 
 \NormalTok{data\_list }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\AttributeTok{N=}\NormalTok{N,}\AttributeTok{P=}\NormalTok{P,}\AttributeTok{D=}\NormalTok{D,}\AttributeTok{X=}\NormalTok{X, }\AttributeTok{n\_lam=}\DecValTok{6}\NormalTok{)}
-\NormalTok{param }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"lam"}\NormalTok{,}\StringTok{"Rho"}\NormalTok{,}\StringTok{"sd\_p"}\NormalTok{,}\StringTok{"M"}\NormalTok{,}\StringTok{"Sd\_d"}\NormalTok{,}
-           \StringTok{"log\_lik0"}\NormalTok{,}\StringTok{"dev"}\NormalTok{,}\StringTok{"log\_lik"}\NormalTok{)}
 
 \CommentTok{\# Fit the model}
 \NormalTok{fit }\OtherTok{\textless{}{-}}\NormalTok{ model}\SpecialCharTok{$}\FunctionTok{sample}\NormalTok{(}
@@ -4960,7 +4967,7 @@ Now we can compile and run the model
   \AttributeTok{iter\_sampling =} \DecValTok{6000}\NormalTok{,}
   \AttributeTok{adapt\_delta=}\FloatTok{0.99}\NormalTok{, }
   \AttributeTok{max\_treedepth =} \DecValTok{12}\NormalTok{,}
-  \AttributeTok{refresh =} \DecValTok{1} \CommentTok{\# print update every 500 iters}
+  \AttributeTok{refresh =} \DecValTok{100} 
 \NormalTok{)}
 
 \CommentTok{\# Save the resulting model fit}
@@ -4968,10 +4975,10 @@ Now we can compile and run the model
 \end{Highlighting}
 \end{Shaded}
 
-The model took about 5 hours to sample and the resulting files are
-enormous -- on the order of 2.5GB each. Fortunately we are able to
-selectively load only the draws from variables we're directly interested
-in, so we have no problem just working in memory.
+The model took about 5 hours to sample and the resulting .csv files
+containing the MCMC samples are large -- on the order of 2.5GB each.
+Fortunately we are able to selectively load only the draws from
+variables we're interested in, so we have no problem working in memory.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -5000,17 +5007,30 @@ Now we can explore the results. One important point is that we can
 interpret the Stan model's estimates of the correlation coefficient
 between the two factors directly as covariances (IE analogous to the
 true parameter simulated with lavaan), because we fixed the factor
-standard deviations to be equal to 1. IE because our sigmas are both
-equal to 1, this equation:
-\(\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}\)
+standard deviations to be equal to 1. Put differently, because our
+sigmas are both equal to 1, this equation:
 
-Just becomes this: \(\rho(X, Y) = \text{Cov}(X, Y)\)
+\$\$
+
+\begin{aligned}
+\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}
+\end{aligned}
+
+\$\$
+
+Just becomes this: \$\$
+
+\begin{aligned}
+\rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 * 1} = \text{Cov}(X, Y)
+\end{aligned}
+
+\$\$
 
 We're interested in the loadings and the between-factor covariance. So
 we can wrangle the MCMC samples for those variables and plot them to
-look at the estimated posteriers. Based on this plot it looks like the
-model did pretty well -- the posterior peak is close to the true value
-for all of the loadings:
+look at the estimated posteriers. First let's look at the loadings.
+Based on this plot it looks like the model did pretty well -- the
+posterior peak is close to the true value for all of the loadings:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -5018,7 +5038,7 @@ for all of the loadings:
 \NormalTok{draws }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\StringTok{"fits/b07.02.samples.rds"}\NormalTok{)}
 
 \CommentTok{\# Plot}
-\NormalTok{draws }\SpecialCharTok{|\textgreater{}}
+\NormalTok{dplt }\OtherTok{\textless{}{-}}\NormalTok{ draws }\SpecialCharTok{|\textgreater{}}
 
   \CommentTok{\# Get the raw draws for the factor loadings and the beween{-}factor correlation coefficient}
   \FunctionTok{gather\_draws}\NormalTok{(}
@@ -5051,7 +5071,11 @@ for all of the loadings:
 \NormalTok{    .variable }\SpecialCharTok{==} \StringTok{"Loading for m5"} \SpecialCharTok{\textasciitilde{}}\NormalTok{ .}\DecValTok{2}\NormalTok{,}
 \NormalTok{    .variable }\SpecialCharTok{==} \StringTok{"Loading for m6"} \SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\NormalTok{.}\DecValTok{4}\NormalTok{,}
 \NormalTok{    .variable }\SpecialCharTok{==} \StringTok{"Covariance for f1 \textasciitilde{} f2"} \SpecialCharTok{\textasciitilde{}}\NormalTok{ .}\DecValTok{4}
-\NormalTok{  )) }\SpecialCharTok{|\textgreater{}}
+\NormalTok{  )) }
+
+\NormalTok{dplt }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{filter}\NormalTok{(.variable }\SpecialCharTok{!=} \StringTok{"Covariance for f1 \textasciitilde{} f2"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
 
   \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ .value, }\AttributeTok{fill =}\NormalTok{ .variable)) }\SpecialCharTok{+}
   \FunctionTok{stat\_halfeye}\NormalTok{(}\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
@@ -5061,7 +5085,7 @@ for all of the loadings:
   \FunctionTok{guides}\NormalTok{(}\AttributeTok{fill =} \StringTok{"none"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"lab"}\NormalTok{,}
      \AttributeTok{y =} \ConstantTok{NULL}\NormalTok{)  }\SpecialCharTok{+}
-  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{.variable) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{.variable, }\AttributeTok{scales =} \StringTok{"free\_x"}\NormalTok{) }\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+} 
   \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{())}
 \end{Highlighting}
@@ -5069,36 +5093,63 @@ for all of the loadings:
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-draws-2-fac-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-loadings-2-fac-1.pdf}
 
 }
 
 \end{figure}
 
-In this exampe we can feel good about model performance because it
-successfully recovered the true simulation parameter estimates for the
-samples of interest. But in a real application where we don't know the
-true parameter values we would also want to look at the model
-convergence diagnostics such as rhat and effective number of samples.
-Here we see that we have rhats slightly greater than 1 for a few of the
-loadings and for rho. We also see that loading 4, loading 6, and rho
-have a pretty low number of effective samples. This is cause for
-concern, and in a real application I would probably increase the number
-of MCMC iterations to see if we can improve that sample size. The trace
-plots also look a bit weird at times for a few of the parameters, with
-some occasional spikes and some parts where one chain goes berzerk
-relative to the others. But overall they seem to show healthy mixing.
+The model also seems to have accurately recovered the true
+between-factor covariance, albeit with some unwholesome weirdness in the
+tail of its approximated posterior. This weirdness appears to be pulling
+the mean estimate upwards away from the true parameter estimate:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Create a summary table}
-\NormalTok{draws }\SpecialCharTok{|\textgreater{}}
+\NormalTok{dplt }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{filter}\NormalTok{(.variable }\SpecialCharTok{==} \StringTok{"Covariance for f1 \textasciitilde{} f2"}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ .value, }\AttributeTok{fill =}\NormalTok{ .variable)) }\SpecialCharTok{+}
+  \FunctionTok{stat\_halfeye}\NormalTok{(}\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{xintercept =}\NormalTok{ true\_loading), }\AttributeTok{linetype =} \DecValTok{2}\NormalTok{) }\SpecialCharTok{+} 
+  \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{0.015}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{0.015}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{guides}\NormalTok{(}\AttributeTok{fill =} \StringTok{"none"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"lab"}\NormalTok{,}
+     \AttributeTok{y =} \ConstantTok{NULL}\NormalTok{)  }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{.variable, }\AttributeTok{scales =} \StringTok{"free\_x"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+} 
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{())}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-cov-2-fac-1.pdf}
+
+}
+
+\end{figure}
+
+We can also look at the MCMC convergence diagnostics such as rhat and
+effective number of samples. Here we see that we have rhats slightly
+greater than 1 for a few of the loadings and for rho. We also see that
+loading 4, loading 6, and rho have a pretty low number of effective
+samples. This is cause for concern, and in a real application I would
+probably increase the number of MCMC iterations to see if we can improve
+that effective sample size, and if that failed then I would think of
+ways to reparameterize the model.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{draws }\SpecialCharTok{|\textgreater{}} 
 
   \FunctionTok{summary}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
 
   \FunctionTok{select}\NormalTok{(variable, rhat, ess\_bulk, ess\_tail) }\SpecialCharTok{|\textgreater{}}
 
-  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), }\SpecialCharTok{\textasciitilde{}}\FunctionTok{round}\NormalTok{(., }\DecValTok{2}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), }\SpecialCharTok{\textasciitilde{}}\FunctionTok{round}\NormalTok{(.x, }\DecValTok{2}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
 
 \NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
 \end{Highlighting}
@@ -5119,35 +5170,53 @@ Rho{[}2,1{]} & 1.02 & 294.12 & 124.70 \\
 \bottomrule()
 \end{longtable}
 
+The trace plots seem healthy overall, albeit with some occasional spikes
+and some parts where one chain goes berzerk relative to the others.
+Chain 4 for the between-factor correlation seems especially problematic,
+with it following a strange trajectory during its final iterations.
+Perhaps this explains why that variable has the highest rhat and
+displays some irregularity in the tail of its approximated posterior.
+Still, even for that parameter the chains seem generally healthy
+overall.
+
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Look at traceplots}
-\CommentTok{\# fit |\textgreater{} }
+\CommentTok{\# Create a summary table}
+\NormalTok{draws }\SpecialCharTok{|\textgreater{}}
 
-\CommentTok{\#  bayesplot::mcmc\_trace()}
+\NormalTok{  bayesplot}\SpecialCharTok{::}\FunctionTok{mcmc\_trace}\NormalTok{() }\SpecialCharTok{+} 
+  \FunctionTok{scale\_color\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"blue"}\NormalTok{, }\StringTok{"red"}\NormalTok{, }\StringTok{"orange"}\NormalTok{, }\StringTok{"mediumorchid"}\NormalTok{)) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}
+    \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{()}
+\NormalTok{  )}
 \end{Highlighting}
 \end{Shaded}
 
-Or instead we can go with \{\{blavaan\}\}. The model fits way faster
-than under the raw Stan approach and recovers the true parameter
-estimates, but is less flexible overall. Crucially for the present
-analysis, there is no way to do survival analysis with \{\{blavaan\}\}.
+Overall we can feel ok about the model's performance here because it
+recovered the true parameter values fairly well, but the MCMC
+convergence checks suggest our chains were not totally happy.
 
-But for posterity, below is the syntax we would use to fit the model
-with \{\{blavaan\}\}. If we specify \texttt{mcmcfile\ =\ TRUE} then the
-resulting Stan file gets written to a new directory called
-\texttt{lavExport}, or we can supply a filepath as the argument in which
-case the Stan file will get written there. The file is very large (over
-1000 lines) and confusing, I think because it is precompiled to handle
-any possible model you could specify in R. So it doesn't seem practical
-to really get in there and customize things directly. The Stan
-documentation includes
+One last thing before moving on: as mentioned above, we could have
+simply used the blavaan package to fit this model instead of fussing
+with custom Stan code. The blavaan version fits way faster and recovers
+the true parameter estimates, but it is less flexible overall. And
+again, crucially for the present analysis, there is no way to do
+survival analysis with blavaan. But for posterity, below is the syntax
+we would use to fit the model with blavaan. If we specify
+\texttt{mcmcfile\ =\ TRUE} then the resulting Stan file gets written to
+a new directory called \texttt{lavExport}, or we can supply a filepath
+as the argument in which case the Stan file will get written there. The
+file is very large (over 1000 lines) and confusing, I think because it
+is precompiled to handle any possible model you could specify in R. The
+Stan documentation includes
 \href{https://mc-stan.org/users/documentation/case-studies/sem.html\#Confirmatory_Factor_Analysis_(CFA)}{an
 example for specifying custom priors in a blavaan model}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# Fit the model}
+\CommentTok{\# Fit the model using the same lavaan{-}syntax model use used above to simulate the dataset}
 \NormalTok{blavfit}\FloatTok{.1} \OtherTok{\textless{}{-}} \FunctionTok{bcfa}\NormalTok{(correlated.factors.model, }\AttributeTok{data=}\NormalTok{fake\_dat, }\AttributeTok{mcmcfile =}\NormalTok{ T)}
 
 \CommentTok{\# Gaze at parameter estimates}
@@ -5158,25 +5227,31 @@ example for specifying custom priors in a blavaan model}
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{third-example-mtmm}{%
-\section{Third Example: MTMM}\label{third-example-mtmm}}
+\hypertarget{bayesian-cfa-with-custom-covariance-structure}{%
+\section{Bayesian CFA with Custom Covariance
+Structure}\label{bayesian-cfa-with-custom-covariance-structure}}
 
-In the previous section we moved beyond \{\{brms\}\} into raw Stan,
-which allowed us to estimate the correlation between latent variables.
-But often in latent variable modelling we also want to account for the
-possibility that certain measured variables are confounded by unmeasured
-features. And rather than declaring a new factor for these unmeasured
-features, it can be simpler to estimate a covariance term for these
-measured variables in the variance-covariance matrix of the shared
-multivariable likelihood function. So now the off-diagonals are not
-entirely 0. This is what Brown (2006) calls a `correlated uniqueness
+In the previous section we moved beyond brms into raw Stan, which
+allowed us to estimate the correlation between latent variables. But
+often in latent variable modelling we also want to account for the
+possibility that certain measured variables are confounded by some
+shared unmeasured influences. One way to address this is to add another
+factor to the model to account for these unmeasured influences, but it
+can be simpler to just estimate a covariance term for those measured
+variables. This is what Brown (2006) calls a `correlated uniqueness
 model'. I have more detailed notes on these ideas in
-Chapter~\ref{sec-mtmm}. For example, say we have two latent factors each
-with 3 measurements. We're worried that the first measurement of each
-variable (m1 and m4) are confounded because they were both collected by
+Chapter~\ref{sec-mtmm}.
+
+As an example of this scenario, we can imagine that the measured
+variables m1 and m4 are confounded because they were both collected by
 participant survey, while the other four measures were each collected by
-different means. Here's the updated model, with the new parameter
-highlighted in blue:
+different means. To reflect this change in the model, we need to change
+the specification of the variance-covariance matrix of the shared
+multivariable likelihood of the measured variables: where before all of
+the off-diagonal elements were fixed at 0, now we need the off-diagonals
+representing the covariance between m1 and m4 to be freely estimated.
+
+Here's the updated model, with the new parameter highlighted in orange:
 
 \[
 \begin{aligned}
@@ -5225,22 +5300,65 @@ m_{6}
 \\
 \Sigma_m &=
 \begin{bmatrix}
-\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+\sigma_{m1}^2 & 0 & 0 & \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
 0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
 0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
-\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
 0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
 \end{aligned}
 \]
 
-We can simulate data from this DAG using \{\{lavaan\}\} like we did for
-the two models above.
+We can simulate data from this DAG using lavaan like we did for the two
+models above, updating the syntax to give m1 and m4 a covariance of .4:
 
-First we'll need to add a new parameter to our Stan model to account for
-the possibility of shared method confounding. This only involves a few
-changes, namely:
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Declare the new lavaan model where m1 and m4 covary}
+\NormalTok{mtmm.model }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{} }
+\StringTok{  f1 =\textasciitilde{} .8*m1 + .6*m2 + .9*m3}
+\StringTok{  f2 =\textasciitilde{} .1*m4 + .2*m5 + {-}.4*m6}
+\StringTok{  f1 \textasciitilde{}\textasciitilde{} .4*f2}
+\StringTok{  m1 \textasciitilde{}\textasciitilde{} .4*m4}
+\StringTok{\textquotesingle{}}
+
+\CommentTok{\# Simulate data from the lavaan model}
+\NormalTok{fake\_dat }\OtherTok{\textless{}{-}}\NormalTok{ lavaan}\SpecialCharTok{::}\FunctionTok{simulateData}\NormalTok{(}\AttributeTok{model =}\NormalTok{ mtmm.model, }\AttributeTok{sample.nobs =} \DecValTok{4000}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+We'll also need to add a new parameter to our Stan model to account for
+the possibility that m1 and m4 covary. This only involves a few changes,
+namely:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Parameters Block}: declare a matrix \texttt{L\_corr\_m1\_m4}
+  to represent the Cholesky factorization of a correlation matrix
+  between m1 and m4;
+\item
+  \textbf{Transformed Parameters Block}: declare the Cholesky
+  factorization of a covariance matrix \texttt{L\_Sigma\_m1\_m4} and
+  populate it by matrix-multiplying the standard deviations of m1 and m4
+  with the Cholesky factorization of the correlation matrix declared
+  above;
+\item
+  \textbf{Model Block}:, declare m1 and m4 as drawn from a shared
+  bivariate normal distribution separate from the other measured
+  variables. This is equivalent to declaring all measured variales as
+  drawn from a shared distribution like in the mathematical rendering of
+  the model shown above, but it is simpler to implement. We can use the
+  Cholesky factorization of a multivariate normal distribution, with the
+  vector of the mu estimates of m1 and m4 as the mean vector, and the
+  Cholesky factorization of the covariance matrix
+  \texttt{L\_Sigma\_m1\_m4} we declared above as the covariance matrix.
+\item
+  \textbf{Generated Quantities Block}: pull out the correlation
+  parameter for m1 and m4 from the estimated variance covariance matrix
+  so we can analyze it.
+\end{itemize}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -5365,17 +5483,6 @@ Now we can compile and run the model:
 \CommentTok{\# Compile the model from the Stan file}
 \NormalTok{model }\OtherTok{\textless{}{-}}\NormalTok{ cmdstanr}\SpecialCharTok{::}\FunctionTok{cmdstan\_model}\NormalTok{(stan\_file)}
 
-\CommentTok{\# Declare the new lavaan model where m1 and m4 covary}
-\NormalTok{mtmm.model }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{} }
-\StringTok{  f1 =\textasciitilde{} .8*m1 + .6*m2 + .9*m3}
-\StringTok{  f2 =\textasciitilde{} .1*m4 + .2*m5 + {-}.4*m6}
-\StringTok{  f1 \textasciitilde{}\textasciitilde{} .4*f2}
-\StringTok{  m1 \textasciitilde{}\textasciitilde{} .4*m4}
-\StringTok{\textquotesingle{}}
-
-\CommentTok{\# Simulate data from the lavaan model}
-\NormalTok{fake\_dat }\OtherTok{\textless{}{-}}\NormalTok{ lavaan}\SpecialCharTok{::}\FunctionTok{simulateData}\NormalTok{(}\AttributeTok{model =}\NormalTok{ mtmm.model, }\AttributeTok{sample.nobs =} \DecValTok{4000}\NormalTok{)}
-
 \CommentTok{\# Put the data into a list format Stan can understand}
 \NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{as.matrix}\NormalTok{(fake\_dat)}
 \NormalTok{P }\OtherTok{\textless{}{-}} \FunctionTok{ncol}\NormalTok{(fake\_dat) }
@@ -5392,9 +5499,7 @@ Now we can compile and run the model:
   \AttributeTok{parallel\_chains =} \DecValTok{4}\NormalTok{,}
   \AttributeTok{iter\_warmup =} \DecValTok{1000}\NormalTok{,}
   \AttributeTok{iter\_sampling =} \DecValTok{6000}\NormalTok{,}
- \CommentTok{\# adapt\_delta=0.99, }
- \CommentTok{\# max\_treedepth = 12,}
-  \AttributeTok{refresh =} \DecValTok{1} \CommentTok{\# print update at each iter}
+  \AttributeTok{refresh =} \DecValTok{100} 
 \NormalTok{)}
 
 \CommentTok{\# Save the resulting model fit}
@@ -5429,16 +5534,16 @@ only contain the draws of substantive interest.
 \end{Highlighting}
 \end{Shaded}
 
-How did that go? We can plot the draws and look at the MCMC diagnostics
-like we did above.
+How did that go? It looks like the model did a good job recovering the
+true loadings:
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{\# Load the draws saved in the previous block}
 \NormalTok{draws }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\StringTok{"fits/b07.03.samples.rds"}\NormalTok{)}
 
-\CommentTok{\# Plot}
-\NormalTok{draws }\SpecialCharTok{|\textgreater{}}
+\CommentTok{\# Prepare the data for plotting}
+\NormalTok{dplt }\OtherTok{\textless{}{-}}\NormalTok{ draws }\SpecialCharTok{|\textgreater{}}
 
   \CommentTok{\# Get the raw draws for the factor loadings and the beween{-}factor correlation coefficient}
   \FunctionTok{gather\_draws}\NormalTok{(}
@@ -5474,7 +5579,43 @@ like we did above.
 \NormalTok{    .variable }\SpecialCharTok{==} \StringTok{"Loading for m6"} \SpecialCharTok{\textasciitilde{}} \SpecialCharTok{{-}}\NormalTok{.}\DecValTok{4}\NormalTok{,}
 \NormalTok{    .variable }\SpecialCharTok{==} \StringTok{"Covariance for f1 \textasciitilde{} f2"} \SpecialCharTok{\textasciitilde{}}\NormalTok{ .}\DecValTok{4}\NormalTok{,}
 \NormalTok{    .variable }\SpecialCharTok{==} \StringTok{"Covariance for m1 \textasciitilde{} m4"} \SpecialCharTok{\textasciitilde{}}\NormalTok{ .}\DecValTok{4}
-\NormalTok{  )) }\SpecialCharTok{|\textgreater{}}
+\NormalTok{  )) }
+
+\CommentTok{\# Plot the loadings}
+\NormalTok{dplt }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\NormalTok{.variable }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"Covariance for f1 \textasciitilde{} f2"}\NormalTok{, }\StringTok{"Covariance for m1 \textasciitilde{} m4"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ .value, }\AttributeTok{fill =}\NormalTok{ .variable)) }\SpecialCharTok{+}
+  \FunctionTok{stat\_halfeye}\NormalTok{(}\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{xintercept =}\NormalTok{ true\_loading), }\AttributeTok{linetype =} \DecValTok{2}\NormalTok{) }\SpecialCharTok{+} 
+  \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{0.015}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\FloatTok{0.015}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{guides}\NormalTok{(}\AttributeTok{fill =} \StringTok{"none"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"lab"}\NormalTok{,}
+     \AttributeTok{y =} \ConstantTok{NULL}\NormalTok{)  }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{.variable, }\AttributeTok{scales =} \StringTok{"free\_x"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+} 
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{())}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-draws-mtmm-loadings-1.pdf}
+
+}
+
+\end{figure}
+
+And things are looking good for the covariance terms as well:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Plot the covariance stuff}
+\NormalTok{dplt }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{filter}\NormalTok{(.variable }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"Covariance for f1 \textasciitilde{} f2"}\NormalTok{, }\StringTok{"Covariance for m1 \textasciitilde{} m4"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
 
   \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ .value, }\AttributeTok{fill =}\NormalTok{ .variable)) }\SpecialCharTok{+}
   \FunctionTok{stat\_halfeye}\NormalTok{(}\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{) }\SpecialCharTok{+}
@@ -5486,35 +5627,84 @@ like we did above.
      \AttributeTok{y =} \ConstantTok{NULL}\NormalTok{)  }\SpecialCharTok{+}
   \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{.variable) }\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+} 
-  \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{())}
+  \FunctionTok{theme}\NormalTok{(}
+    \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{()}
+\NormalTok{  )}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-16-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-draws-mtmm-covar-1.pdf}
 
 }
 
 \end{figure}
 
+Out of curiosity we can also check the MCMC diagnostics. The Rhats and
+effective sample sizes are looking a bit healthier than the previous
+model, which is interesting considering we've made the model more
+complex by adding a new parameter.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{draws }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{summary}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{select}\NormalTok{(variable, rhat, ess\_bulk, ess\_tail) }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{mutate}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{where}\NormalTok{(is.numeric), }\SpecialCharTok{\textasciitilde{}}\FunctionTok{round}\NormalTok{(.x, }\DecValTok{2}\NormalTok{))) }\SpecialCharTok{|\textgreater{}}
+
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\toprule()
+variable & rhat & ess\_bulk & ess\_tail \\
+\midrule()
+\endhead
+lam{[}1,1{]} & 1.00 & 4652.90 & 9876.69 \\
+lam{[}2,1{]} & 1.00 & 13721.92 & 17472.99 \\
+lam{[}3,1{]} & 1.00 & 3707.37 & 6725.97 \\
+lam{[}4,2{]} & 1.00 & 4983.17 & 10820.66 \\
+lam{[}5,2{]} & 1.00 & 4287.63 & 8968.60 \\
+lam{[}6,2{]} & 1.01 & 537.83 & 956.49 \\
+Rho\_factors{[}2,1{]} & 1.01 & 400.12 & 569.74 \\
+Rho\_m1\_m4{[}2,1{]} & 1.00 & 8851.63 & 14678.11 \\
+\bottomrule()
+\end{longtable}
+
+The trace plots also look generally healthy, albeit exhibiting a few of
+the same big spikes we saw in the previous example.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{draws }\SpecialCharTok{|\textgreater{}}
+
+\NormalTok{  bayesplot}\SpecialCharTok{::}\FunctionTok{mcmc\_trace}\NormalTok{() }\SpecialCharTok{+} 
+  \FunctionTok{scale\_color\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"blue"}\NormalTok{, }\StringTok{"red"}\NormalTok{, }\StringTok{"orange"}\NormalTok{, }\StringTok{"mediumorchid"}\NormalTok{)) }\SpecialCharTok{+} 
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}
+    \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{()}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
 \hypertarget{fourth-example-survival-analysis}{%
 \section{Fourth Example: Survival
 Analysis}\label{fourth-example-survival-analysis}}
 
-Now that we're confident our measurement model for the correlated
-factors is well-specified, we can move on to modelling the outcome of
-interest: time to employment. Let's say our client has designed two
-scales for measuring the latent features `Adaptability' \texttt{adapt}
-and `Collaboration Skills' \texttt{collab}, which are thought to be
-correlated but distinct constructs. Each is measured by 3 instruments,
-and as above we assume \texttt{m1} and \texttt{m4} are confounded by
-their shared measurement approach, so we estimate their residual
-covariance to account for this.
+Now that we're confident our CFA MTMM Stan model is well-specified, we
+can graft it onto the substantive regression model for the outcome of
+interest: time to employment.
 
-The updated model is shown below. The only change from the MTMM model
-above is the two top lines: now we imagine time-to-event \(T\) for each
-person \(i\) to be drawn from a shared Weibull distribution, whose
+The updated model is shown below. All we've done is add two new lines at
+the top of the model. These lines say we imagine time-to-event \(T\) for
+each person \(i\) to be drawn from a shared Weibull distribution, whose
 location parameter is a linear model of the latent factors
 \(\text{adapt}\) and \(\text{collab}\), as well as other measured
 variables in the matrix \(\mathbf{X}\), each with its own coefficient in
@@ -5523,8 +5713,8 @@ the vector \(\boldsymbol{\beta}\).
 \$\$
 
 \begin{aligned}
-\color{orange}T_i &\color{orange}\sim \text{Weibull}(\theta_i, k) \\
-\color{orange}\theta_i &\color{orange}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
+\color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
+\color{teal}\theta_i &\color{teal}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
 \\
 \begin{bmatrix}
 m_{1} \\
@@ -5571,10 +5761,10 @@ m_{6}
 \\
 \Sigma_m &=
 \begin{bmatrix}
-\sigma_{m1}^2 & 0 & 0 & \color{teal}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+\sigma_{m1}^2 & 0 & 0 & \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
 0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
 0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
-\color{teal}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
 0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
@@ -5593,21 +5783,22 @@ Accelerated Failure Time regression, which gives us flexibility in how
 we communicate about the parameter estimates, and allows us to not worry
 too much about the proportional hazards assumption.
 
-\hypertarget{simulating-data}{%
-\subsection{Simulating data}\label{simulating-data}}
+\hypertarget{data-simulation-and-validation}{%
+\subsection{Data Simulation and
+Validation}\label{data-simulation-and-validation}}
 
-For this final section we won't be able to rely on
+Unlike in previous sections, here we won't be able to rely on
 \texttt{lavaan::simulateData()} to create our simulated data, because it
 can't generate time-to-event data. So we'll need to generate the data
 ourselves.
 \href{https://scholar.google.com/citations?user=s2LhwXAAAAAJ\&hl=en}{Mark
 Lai} has shared
 \href{https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html\#full-example-of-a-small-scale-simulation}{some
-nice code} to do this, so we can take his approach, adapting it slightly
-allow for covariance between m1 and m4 as in the MTMM model above. For
-now we'll simulate the measured variables as continuous and gaussian,
-even though it is more realistic that in this context they would be
-ordinal likert-style.
+nice code} to do this. I use his approach, adapting it slightly allow
+for covariance between m1 and m4 as in the MTMM model above. For now
+we'll simulate the measured variables as continuous and gaussian, even
+though it is more realistic that in this context they would be ordinal
+likert-style.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -5656,11 +5847,13 @@ ordinal likert-style.
 Now we have our `measured' variables, simulated according to our chosen
 factor loadings and error structure. Just to be safe, let's make sure
 lavaan can recover the true parameter estimates. We need to specify
-\texttt{std.lv\ =\ TRUE} to override lavaan's default behaviour of
-setting the first loading of each factor to 1 and instead fix the
-variances of the latent variables to 1, or else it doesn't return the
-true simulated parameter estimates because the scales of the latent
-variables get messed up. Looks like everything works fine:
+\texttt{std.lv\ =\ TRUE} to override lavaan's default behaviour of using
+the marker variable approach for identifiability, and instead fix the
+variances of the latent variables to 1. If we don't do this then the
+model doesn't return the true simulated parameter estimates because the
+scales of the latent variables get messed up. Looks like lavaan can
+recover the true parameter estimates, which means our data simulation
+code does what we think it does:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -5693,31 +5886,30 @@ variables get messed up. Looks like everything works fine:
 term & estimate \\
 \midrule()
 \endhead
-f1 =\textasciitilde{} m1 & 0.8198281 \\
-f1 =\textasciitilde{} m2 & 0.5955132 \\
-f1 =\textasciitilde{} m3 & 0.8536641 \\
-f2 =\textasciitilde{} m4 & 0.0607140 \\
-f2 =\textasciitilde{} m5 & 0.2400272 \\
-f2 =\textasciitilde{} m6 & -0.3620342 \\
+f1 =\textasciitilde{} m1 & 0.8031530 \\
+f1 =\textasciitilde{} m2 & 0.5989194 \\
+f1 =\textasciitilde{} m3 & 0.9033436 \\
+f2 =\textasciitilde{} m4 & 0.1157250 \\
+f2 =\textasciitilde{} m5 & 0.2158621 \\
+f2 =\textasciitilde{} m6 & -0.3541507 \\
 f1 \textasciitilde\textasciitilde{} f1 & 1.0000000 \\
 f2 \textasciitilde\textasciitilde{} f2 & 1.0000000 \\
-m1 \textasciitilde\textasciitilde{} m4 & 0.3656692 \\
-m1 \textasciitilde\textasciitilde{} m1 & 0.9434914 \\
-m2 \textasciitilde\textasciitilde{} m2 & 0.9865352 \\
-m3 \textasciitilde\textasciitilde{} m3 & 1.0540411 \\
-m4 \textasciitilde\textasciitilde{} m4 & 0.9873786 \\
-m5 \textasciitilde\textasciitilde{} m5 & 0.9413584 \\
-m6 \textasciitilde\textasciitilde{} m6 & 1.0233323 \\
-f1 \textasciitilde\textasciitilde{} f2 & 0.3438123 \\
+m1 \textasciitilde\textasciitilde{} m4 & 0.4022579 \\
+m1 \textasciitilde\textasciitilde{} m1 & 0.9769983 \\
+m2 \textasciitilde\textasciitilde{} m2 & 1.0156702 \\
+m3 \textasciitilde\textasciitilde{} m3 & 0.9648986 \\
+m4 \textasciitilde\textasciitilde{} m4 & 1.0062068 \\
+m5 \textasciitilde\textasciitilde{} m5 & 1.0382976 \\
+m6 \textasciitilde\textasciitilde{} m6 & 1.0372607 \\
+f1 \textasciitilde\textasciitilde{} f2 & 0.5369498 \\
 \bottomrule()
 \end{longtable}
 
-Now that we have the factor scores and their measured manifestations, we
-can simulate the demographic variables and time-to-event data and add
-them to the dataset. We can draw the covariates straightforwardly from
-the relevent distributions, but the times-to-event will require a bit
-more thought. There are existing packages for simulating survival data
-in R (such as
+Now we can simulate the demographic variables and time-to-event data
+using the CFA data we simulated above. We can draw the covariates
+straightforwardly from the relevent distributions, but the
+times-to-event will require a bit more thought. There are existing
+packages for simulating survival data in R (such as
 \href{https://cran.r-project.org/web/packages/simsurv/vignettes/simsurv_usage.html}{simsurv}
 by Sam Brilleman of rstanarm fame!) but since we're taking an explicit
 approach for the latent variables this time, it's nice to continue in
@@ -5745,7 +5937,7 @@ f(x; k, \lambda) = \begin{cases}
 
 \$\$
 
-And its cumulative density function is given by:
+And its cumulative density function given by:
 
 \$\$
 
@@ -5806,8 +5998,7 @@ h(t | \mathbf{X}) = h_0(t) \exp(\mathbf{\beta}' \mathbf{X})
 
 So we can take the definition of the Weibull cumulative hazard function
 we found above and substitute it into this equation, then take its
-negative exp to get it back in terms of the survival function, which is
-what we actually want to be sampling event times from:
+negative exp to get it back in terms of the survival function:
 
 \$\$
 
@@ -5844,7 +6035,7 @@ So we can just take the whole denominator and call it its own new thing
 
 \$\$
 
-So now we've snuck our linear model into the classic no-model definition
+Thus we've snuck our linear model into the classic no-model definition
 of the Weibull survival function we saw above, just with \(\lambda'\)
 instead of \(\lambda\):
 
@@ -5860,15 +6051,13 @@ This is the parameterization we can implement when we go to create our
 event times. We'll also imagine censoring times to be drawn from an
 unconditional exponential distribution, which creates non-informative
 censoring. We'll generate an event time and a censoring time for each
-person, and a person's status will be the shorter of those two times.
-
-We can start by choosing values for the Weibull distribution's
-\texttt{rho} and \texttt{lambda} parameters that generate a
-realistic-seeming distribution of times-to-employment in the absence of
-a linear model. This is simpler conceptually if we define
-\texttt{rho\ =\ 1}. After some trial and error I settled on
-\texttt{lambda\ =\ .02}, which results in a mean time-to-employment of
-22 days, as shown in the plot below.
+person, and a person's status will be the shorter of those two times. We
+can start by choosing values for the Weibull distribution's \texttt{rho}
+and \texttt{lambda} parameters that generate a realistic-seeming
+distribution of times-to-employment in the absence of a linear model.
+This is simpler conceptually if we define \texttt{rho\ =\ 1}. After some
+trial and error I settled on \texttt{lambda\ =\ .02}, which results in a
+mean time-to-employment of 22 days in the simulated dataset.
 
 Now we can choose the simulated parameter estimates for the linear
 model. There's some tricky conversion we need to do to interpret our
@@ -5967,8 +6156,19 @@ same way for the other parameter estimates.
 \NormalTok{    time\_event,}
 \NormalTok{    time\_censor}
 \NormalTok{  ))}
+
+\NormalTok{fake\_dat }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{summarize}\NormalTok{(}\AttributeTok{what =} \FunctionTok{mean}\NormalTok{(time))}
 \end{Highlighting}
 \end{Shaded}
+
+\begin{verbatim}
+# A tibble: 1 x 1
+   what
+  <dbl>
+1  21.7
+\end{verbatim}
 
 If we've done everything correctly then a basic survival analysis should
 be able to recover the true parameter estimates using the true model
@@ -5976,133 +6176,144 @@ specification. Indeed, this is what we see:
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\CommentTok{\# Create the surv object}
 \NormalTok{surv\_object }\OtherTok{\textless{}{-}} \FunctionTok{Surv}\NormalTok{(fake\_dat}\SpecialCharTok{$}\NormalTok{time, fake\_dat}\SpecialCharTok{$}\NormalTok{status)}
 
+\CommentTok{\# Fit the model using the surv object}
 \NormalTok{test }\OtherTok{\textless{}{-}} \FunctionTok{survreg}\NormalTok{(surv\_object }\SpecialCharTok{\textasciitilde{}}\NormalTok{ adapt }\SpecialCharTok{+}\NormalTok{ collab }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ ei\_status, }\AttributeTok{data=}\NormalTok{fake\_dat, }\AttributeTok{dist=}\StringTok{\textquotesingle{}weibull\textquotesingle{}}\NormalTok{)}
 
-\NormalTok{test }\SpecialCharTok{|\textgreater{}} 
+\CommentTok{\# Wrangle and plot}
+\NormalTok{tidied\_results }\OtherTok{\textless{}{-}}\NormalTok{ test }\SpecialCharTok{|\textgreater{}} 
+  
+\NormalTok{  broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{|\textgreater{}}
 
-\NormalTok{  broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{() }\SpecialCharTok{|\textgreater{}} 
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{estimate =} \FunctionTok{exp}\NormalTok{(estimate),}
+    \AttributeTok{conf.low =} \FunctionTok{exp}\NormalTok{(conf.low),}
+    \AttributeTok{conf.high =} \FunctionTok{exp}\NormalTok{(conf.high)}
+\NormalTok{  ) }\SpecialCharTok{|\textgreater{}}
 
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{estimate =} \FunctionTok{exp}\NormalTok{(estimate)) }\SpecialCharTok{|\textgreater{}}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\NormalTok{term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"(Intercept)"}\NormalTok{, }\StringTok{"Log(scale)"}\NormalTok{)) }\SpecialCharTok{|\textgreater{}}
 
-\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{true\_loading =} \FunctionTok{case\_when}\NormalTok{(}
+\NormalTok{    term }\SpecialCharTok{==} \StringTok{"age"} \SpecialCharTok{\textasciitilde{}} \FloatTok{1.11}\NormalTok{,}
+\NormalTok{    term }\SpecialCharTok{==} \StringTok{"collab"} \SpecialCharTok{\textasciitilde{}} \FloatTok{0.833}\NormalTok{,}
+\NormalTok{    term }\SpecialCharTok{==} \StringTok{"adapt"} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{,}
+\NormalTok{    term }\SpecialCharTok{==} \StringTok{"ei\_status"} \SpecialCharTok{\textasciitilde{}} \FloatTok{0.5}
+\NormalTok{  )) }\SpecialCharTok{|\textgreater{}}
+
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \FunctionTok{reorder}\NormalTok{(term, }\SpecialCharTok{{-}}\NormalTok{estimate), }\AttributeTok{y =}\NormalTok{ estimate)) }\SpecialCharTok{+}
+    \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{geom\_linerange}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ conf.low, }\AttributeTok{ymax =}\NormalTok{ conf.high), }\AttributeTok{size =} \DecValTok{2}\NormalTok{, }\AttributeTok{colour =}   \StringTok{"cornflowerblue"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{size =} \DecValTok{5}\NormalTok{, }\AttributeTok{colour =} \StringTok{"cornflowerblue"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{geom\_point}\NormalTok{(}\AttributeTok{size =} \DecValTok{3}\NormalTok{, }\AttributeTok{color =} \StringTok{"white"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{geom\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ term, }\AttributeTok{y =}\NormalTok{ true\_loading), }\AttributeTok{colour =} \StringTok{"red4"}\NormalTok{, }\AttributeTok{size =} \DecValTok{5}\NormalTok{, }\AttributeTok{shape =}  \DecValTok{13}\NormalTok{, }\AttributeTok{stroke =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{coord\_flip}\NormalTok{() }\SpecialCharTok{+} 
+    \FunctionTok{labs}\NormalTok{(}
+      \AttributeTok{y =} \StringTok{"Estimate"}\NormalTok{,}
+      \AttributeTok{x =} \StringTok{"Variable"}
+\NormalTok{    ) }\SpecialCharTok{+}
+    \FunctionTok{theme\_minimal}\NormalTok{() }
 \end{Highlighting}
 \end{Shaded}
 
-\begin{longtable}[]{@{}lrrrr@{}}
-\toprule()
-term & estimate & std.error & statistic & p.value \\
-\midrule()
-\endhead
-(Intercept) & 51.7489593 & 0.0287406 & 137.311057 & 0.0000000 \\
-adapt & 0.9769938 & 0.0224345 & -1.037463 & 0.2995202 \\
-collab & 0.8443064 & 0.0220928 & -7.660400 & 0.0000000 \\
-age & 1.1248235 & 0.0205337 & 5.728433 & 0.0000000 \\
-ei\_status & 0.4880109 & 0.0408208 & -17.574783 & 0.0000000 \\
-Log(scale) & 0.9646958 & 0.0162162 & -2.216450 & 0.0266607 \\
-\bottomrule()
-\end{longtable}
-
-\hypertarget{exploratory-data-analysis.-report-the-scale-reliabilities}{%
-\subsection{Exploratory Data Analysis. Report the scale
-reliabilities?}\label{exploratory-data-analysis.-report-the-scale-reliabilities}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{km.full.sample }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(surv\_object }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ ei\_status, }\AttributeTok{data =}\NormalTok{ fake\_dat)}
-
-\NormalTok{survminer}\SpecialCharTok{::}\FunctionTok{ggsurvplot}\NormalTok{(}
-  \AttributeTok{fit =}\NormalTok{ km.full.sample,}
-  \AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{,}
-  \AttributeTok{risk.table =} \ConstantTok{TRUE}\NormalTok{,}
-  \AttributeTok{surv.median.line =} \StringTok{"v"}\NormalTok{,}
-  \AttributeTok{linetype =} \DecValTok{1}\NormalTok{,}
-  \AttributeTok{legend =} \StringTok{"none"}\NormalTok{,}
-  \CommentTok{\#  palette = c("cadetblue4"),}
-  \AttributeTok{title =} \StringTok{"Kaplan{-}Meier Estimated Survival Curve"}\NormalTok{,}
-  \AttributeTok{xlab =} \StringTok{""}\NormalTok{, }
-  \AttributeTok{ylab =} \StringTok{""}\NormalTok{,}
-  \AttributeTok{ggtheme =} \FunctionTok{theme\_bw}\NormalTok{()}
-\NormalTok{) }
-\end{Highlighting}
-\end{Shaded}
-
-\begin{figure}[H]
-
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-21-1.pdf}
-
-}
-
-\end{figure}
-
-For starters, we can plot the raw distribution of event times:
+We can also do some basic exploratory analysis of the data to make sure
+the event times make sense:
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{fake\_dat }\SpecialCharTok{|\textgreater{}}
 
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{mean =} \FunctionTok{mean}\NormalTok{(time)) }\SpecialCharTok{|\textgreater{}}
+
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+} 
-  \FunctionTok{geom\_density}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ time), }\AttributeTok{fill =} \StringTok{"mediumorchid"}\NormalTok{, }\AttributeTok{colour =} \StringTok{"black"}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{geom\_vline}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{xintercept =} \FunctionTok{mean}\NormalTok{(time)), }\AttributeTok{linetype =} \DecValTok{2}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_histogram}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ time), }\AttributeTok{colour =} \DecValTok{1}\NormalTok{, }\AttributeTok{fill =} \StringTok{"cornflowerblue"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{xintercept =}\NormalTok{ mean), }\AttributeTok{size =} \DecValTok{2}\NormalTok{, }\AttributeTok{linetype =} \DecValTok{2}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{limits =} \FunctionTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{180}\NormalTok{), }\AttributeTok{n.breaks =} \DecValTok{10}\NormalTok{, }\AttributeTok{expand=}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
   \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand=}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
-  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}
+    \AttributeTok{x =} \StringTok{"Days to Employment"}\NormalTok{,}
+    \AttributeTok{y =} \StringTok{"N Graduates"}
+\NormalTok{  ) }\SpecialCharTok{+}
+  \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{theme}\NormalTok{(}
-    \AttributeTok{axis.text.y =} \FunctionTok{element\_blank}\NormalTok{(),}
-    \AttributeTok{axis.ticks.y =} \FunctionTok{element\_blank}\NormalTok{()}
+    \AttributeTok{axis.ticks.y =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{(),}
+    \AttributeTok{axis.text.y =} \FunctionTok{element\_blank}\NormalTok{()}
 \NormalTok{  )}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-weibull-samples-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-raw-event-times-1.pdf}
 
 }
 
-\caption{Distribution of Weibull-distributed event times for all
-simulated participants. Vertical line shows the mean event time.}
+\caption{Histogram of times-to-event, including both events and
+censorings.}
 
 \end{figure}
 
-Stratified Kaplan Meier, etc?
-
-Now we'll adopt the conceit that the two factors \texttt{adapt} and
-\texttt{collab} are unmeasured, as would be the case in reality.
+And we can plot some stratified kaplan-meier curves to make sure
+parameter estimates mean what we think they mean. For example, we see
+that when we stratify by \texttt{ei\_status} those with
+\texttt{ei\_status\ ==\ TRUE} see faster estimated event times, which is
+what we intended when simulating the data:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{fake\_dat }\SpecialCharTok{|\textgreater{}}
+\NormalTok{km.object }\OtherTok{\textless{}{-}} \FunctionTok{survfit}\NormalTok{(surv\_object }\SpecialCharTok{\textasciitilde{}} \DecValTok{1} \SpecialCharTok{+}\NormalTok{ ei\_status, }\AttributeTok{data =}\NormalTok{ fake\_dat)}
 
-    \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+} 
-    \FunctionTok{geom\_density}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ time))}
+\NormalTok{plt }\OtherTok{\textless{}{-}}\NormalTok{ survminer}\SpecialCharTok{::}\FunctionTok{ggsurvplot}\NormalTok{(}
+  \AttributeTok{fit =}\NormalTok{ km.object,}
+  \AttributeTok{conf.int =} \ConstantTok{TRUE}\NormalTok{,}
+  \AttributeTok{risk.table =} \ConstantTok{FALSE}\NormalTok{,}
+  \AttributeTok{legend =} \StringTok{"none"}\NormalTok{,}
+  \AttributeTok{palette =} \FunctionTok{c}\NormalTok{(}\StringTok{"cornflowerblue"}\NormalTok{, }\StringTok{"mediumorchid"}\NormalTok{),}
+  \AttributeTok{title =} \StringTok{""}\NormalTok{,}
+  \AttributeTok{xlab =} \StringTok{"Days Since Graduation"}\NormalTok{, }
+  \AttributeTok{ylab =} \StringTok{"Proportion Unemployed"}\NormalTok{,}
+  \AttributeTok{ggtheme =} \FunctionTok{theme\_bw}\NormalTok{()}
+\NormalTok{)  }
+
+\NormalTok{plt}\SpecialCharTok{$}\NormalTok{plot }\SpecialCharTok{+}
+  \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{())}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-23-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/viz-km-weibull-1-1.pdf}
 
 }
+
+\caption{Kaplan-Meier estimated survival curves, stratified by EI
+Status.}
 
 \end{figure}
 
 \hypertarget{prior-predictive-simulation}{%
-\subsection*{Prior Predictive
+\subsection{Prior Predictive
 Simulation}\label{prior-predictive-simulation}}
-\addcontentsline{toc}{subsection}{Prior Predictive Simulation}
 
 Unlike the factor analysis models we fit above, this model has
-substantive predictors about which we have background knowledge. So we
-can use prior predictive simulation to specify informative priors. One
-convenient workflow for doing this is to write some simple code to
-simulate from the prior distributions of interest, then transform the
-simulated values to check whether the priors make sense on the scale of
-interest. Once we arrive at reasonable-seeming priors for all of the
-parameters, we can use \textbf{brms} to sample from the prior predictive
-distribution of event times and make sure everything is making sense.
+substantive predictor variables, namely \texttt{age},
+\texttt{ei\_status}, and the two latent variables \texttt{adapt} and
+\texttt{collab}. Based on previous research, we have a sense of the
+types of parameter estimates that seem realistic for these predictors.
+So can use prior predictive simulation to specify informative priors.
+Here's what we'll do: 1. Write some simple code to simulate from the
+prior distributions of interest; 2. Transform the simulated values to
+check whether the priors make sense on the scale of interest; 3. Once we
+arrive at reasonable-seeming priors for all of the parameters, we can
+use brms to simulate event times from the prior predictive distribution
+and make sure everything is making sense.
 
-The \textbf{brms} parameterization of the Weibull distribution
+The brms parameterization of the Weibull distribution
 \href{https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html}{is
 slightly different} than the one used in the \textbf{survival} package,
 with \textbf{brms} specifying a mean parameter as a function of the
@@ -6110,9 +6321,9 @@ scale and shape parameters of the more traditional parameterization:
 
 \$\$
 
+\begin{align*}
 s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
-
-\$\$
+\end{align*} \$\$
 
 So when we specify a prior for the intercept term in our Bayesian model,
 we're also specifying a prior for this transformation of the scale and
@@ -6120,20 +6331,21 @@ shape parameters under the traditional parameterization:
 
 \$\$
 
+\begin{align*}
 \mu = s \times \Gamma\left(1 + \frac{1}{\alpha}\right)
+\end{align*}
 
 \$\$
 
 I don't think this has any big implications: setting a prior for the
 intercept is more intuitive than setting a prior for the scale and shape
-parameters indivdually anyway.
+parameters indivdually anyway. We can copy this approach when we go to
+fit our Stan model.
 
-Now it's time to iteratively choose some priors, sample them, visualize
-their implications, and refine them to better reflect our background
-knowledge. A few points to keep in mind:
+Let's start with the prior for the intercept, specifying a prior on the
+raw `days-to-employment' scale because that helps keep things
+interpretable.
 
-We can start with the intercept, specifying a prior on the raw
-`days-to-employment' scale because that helps keep things interpretable.
 Based on previous studies I've done at my work, an average
 time-to-employment of 30 days seems reasonable, and an average higher
 than 60 days seems very unlikely. After much trial and error with the
@@ -6160,7 +6372,7 @@ characteristics:
 \end{Shaded}
 
 \begin{verbatim}
-[1] 29.46707
+[1] 29.47964
 \end{verbatim}
 
 \begin{Shaded}
@@ -6169,15 +6381,31 @@ characteristics:
 \NormalTok{sim }\SpecialCharTok{|\textgreater{}}
 
     \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value)) }\SpecialCharTok{+}
-    \FunctionTok{stat\_halfeye}\NormalTok{()  }
+    \FunctionTok{stat\_halfeye}\NormalTok{(}\AttributeTok{fill =} \StringTok{"orchid"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{n.breaks =} \DecValTok{10}\NormalTok{, }\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{labs}\NormalTok{(}
+      \AttributeTok{x =} \StringTok{"rnorm draw"}\NormalTok{,}
+      \AttributeTok{y =} \StringTok{"Density"}
+\NormalTok{    ) }\SpecialCharTok{+}
+    \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}
+      \AttributeTok{axis.ticks.y =} \FunctionTok{element\_blank}\NormalTok{(),}
+      \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+      \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{(),}
+      \AttributeTok{axis.text.y =} \FunctionTok{element\_blank}\NormalTok{()}
+\NormalTok{    )}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-24-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/prior-pred-weibull-intercept-1.pdf}
 
 }
+
+\caption{Draws from a gaussian distribution with mean = 3.3, and sd =
+.4}
 
 \end{figure}
 
@@ -6208,16 +6436,23 @@ probability of only about 5\% in either direction.
 
   \FunctionTok{summarise\_draws}\NormalTok{() }\SpecialCharTok{|\textgreater{}}
 
-  \FunctionTok{select}\NormalTok{(q5, q95)}
+  \FunctionTok{select}\NormalTok{(q5, q95) }\SpecialCharTok{|\textgreater{}}
+
+\NormalTok{  knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{()}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-# A tibble: 1 x 2
-      q5   q95
-   <num> <num>
-1 0.0952  10.3
-\end{verbatim}
+\begin{longtable}[]{@{}rr@{}}
+\toprule()
+q5 & q95 \\
+\midrule()
+\endhead
+0.0920575 & 10.84884 \\
+\bottomrule()
+\end{longtable}
+
+Exponentiated draws from a gaussian distribution with mean = 0, and sd =
+1.45
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -6225,32 +6460,41 @@ probability of only about 5\% in either direction.
 \NormalTok{sim }\SpecialCharTok{|\textgreater{}}
 
     \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value)) }\SpecialCharTok{+}
-    \FunctionTok{stat\_halfeye}\NormalTok{() }\SpecialCharTok{+}
-    \FunctionTok{xlim}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{10}\NormalTok{))}
+    \FunctionTok{stat\_halfeye}\NormalTok{(}\AttributeTok{fill =} \StringTok{"orchid"}\NormalTok{) }\SpecialCharTok{+}
+    \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{limits =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{30}\NormalTok{), }\AttributeTok{n.breaks =} \DecValTok{10}\NormalTok{, }\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+    \FunctionTok{labs}\NormalTok{(}
+      \AttributeTok{x =} \StringTok{"rnorm draw"}\NormalTok{,}
+      \AttributeTok{y =} \StringTok{"Density"}
+\NormalTok{    ) }\SpecialCharTok{+}
+    \FunctionTok{theme\_bw}\NormalTok{() }\SpecialCharTok{+}
+    \FunctionTok{theme}\NormalTok{(}
+      \AttributeTok{axis.ticks.y =} \FunctionTok{element\_blank}\NormalTok{(),}
+      \AttributeTok{panel.grid.major =} \FunctionTok{element\_blank}\NormalTok{(),}
+      \AttributeTok{panel.grid.minor =} \FunctionTok{element\_blank}\NormalTok{(),}
+      \AttributeTok{axis.text.y =} \FunctionTok{element\_blank}\NormalTok{()}
+\NormalTok{    )}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-Warning: Removed 518 rows containing missing values (`stat_slabinterval()`).
-\end{verbatim}
-
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-25-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/prior-pred-weibull-coefs-1.pdf}
 
 }
+
+\caption{Exponentiated draws from a gaussian distribution with mean = 0,
+and sd = 1.45}
 
 \end{figure}
 
 Now that we have some reasonable priors, we can sample from them to
-simulate from the prior predictive distribution. One thing I was finding
-at this stage was I needed to fix the Weibull distribution's
-\texttt{shape} parameter at a constant value in order to produce
-reasonable-seeming event times. This also greatly improved the number of
-divergent transitions in sampling. The resulting densities of bounded
-1-year times-to-event look reasonable to me, and there is plenty of
-uncertainty leftover for the model to refine its predictions after it
-sees the data.
+simulate from the prior predictive distribution. I don't have any
+background knowledge to inform the estimate of the shape parameter, so
+we can set a conventional \texttt{cauchy(0,\ 2.5)} prior to keep it
+vague. The resulting densities of bounded 1-year times-to-event look
+reasonable to me, and there is plenty of uncertainty leftover for the
+model to refine its predictions after it sees the data.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -6301,19 +6545,8 @@ sees the data.
 \NormalTok{)}
 
 \CommentTok{\# Figure out what brms has named everything so we can wrangle the draws}
-\FunctionTok{get\_variables}\NormalTok{(fit.prior)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
- [1] "b_Intercept"   "b_adapt"       "b_collab"      "b_age"        
- [5] "b_ei_status"   "shape"         "lprior"        "lp__"         
- [9] "accept_stat__" "treedepth__"   "stepsize__"    "divergent__"  
-[13] "n_leapfrog__"  "energy__"     
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
+\CommentTok{\# get\_variables(fit.prior)}
+    
 \CommentTok{\# Check the prior predictive distribution}
 \NormalTok{prior\_preds }\OtherTok{\textless{}{-}}\NormalTok{ fake\_dat }\SpecialCharTok{|\textgreater{}}
 
@@ -6327,14 +6560,13 @@ sees the data.
 
   \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+} 
   \FunctionTok{geom\_density}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ .prediction, }\AttributeTok{group =}\NormalTok{ .draw), }\AttributeTok{alpha =} \DecValTok{0}\NormalTok{, }\AttributeTok{colour=}\FunctionTok{alpha}\NormalTok{(}\StringTok{"mediumorchid"}\NormalTok{, .}\DecValTok{1}\NormalTok{)) }\SpecialCharTok{+}
-\CommentTok{\#  geom\_density(data = prior\_preds |\textgreater{} distinct(rowid, .keep\_all = TRUE), aes(x = prior\_pred\_mean)) +}
   \FunctionTok{scale\_y\_continuous}\NormalTok{(}\AttributeTok{expand=}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
   \FunctionTok{xlim}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{365}\NormalTok{)) }\SpecialCharTok{+}
   \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{theme}\NormalTok{(}
     \AttributeTok{axis.text.y =} \FunctionTok{element\_blank}\NormalTok{(),}
     \AttributeTok{axis.ticks.y =} \FunctionTok{element\_blank}\NormalTok{()}
-\NormalTok{  ) }
+\NormalTok{  )  }
 \end{Highlighting}
 \end{Shaded}
 
@@ -6348,26 +6580,6 @@ sees the data.
 of event times.}
 
 \end{figure}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# DELETE}
-
-\CommentTok{\# Fit the model}
-\NormalTok{fit.test }\OtherTok{\textless{}{-}} \FunctionTok{brm}\NormalTok{(}
-  \AttributeTok{data =}\NormalTok{ fake\_dat,}
-  \AttributeTok{formula =}\NormalTok{ bf,}
-  \AttributeTok{family =} \FunctionTok{weibull}\NormalTok{(),}
- \CommentTok{\# prior = priors,}
-  \AttributeTok{iter =} \DecValTok{2000}\NormalTok{,}
-  \AttributeTok{file =} \StringTok{"fits/brmstest2{-}delete"}
-\NormalTok{)}
-
-
-
-\CommentTok{\# /DELETE}
-\end{Highlighting}
-\end{Shaded}
 
 We can also check the distribution of certain statistics under the prior
 predictive distribution, like the mean time to event. This is something
@@ -6385,7 +6597,9 @@ model this information in other ways, for example by changing the
 response distribution entirely, perhaps using a 1-inflated beta
 distribution to model the proportion of a year until a person found a
 job, topcoding anybody who took more than a year as 1. But for now let's
-just stick with the plan.
+stick with the plan and see if the model is able to recover the true
+parameter estimates and come up with reasonable posterior predictive
+distribution despite these imperfect priors.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -6419,9 +6633,8 @@ distribution of event times.}
 
 \end{figure}
 
-\hypertarget{stan-code}{%
-\subsection*{Stan code}\label{stan-code}}
-\addcontentsline{toc}{subsection}{Stan code}
+\hypertarget{fitting-the-stan-model}{%
+\subsection{Fitting the Stan Model}\label{fitting-the-stan-model}}
 
 Now we're ready to fit the survival model using the latent factors as
 predictors.
@@ -6441,9 +6654,7 @@ predictors.
   \DataTypeTok{array}\NormalTok{[N] }\DataTypeTok{int}\NormalTok{\textless{}}\KeywordTok{lower}\NormalTok{={-}}\DecValTok{1}\NormalTok{, }\KeywordTok{upper}\NormalTok{=}\DecValTok{2}\NormalTok{\textgreater{} cens; }\CommentTok{// indicates censoring for Weibull model}
   \DataTypeTok{int}\NormalTok{ K; }\CommentTok{// number of predictors in Weibull model, now it should be D + 2 + intercept}
   \DataTypeTok{matrix}\NormalTok{[N, K] X\_weibull; }\CommentTok{// population{-}level design matrix for Weibull model}
-  
 \NormalTok{\}}
-
 \KeywordTok{parameters}\NormalTok{ \{}
   \DataTypeTok{matrix}\NormalTok{[N, D] FS\_UNC; }\CommentTok{// factor scores}
   \DataTypeTok{cholesky\_factor\_corr}\NormalTok{[D] L\_corr\_d; }\CommentTok{// cholesky correlation between factors}
@@ -6454,7 +6665,6 @@ predictors.
   \DataTypeTok{real}\NormalTok{\textless{}}\KeywordTok{lower}\NormalTok{=}\DecValTok{0}\NormalTok{\textgreater{} shape; }\CommentTok{// shape parameter for Weibull model}
   \DataTypeTok{vector}\NormalTok{[K] b; }\CommentTok{// regression coefficients for Weibull model}
 \NormalTok{\}}
-
 \KeywordTok{transformed parameters}\NormalTok{ \{}
   \CommentTok{// Factor Analysis transformed parameters}
   \DataTypeTok{vector}\NormalTok{[D] M = rep\_vector(}\DecValTok{0}\NormalTok{, D); }\CommentTok{// factor means}
@@ -6477,7 +6687,6 @@ predictors.
   \DataTypeTok{vector}\NormalTok{[N] mu\_weibull = rep\_vector(}\FloatTok{0.0}\NormalTok{, N); }\CommentTok{// initialize linear predictor term for Weibull model}
 \NormalTok{  mu\_weibull += X\_weibull * b; }\CommentTok{// use both factor scores and observed predictors as predictors}
 \NormalTok{\}}
-
 \KeywordTok{model}\NormalTok{ \{}
   \CommentTok{// Factor Analysis}
 \NormalTok{  L\_corr\_d \textasciitilde{} lkj\_corr\_cholesky(}\DecValTok{1}\NormalTok{);}
@@ -6507,7 +6716,6 @@ predictors.
 \NormalTok{    \} }
 \NormalTok{  \}}
 \NormalTok{\}}
-
 \KeywordTok{generated quantities}\NormalTok{ \{}
   \DataTypeTok{corr\_matrix}\NormalTok{[D] Rho\_UNC; }\CommentTok{// correlation matrix for factors}
   \DataTypeTok{corr\_matrix}\NormalTok{[D] Rho\_factors; }\CommentTok{// correlation matrix for factors}
@@ -6552,18 +6760,29 @@ predictors.
 Now compline the model and run. I've worked closely from the Stan code
 for the Weibull model we fit with \textbf{brms} above, essentially just
 grafting it onto the MTMM factor analysis model from before. This only
-involved a few steps: - \textbf{Data block:} add new vectors for the
-response variable \texttt{Y} and predictor variables \texttt{K} of the
-Weibull model, and for censoring status \texttt{cens}. Also declare the
-design matrix \texttt{X\_weibull} of the necessary dimensions. -
-\textbf{Parameters block:} add a vector of coefficients \texttt{b} for
-the beta coefficients of the Weibull model. - \textbf{Transformed
-Parameters block:} declare the constant shape parameter for the Weibull
-model, as well as the linear predictor \texttt{mu} for each observation.
-Then exponentiate it. - \textbf{Model block:} add the priors we
-simulated above, as well as the likelihood function conditional on
-censoring status. - \textbf{Generated Quantities block:} generate draws
-from the posterior predictive distribution, to help with model checking.
+involved a few steps:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Data block:} add new vectors for the response variable
+  \texttt{Y} and predictor variables \texttt{K} of the Weibull model,
+  and for censoring status \texttt{cens}. Also declare the design matrix
+  \texttt{X\_weibull} of the necessary dimensions.
+\item
+  \textbf{Parameters block:} add a vector of coefficients \texttt{b} for
+  the beta coefficients of the Weibull model.
+\item
+  \textbf{Transformed Parameters block:} declare the constant shape
+  parameter for the Weibull model, as well as the linear predictor
+  \texttt{mu} for each observation. Then exponentiate it.
+\item
+  \textbf{Model block:} add the priors we simulated above, as well as
+  the likelihood function conditional on censoring status.
+\item
+  \textbf{Generated Quantities block:} generate draws from the posterior
+  predictive distribution, to help with model checking.
+\end{itemize}
 
 One thing to note is that because we adopted \textbf{brms}'s
 \texttt{0\ +\ Intercept} syntax in generating the Stan code to allow us
@@ -6753,7 +6972,7 @@ big win for Bayes.
 
 \begin{figure}[H]
 
-{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-31-1.pdf}
+{\centering \includegraphics{./bayesian-cfa_files/figure-pdf/unnamed-chunk-37-1.pdf}
 
 }
 
@@ -7068,7 +7287,7 @@ thresholds
 \end{Shaded}
 
 \begin{verbatim}
-lavaan 0.6.16 ended normally after 17 iterations
+lavaan 0.6.16 ended normally after 18 iterations
 
   Estimator                                       DWLS
   Optimization method                           NLMINB
@@ -7090,19 +7309,19 @@ Parameter Estimates:
 Regressions:
                    Estimate  Std.Err  z-value  P(>|z|)
   communication ~                                     
-    communicatn_m1    3.670    0.202   18.211    0.000
-    communicatn_m2    3.723    0.199   18.730    0.000
-    communicatn_m3    3.761    0.200   18.804    0.000
-    communicatn_m4    3.791    0.199   19.091    0.000
-    communicatn_m5    3.872    0.200   19.320    0.000
+    communicatn_m1    4.043    0.198   20.424    0.000
+    communicatn_m2    3.517    0.201   17.509    0.000
+    communicatn_m3    3.775    0.199   18.938    0.000
+    communicatn_m4    3.852    0.202   19.081    0.000
+    communicatn_m5    3.663    0.199   18.446    0.000
 
 Intercepts:
                    Estimate  Std.Err  z-value  P(>|z|)
-   .communication   -10.167    0.113  -90.271    0.000
+   .communication   -10.276    0.113  -91.324    0.000
 
 Variances:
                    Estimate  Std.Err  z-value  P(>|z|)
-   .communication   113.724    0.435  261.540    0.000
+   .communication   114.555    0.437  262.335    0.000
 \end{verbatim}
 
 Lastly, we'll simulate the outcome variables for survival analysis.
@@ -7126,15 +7345,15 @@ formula: factor(communication_m1) ~ communication
 data:    dat
 
  link  threshold nobs  logLik   AIC      niter max.grad cond.H 
- logit flexible  60000 -7733.88 15477.75 12(0) 6.21e-10 8.3e+06
+ logit flexible  60000 -7952.06 15914.13 12(0) 7.10e-11 7.8e+06
 
 Coefficients:
 communication 
-        1.014 
+       0.9831 
 
 Threshold coefficients:
-  1|2   2|3   3|4   4|5 
- 5.09 50.74 60.89 65.91 
+   1|2    2|3    3|4    4|5 
+ 4.915 49.160 58.962 63.952 
 \end{verbatim}
 
 \begin{Shaded}
@@ -7153,11 +7372,11 @@ Threshold coefficients:
 # A tibble: 5 x 3
   communication_m1     n      p
              <dbl> <int>  <dbl>
-1                1  3041 0.0507
-2                2 26703 0.445 
-3                3  6009 0.100 
-4                4  2981 0.0497
-5                5 21266 0.354 
+1                1  3035 0.0506
+2                2 27122 0.452 
+3                3  5935 0.0989
+4                4  2948 0.0491
+5                5 20960 0.349 
 \end{verbatim}
 
 The idea is that if the latent variables predict time-to-employment then

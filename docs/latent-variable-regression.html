@@ -181,7 +181,7 @@ div.csl-indent {
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">Confirmatory Factor Analysis</a>
+            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">Introduction to CFA</a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -422,7 +422,7 @@ thresholds</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model.ord <span class="sc">|&gt;</span> <span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>lavaan 0.6.16 ended normally after 18 iterations
+<pre><code>lavaan 0.6.16 ended normally after 13 iterations
 
   Estimator                                       DWLS
   Optimization method                           NLMINB
@@ -444,19 +444,19 @@ Parameter Estimates:
 Regressions:
                    Estimate  Std.Err  z-value  P(&gt;|z|)
   communication ~                                     
-    communicatn_m1    3.694    0.196   18.887    0.000
-    communicatn_m2    3.807    0.199   19.145    0.000
-    communicatn_m3    4.060    0.197   20.661    0.000
-    communicatn_m4    3.629    0.198   18.322    0.000
-    communicatn_m5    3.643    0.198   18.359    0.000
+    communicatn_m1    4.030    0.199   20.274    0.000
+    communicatn_m2    3.437    0.200   17.201    0.000
+    communicatn_m3    3.934    0.199   19.733    0.000
+    communicatn_m4    4.081    0.198   20.635    0.000
+    communicatn_m5    3.395    0.198   17.161    0.000
 
 Intercepts:
                    Estimate  Std.Err  z-value  P(&gt;|z|)
-   .communication   -10.244    0.113  -90.539    0.000
+   .communication   -10.446    0.112  -93.221    0.000
 
 Variances:
                    Estimate  Std.Err  z-value  P(&gt;|z|)
-   .communication   114.517    0.436  262.935    0.000</code></pre>
+   .communication   114.061    0.436  261.324    0.000</code></pre>
 </div>
 </div>
 <p>Lastly, we’ll simulate the outcome variables for survival analysis. We’ll use a Weibull likelihood. This is a popular choice for parametric survival analysis because it can fit a pretty flexible monotonic baseline hazard function, and can be interpretted as both a proportional hazards and an acceleration failure time model, which gives us flexibility in how we communicate results and frees us from the burden of needing to check the proportional hazards assumption.</p>
@@ -471,15 +471,15 @@ Variances:
 data:    dat
 
  link  threshold nobs  logLik   AIC      niter max.grad cond.H 
- logit flexible  60000 -7968.42 15946.84 12(0) 1.87e-10 7.8e+06
+ logit flexible  60000 -7820.11 15650.23 12(0) 1.54e-10 8.0e+06
 
 Coefficients:
 communication 
-       0.9842 
+        1.001 
 
 Threshold coefficients:
-   1|2    2|3    3|4    4|5 
- 4.961 49.261 59.026 63.950 </code></pre>
+  1|2   2|3   3|4   4|5 
+ 5.10 50.05 60.04 65.04 </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">|&gt;</span> </span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -492,11 +492,11 @@ Threshold coefficients:
 <pre><code># A tibble: 5 × 3
   communication_m1     n      p
              &lt;dbl&gt; &lt;int&gt;  &lt;dbl&gt;
-1                1  2982 0.0497
-2                2 26922 0.449 
-3                3  5953 0.0992
-4                4  3032 0.0505
-5                5 21111 0.352 </code></pre>
+1                1  3134 0.0522
+2                2 26966 0.449 
+3                3  5983 0.0997
+4                4  2991 0.0498
+5                5 20926 0.349 </code></pre>
 </div>
 </div>
 <p>The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc.</p>
