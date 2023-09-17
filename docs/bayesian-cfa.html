@@ -183,7 +183,7 @@ div.csl-indent {
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">Confirmatory Factor Analysis</a>
+            <a href="./cfa-intro.html" class="sidebar-item-text sidebar-link">Introduction to CFA</a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
@@ -301,7 +301,7 @@ div.csl-indent {
 <section id="introduction" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">6.1</span> Introduction</h2>
 <p>In the previous sections we’ve explored various aspects of the traditional workflow for Confirmatory Factor Analysis, including the basic model structure, the concepts of validity and reliability, classic model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data.</p>
-<p>But often you’ll want to do more than just convince me the data are consistent with the Primordial CFA DAG of Confounding: you’ll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to <strong>Structural Equation Modelling (SEM)</strong>, which is a framework for simultaneously arguing that my data are consistent with the imaginary constructs I have in mind, <em>and</em> that my data are consistent with those constructs relating to each other according to a specific causal structure.</p>
+<p>But often you’ll want to do more than just convince me the data are consistent with <span class="quarto-unresolved-ref">?sec-intro</span>: you’ll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to <strong>Structural Equation Modelling (SEM)</strong>, which is a framework for simultaneously arguing that my data are consistent with the imaginary constructs I have in mind, <em>and</em> that my data are consistent with those constructs relating to each other according to a specific causal structure.</p>
 <p>In later chapters I’ll be adding notes on the traditional SEM workflow culled from various sources. But first it is interesting to explore a more basic situation where we only have latent <em>predictors</em>, and want to estimate the relationship between those latent predictors and an observed outcome. A traditional way of incorporating a CFA measurement model into a fuller regression analysis for a measured dependent variable proceeds in two steps:</p>
 <ol type="1">
 <li>Fit the CFA model;</li>
@@ -724,7 +724,7 @@ m_{6}
 <p>$$</p>
 <p>Just becomes this: $$</p>
 <span class="math display">\[\begin{aligned}
-\rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 * 1} = \text{Cov}(X, Y)
+\rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 x 1} = \text{Cov}(X, Y)
 \end{aligned}\]</span>
 <p>$$</p>
 <p>We’re interested in the loadings and the between-factor covariance. So we can wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. First let’s look at the loadings. Based on this plot it looks like the model did pretty well – the posterior peak is close to the true value for all of the loadings:</p>
@@ -801,7 +801,7 @@ m_{6}
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"lab"</span>,</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>     <span class="at">y =</span> <span class="cn">NULL</span>)  <span class="sc">+</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable) <span class="sc">+</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
 <span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
 <span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.major =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -1202,7 +1202,7 @@ m_{6}
 <span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
 <span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"lab"</span>,</span>
 <span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>     <span class="at">y =</span> <span class="cn">NULL</span>)  <span class="sc">+</span></span>
-<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable) <span class="sc">+</span></span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
 <span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> </span>
 <span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.major =</span> <span class="fu">element_blank</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -1463,27 +1463,27 @@ m_{6}
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m1</td>
-<td style="text-align: right;">0.8308122</td>
+<td style="text-align: right;">0.8206304</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 =~ m2</td>
-<td style="text-align: right;">0.5835556</td>
+<td style="text-align: right;">0.5874963</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m3</td>
-<td style="text-align: right;">0.8780522</td>
+<td style="text-align: right;">0.8988572</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m4</td>
-<td style="text-align: right;">0.0663538</td>
+<td style="text-align: right;">0.0776609</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f2 =~ m5</td>
-<td style="text-align: right;">0.2389567</td>
+<td style="text-align: right;">0.2086612</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m6</td>
-<td style="text-align: right;">-0.3520159</td>
+<td style="text-align: right;">-0.4346364</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 ~~ f1</td>
@@ -1495,35 +1495,35 @@ m_{6}
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m1 ~~ m4</td>
-<td style="text-align: right;">0.4058447</td>
+<td style="text-align: right;">0.4316255</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m1 ~~ m1</td>
-<td style="text-align: right;">0.9931763</td>
+<td style="text-align: right;">0.9848187</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m2 ~~ m2</td>
-<td style="text-align: right;">1.0017525</td>
+<td style="text-align: right;">1.0262859</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m3 ~~ m3</td>
-<td style="text-align: right;">1.0325882</td>
+<td style="text-align: right;">1.0291595</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m4 ~~ m4</td>
-<td style="text-align: right;">1.0096642</td>
+<td style="text-align: right;">1.0050597</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m5 ~~ m5</td>
-<td style="text-align: right;">0.9852823</td>
+<td style="text-align: right;">0.9743470</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m6 ~~ m6</td>
-<td style="text-align: right;">1.0342526</td>
+<td style="text-align: right;">0.9880444</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 ~~ f2</td>
-<td style="text-align: right;">0.3619472</td>
+<td style="text-align: right;">0.3760674</td>
 </tr>
 </tbody>
 </table>
@@ -1685,45 +1685,45 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">(Intercept)</td>
-<td style="text-align: right;">49.6989941</td>
-<td style="text-align: right;">0.0294197</td>
-<td style="text-align: right;">132.7675524</td>
+<td style="text-align: right;">52.4752236</td>
+<td style="text-align: right;">0.0293472</td>
+<td style="text-align: right;">134.9479477</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">adapt</td>
-<td style="text-align: right;">1.0562576</td>
-<td style="text-align: right;">0.0232010</td>
-<td style="text-align: right;">2.3590398</td>
-<td style="text-align: right;">0.0183223</td>
+<td style="text-align: right;">0.9777226</td>
+<td style="text-align: right;">0.0230199</td>
+<td style="text-align: right;">-0.9786888</td>
+<td style="text-align: right;">0.3277338</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">collab</td>
-<td style="text-align: right;">0.8108925</td>
-<td style="text-align: right;">0.0229287</td>
-<td style="text-align: right;">-9.1422378</td>
-<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">0.8955813</td>
+<td style="text-align: right;">0.0228238</td>
+<td style="text-align: right;">-4.8319022</td>
+<td style="text-align: right;">0.0000014</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">age</td>
-<td style="text-align: right;">1.0973186</td>
-<td style="text-align: right;">0.0212005</td>
-<td style="text-align: right;">4.3805296</td>
-<td style="text-align: right;">0.0000118</td>
+<td style="text-align: right;">1.1369982</td>
+<td style="text-align: right;">0.0212260</td>
+<td style="text-align: right;">6.0488029</td>
+<td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ei_status</td>
-<td style="text-align: right;">0.5154512</td>
-<td style="text-align: right;">0.0423480</td>
-<td style="text-align: right;">-15.6492043</td>
+<td style="text-align: right;">0.4698532</td>
+<td style="text-align: right;">0.0426993</td>
+<td style="text-align: right;">-17.6896196</td>
 <td style="text-align: right;">0.0000000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Log(scale)</td>
-<td style="text-align: right;">0.9932597</td>
-<td style="text-align: right;">0.0164513</td>
-<td style="text-align: right;">-0.4111016</td>
-<td style="text-align: right;">0.6809980</td>
+<td style="text-align: right;">0.9987010</td>
+<td style="text-align: right;">0.0165683</td>
+<td style="text-align: right;">-0.0784545</td>
+<td style="text-align: right;">0.9374665</td>
 </tr>
 </tbody>
 </table>
@@ -1815,7 +1815,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mean</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 29.47581</code></pre>
+<pre><code>[1] 29.38646</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the distribution</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span></span>
@@ -1845,7 +1845,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <pre><code># A tibble: 1 × 2
       q5   q95
    &lt;num&gt; &lt;num&gt;
-1 0.0954  11.2</code></pre>
+1 0.0906  10.8</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the distribution</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>sim <span class="sc">|&gt;</span></span>
@@ -1854,7 +1854,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>() <span class="sc">+</span></span>
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">xlim</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 572 rows containing missing values (`stat_slabinterval()`).</code></pre>
+<pre><code>Warning: Removed 561 rows containing missing values (`stat_slabinterval()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid" width="672"></p>

@@ -1,9 +1,4 @@
----
-title: "Confirmatory Factor Analysis"
-format:
-  html:
-    theme: default
----
+# Introduction to CFA {#sec-intro}
 
 ```{r message = FALSE, results = FALSE, warning = FALSE}
 
@@ -16,7 +11,7 @@ library(ggdag)
 
 The Whole Game of Confirmatory Factor Analysis (CFA) is that I'm trying to convince you my observed variables are confounded by some unmeasured variables. Usually I'm trying to show that the observed ariables are confounded in a very particular way, where a few small groups of variables are confounded only by one unmeasured variable per group.
 
-So here's the archetypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am trying to convince you exists. We can call this **The Primordial CFA DAG of Confounding**:
+So here's the archetypal DAG of a CFA, where the Xs are observed variables, and F1 is an unmeasured variable I am trying to convince you exists. We can call this **The Primordial CFA DAG**:
 
 ```{r}
 

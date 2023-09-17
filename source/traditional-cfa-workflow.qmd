@@ -1,4 +1,4 @@
-# Traditional CFA Workflow
+# Traditional CFA Workflow {#sec-basic-workflow}
 
 ```{r message = FALSE, results = FALSE, warning = FALSE}
 
