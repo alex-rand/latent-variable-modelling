@@ -23,45 +23,44 @@ options(mc.cores = parallel::detectCores())
 
 ```
 
-## Summary {-}
+## Summary {.unnumbered}
 
 I recently did an analysis for a client who designs workforce skills training programs. The client was interested in the relationship between several latent skills for which they had collected measurements, and time-to-employment following a skills training program. This document presents the Bayesian workflow I used for that analysis, which involved simultaneously estimating a factor model for the latent variables and including them as regressors in a time-to-event analysis. Along the way I show various approaches to simulating latent variable and time-to-event data for model validation, and demonstrate the advantages of the Bayesian approach to including latent regressors in a statistical model, compared to traditional two-stage approaches involving factor score point estimates.
 
-## Introduction 
+## Introduction
 
-In the previous sections we've explored various aspects of the traditional workflow for Confirmatory Factor Analysis, including the basic model structure, the concepts of validity and reliability, classic model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data. 
+In the previous sections we've explored various aspects of the traditional workflow for Confirmatory Factor Analysis, including the basic model structure, the concepts of validity and reliability, classic model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data.
 
-But often you'll want to do more than just convince me the data are consistent with [The Primordial CFA DAG -@sec-intro]: you'll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to **Structural Equation Modelling (SEM)**, which is a framework for simultaneously arguing that my data are consistent with the imaginary constructs I have in mind, _and_ that my data are consistent with the idea that those constructs relate to each other according to a specific causal structure.
+But often you'll want to do more than just convince me the data are consistent with [The Primordial CFA DAG -@sec-intro]: you'll also have some theories about how those imagined constructs relate to other measurements or latent constructs. This opens the door to **Structural Equation Modelling (SEM)**, which is a framework for simultaneously arguing that my data are consistent with the imaginary constructs I have in mind, *and* that my data are consistent with the idea that those constructs relate to each other according to a specific causal structure.
 
-In later chapters I'll be adding notes on the traditional SEM workflow. But as a first step towards full SEM it is interesting to explore a more basic situation where we only have latent _predictors_, and want to estimate the relationship between those latent predictors and an _observed outcome_, as opposed to a latent outcome with its own measurement model. A traditional way of incorporating a CFA measurement model into a fuller regression analysis for a measured dependent variable proceeds in two steps: 
+In later chapters I'll be adding notes on the traditional SEM workflow. But as a first step towards full SEM it is interesting to explore a more basic situation where we only have latent *predictors*, and want to estimate the relationship between those latent predictors and an *observed outcome*, as opposed to a latent outcome with its own measurement model. A traditional way of incorporating a CFA measurement model into a fuller regression analysis for a measured dependent variable proceeds in two steps:
 
-1. Fit the CFA model;
-2. Generate factor scores for each observation;
-2. Use those factor scores as predictors in a regression. 
+1.  Fit the CFA model;
+2.  Generate factor scores for each observation;
+3.  Use those factor scores as predictors in a regression.
 
-For example, this is the approach taken by @Kankaraš-et-all-2019 in their study of the relationship between latent social/emotional skills and life outcomes such as academic achievement; they use point-estimate factor scores for the latent variables as predictors in the subsequent regressions on life outcome data. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using _those_ point-estimates as regression predictors! This approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates, about which there is uncertainty. If we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore this uncertainty. 
+For example, this is the approach taken by @Kankaraš-et-all-2019 in their study of the relationship between latent social/emotional skills and life outcomes such as academic achievement; they use point-estimate factor scores for the latent variables as predictors in the subsequent regressions on life outcome data. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using *those* point-estimates as regression predictors! This approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates, about which there is uncertainty. If we only give our substantive regression model a point-estimate factor score from the CFA model, we ignore this uncertainty.
 
-A better option is to fit a Bayesian model that fits the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. As we'll see below, this approach is essentially just a Bayesian missing data analysis, where the factor scores for each observation are treated as missing data for which the model estimates a unique observation-specific parameter, along with its own unique posterior distribution. 
+A better option is to fit a Bayesian model that fits the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. As we'll see below, this approach is essentially just a Bayesian missing data analysis, where the factor scores for each observation are treated as missing data for which the model estimates a unique observation-specific parameter, along with its own unique posterior distribution.
 
-## The Plan 
+## The Plan
 
-In this document I'll demonstrate how to implement this Bayesian approach with Stan. We'll iterate on this model a few times, gradually incorporating concepts from previous chapters such as MTMM factor analysis. At each stage we'll stick the following invented scenario: our client has designed scales for the latent skills "adaptability" and "collaboration", and wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates. 
+In this document I'll demonstrate how to implement this Bayesian approach with Stan. We'll iterate on this model a few times, gradually incorporating concepts from previous chapters such as MTMM factor analysis. At each stage we'll stick the following invented scenario: our client has designed scales for the latent skills "adaptability" and "collaboration", and wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates.
 
 At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. We'll proceed as follows:
 
-1. Fit a simple Bayesian CFA with one factor and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but where _all_ of your observations are missing;
-2. Fit a Bayesian CFA with two correlated factors. The brms package can't yet handle custom covariance structures for latent factors, so we swtich to raw Stan;
-3. Update the model to include a custom error covariance structure à la MTMM;
-4. Combine the MTMM model from the previous step with a parametric proportional hazards regression model;
-5. Expand the model to include multilevel structure, with correlated varying effects for the regression predictors. 
+1.  Fit a simple Bayesian CFA with one factor and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but where *all* of your observations are missing;
+2.  Fit a Bayesian CFA with two correlated factors. The brms package can't yet handle custom covariance structures for latent factors, so we swtich to raw Stan;
+3.  Update the model to include a custom error covariance structure à la MTMM;
+4.  Combine the MTMM model from the previous step with a parametric proportional hazards regression model;
+5.  Expand the model to include multilevel structure, with correlated varying effects for the regression predictors.
 
-I assume basic knowledge of R, Stan, and survial analysis. 
+I assume basic knowledge of R, Stan, and survial analysis.
 
-## Simple Bayesian CFA with brms 
+## Simple Bayesian CFA with brms
 
 Before diving into a full model with our two factors for "adaptability" and "collabortion" in raw Stan, in this section we'll see how to fit a simple Bayesian CFA model in brms. Nothing fancy, just one factor with 6 measurements. Here's the full model definition:
 
-$$
 \begin{aligned}
 \begin{bmatrix}
 m_{1} \\
@@ -87,7 +86,7 @@ m_{6}
 \mu_{m1} &= \lambda_1 \text{f}_1, \quad \mu_{m2} = \lambda_2 \text{f}_1, \quad \mu_{m3} = \lambda_3 \text{f}_1 \\
 \mu_{m4} &= \lambda_4 \text{f}_1, \quad \mu_{m5} = \lambda_5 \text{f}_1, \quad \mu_{m6} = \lambda_6 \text{f}_1 \\
 \\
-\text{f} &\sim \text{Normal}(\mu_\text{f}, \sigma_\text{f}^2) \\
+\text{f_1} &\sim \text{Normal}(\mu_\text{f}, \sigma_\text{f}^2) \\
 \\
 \Sigma_m &=
 \begin{bmatrix}
@@ -99,7 +98,6 @@ m_{6}
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
 \end{aligned}
-$$
 
 First we can simulate some data with the given factor structure using the lavaan package's handy `simulateData()` function:
 
@@ -141,7 +139,7 @@ fake_dat |>
 
 ```
 
-Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just fitting a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model components of their location parameters include a covariate for which we _only_ have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. Then we define the model with the same approach to identifiability constraints that lavaan imposes by default, I.E. constraining the first loading to be constant. The jargon term for this approach to ensuring identifiability is the 'marker variable approach':
+Now we can specify a Bayesian model in brms that recovers the simulation parameter values. I've worked from [the approach shared by Jack Bailey in a post on the Stan forum](https://discourse.mc-stan.org/t/confirmatory-factor-analysis-using-brms/23139). I like this approach because it gives a nice conceptual perspective on what we're actually doing when we're doing latant variable modelling: we're just fitting a linear regression where the measured variables are all drawn from a shared multivariate normal distribution, and where the linear model components of their location parameters include a covariate for which we *only* have missing data. So the first thing we need to do is add a column of all missing data for each of the latent variables. Then we define the model with the same approach to identifiability constraints that lavaan imposes by default, I.E. constraining the first loading to be constant. The jargon term for this approach to ensuring identifiability is the 'marker variable approach':
 
 ```{r}
 #| label: brms-fit-basic
@@ -185,7 +183,7 @@ bfit.1 <- brm(
 
 ```
 
-A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is 100% missing data, this means we end up with 4000 rows of data x 6000 samples x 4 chains = 96,000,000 MCMC samples for the factor scores alone, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to make sure the model recovered the true parameter estimates. 
+A Bayesian missing data model treats each missing observation as a parameter to estimate. And since the factor is 100% missing data, this means we end up with 4000 rows of data x 6000 samples x 4 chains = 96,000,000 MCMC samples for the factor scores alone, resulting in a pretty big model file. This is too big for Github, so I'll only push the draws we need to make sure the model recovered the true parameter estimates.
 
 First we can put the draws we need into a tidy format and do some cleaning, then we can plot the draws to visualize the approximated posteriors:
 
@@ -252,11 +250,11 @@ bfit.1.samples|>
   
 ```
 
-In all cases the model is _pretty close_ to the true parameter values, shown by the dashed lines. It's a bit worrying that the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty decent CFA in brms. 
+In all cases the model is *pretty close* to the true parameter values, shown by the dashed lines. It's a bit worrying that the standard errors are so small they fail to capture the true values, but this illustrates the general proof of concept: we can do a pretty decent CFA in brms.
 
-In practice I would probably not choose brms for a simple CFA of this kind, where we have no prior information to inform the parameter estimates and no need to incorporate uncertainty in factor score estimates into models of other variables. If I were committed to doing this sort of model Bayesianly then I would use the amazing blavaan package, which works with lavaan syntax, allows you to specify custom priors, and is lightening-fast compared to the brms version implemented above. But blavaan is limited in the types of models it can handle, and cannot fit the type of time-to-event model we are heading towards here. Stan offers greater flexibility. 
+In practice I would probably not choose brms for a simple CFA of this kind, where we have no prior information to inform the parameter estimates and no need to incorporate uncertainty in factor score estimates into models of other variables. If I were committed to doing this sort of model Bayesianly then I would use the amazing blavaan package, which works with lavaan syntax, allows you to specify custom priors, and is lightening-fast compared to the brms version implemented above. But blavaan is limited in the types of models it can handle, and cannot fit the type of time-to-event model we are heading towards here. Stan offers greater flexibility.
 
-## Bayesian CFA with Correlated Factors 
+## Bayesian CFA with Correlated Factors
 
 Now let's introduce our two factors "adaptability" and "collaboration", and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors, as we saw in [Chapter -@sec-basic-workflow]. The only change from the model in the previous section is that now we imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation $\rho$ and the two factor-specific variances. Here's the updated model definition, with the covariance terms highlighted:
 
@@ -317,7 +315,7 @@ m_{6}
 \end{aligned}
 $$
 
-We can update the lavaan model structure from the previous section to simulate new data with correlated factors. Note that in the lavaan syntax `f1 ~~ .4*f2` we are specifying the _covariance_ between the factors, not the correlation. But as we'll see later, the distinction doesn't matter in this case.
+We can update the lavaan model structure from the previous section to simulate new data with correlated factors. Note that in the lavaan syntax `f1 ~~ .4*f2` we are specifying the *covariance* between the factors, not the correlation. But as we'll see later, the distinction doesn't matter in this case.
 
 ```{r}
 #| label: sim-2-fac
@@ -336,11 +334,11 @@ fake_dat <- lavaan::simulateData(model = correlated.factors.model, sample.nobs =
 
 ```
 
-Now to fit a model to the simulated data. We'll use raw Stan from now on, because brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but we do better to dive into raw Stan anyway for added flexibility. 
+Now to fit a model to the simulated data. We'll use raw Stan from now on, because brms doesn't currently support setting constraints on individual correlation terms in the model, even in the form of constant priors. [There seems to be a plan](https://github.com/paul-buerkner/brms/issues/957) to include more SEM-like flexibility of covariance matrixes in general in brms 3.0, but we do better to dive into raw Stan anyway for added flexibility.
 
-I tried a few different model definitions in Stan, but they all had convergence issues and failed to recover the true parameter estimates. Convergence in fitting a factor analysis can be tricky in general, and things get even more complicated in a Bayesian context where we're using MCMC to approximate the posterior. So I took to the Stan Forums, where I found a few strategies for avoiding convergence issues when fitting this kind of model. I have worked closely from the strategy provided in [this comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by [Mauricio Garnier-Villarre](https://research.vu.nl/en/persons/mauricio-garnier-villarreal). Instead of the lavaan-default 'marker variable approach' to identifiability we used above in our brms model, Mauricio fixes the factor means and variances at 0 and 1, respectively, which has the benefit of letting the model freely estimate the _all_ of the factor loadings. He also adds some code to sign-correct the estimated loadings in the `generated quantities{}` block, which apparently helps align estimates across chains. I just make a few minor adjustments such as removing intercepts from the linear predictors of the factors to better align the model with the lavaan defaults. Here is the Stan code:
+I tried a few different model definitions in Stan, but they all had convergence issues and failed to recover the true parameter estimates. Convergence in fitting a factor analysis can be tricky in general, and things get even more complicated in a Bayesian context where we're using MCMC to approximate the posterior. So I took to the Stan Forums, where I found a few strategies for avoiding convergence issues when fitting this kind of model. I have worked closely from the strategy provided in [this comment](https://discourse.mc-stan.org/t/non-convergence-of-latent-variable-model/12450/13) by [Mauricio Garnier-Villarre](https://research.vu.nl/en/persons/mauricio-garnier-villarreal). Instead of the lavaan-default 'marker variable approach' to identifiability we used above in our brms model, Mauricio fixes the factor means and variances at 0 and 1, respectively, which has the benefit of letting the model freely estimate the *all* of the factor loadings. He also adds some code to sign-correct the estimated loadings in the `generated quantities{}` block, which apparently helps align estimates across chains. I just make a few minor adjustments such as removing intercepts from the linear predictors of the factors to better align the model with the lavaan defaults. Here is the Stan code:
 
-```stan
+``` stan
 data {
   int N; // sample size
   int P; // number of variables
@@ -432,7 +430,6 @@ generated quantities {
     }
   }
 }
-
 ```
 
 ```{r}
@@ -581,7 +578,7 @@ saveRDS(fit, "fits/b07.02.rds")
 
 ```
 
-The model took about 5 hours to sample and the resulting .csv files containing the MCMC samples are large -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're interested in, so we have no problem working in memory. 
+The model took about 5 hours to sample and the resulting .csv files containing the MCMC samples are large -- on the order of 2.5GB each. Fortunately we are able to selectively load only the draws from variables we're interested in, so we have no problem working in memory.
 
 ```{r}
 #| label: wrangle-draws-2-fac
@@ -610,23 +607,19 @@ saveRDS(draws, "fits/b07.02.samples.rds")
 
 Now we can explore the results. One important point is that we can interpret the Stan model's estimates of the correlation coefficient between the two factors directly as covariances (IE analogous to the true parameter simulated with lavaan), because we fixed the factor standard deviations to be equal to 1. Put differently, because our sigmas are both equal to 1, this equation:
 
-$$
-
+```{=tex}
 \begin{aligned}
 \rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}
 \end{aligned}
-
-$$
-
+```
 
 Just becomes this:
-$$
 
+```{=tex}
 \begin{aligned}
 \rho(X, Y) = \frac{\text{Cov}(X, Y)}{1 * 1} = \text{Cov}(X, Y)
 \end{aligned}
-
-$$
+```
 
 We're interested in the loadings and the between-factor covariance. So we can wrangle the MCMC samples for those variables and plot them to look at the estimated posteriers. First let's look at the loadings. Based on this plot it looks like the model did pretty well -- the posterior peak is close to the true value for all of the loadings:
 
@@ -718,7 +711,7 @@ dplt |>
 
 ```
 
-We can also look at the MCMC convergence diagnostics such as rhat and effective number of samples. Here we see that we have rhats slightly greater than 1 for a few of the loadings and for rho. We also see that loading 4, loading 6, and rho have a pretty low number of effective samples. This is cause for concern, and in a real application I would probably increase the number of MCMC iterations to see if we can improve that effective sample size, and if that failed then I would think of ways to reparameterize the model. 
+We can also look at the MCMC convergence diagnostics such as rhat and effective number of samples. Here we see that we have rhats slightly greater than 1 for a few of the loadings and for rho. We also see that loading 4, loading 6, and rho have a pretty low number of effective samples. This is cause for concern, and in a real application I would probably increase the number of MCMC iterations to see if we can improve that effective sample size, and if that failed then I would think of ways to reparameterize the model.
 
 ```{r}
 #| label: convergence-2-fac
@@ -737,7 +730,7 @@ draws |>
 
 ```
 
-The trace plots seem healthy overall, albeit with some occasional spikes and some parts where one chain goes berzerk relative to the others. Chain 4 for the between-factor correlation seems especially problematic, with it following a strange trajectory during its final iterations. Perhaps this explains why that variable has the highest rhat and displays some irregularity in the tail of its approximated posterior. Still, even for that parameter the chains seem generally healthy overall. 
+The trace plots seem healthy overall, albeit with some occasional spikes and some parts where one chain goes berzerk relative to the others. Chain 4 for the between-factor correlation seems especially problematic, with it following a strange trajectory during its final iterations. Perhaps this explains why that variable has the highest rhat and displays some irregularity in the tail of its approximated posterior. Still, even for that parameter the chains seem generally healthy overall.
 
 ```{r}
 #| label: trace-2-fac
@@ -758,7 +751,7 @@ draws |>
 
 ```
 
-Overall we can feel ok about the model's performance here because it recovered the true parameter values fairly well, but the MCMC convergence checks suggest our chains were not totally happy. 
+Overall we can feel ok about the model's performance here because it recovered the true parameter values fairly well, but the MCMC convergence checks suggest our chains were not totally happy.
 
 One last thing before moving on: as mentioned above, we could have simply used the blavaan package to fit this model instead of fussing with custom Stan code. The blavaan version fits way faster and recovers the true parameter estimates, but it is less flexible overall. And again, crucially for the present analysis, there is no way to do survival analysis with blavaan. But for posterity, below is the syntax we would use to fit the model with blavaan. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
 
@@ -781,7 +774,7 @@ blavInspect(blavfit.1, "mcobj")
 
 ## Bayesian CFA with Custom Covariance Structure
 
-In the previous section we moved beyond brms into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by some shared unmeasured influences. One way to address this is to add another factor to the model to account for these unmeasured influences, but it can be simpler to just estimate a covariance term for those measured variables. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm]. 
+In the previous section we moved beyond brms into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by some shared unmeasured influences. One way to address this is to add another factor to the model to account for these unmeasured influences, but it can be simpler to just estimate a covariance term for those measured variables. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm].
 
 As an example of this scenario, we can imagine that the measured variables m1 and m4 are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. To reflect this change in the model, we need to change the specification of the variance-covariance matrix of the shared multivariable likelihood of the measured variables: where before all of the off-diagonal elements were fixed at 0, now we need the off-diagonals representing the covariance between m1 and m4 to be freely estimated.
 
@@ -844,7 +837,6 @@ m_{6}
 \end{aligned}
 $$
 
-
 We can simulate data from this DAG using lavaan like we did for the two models above, updating the syntax to give m1 and m4 a covariance of .4:
 
 ```{r}
@@ -867,12 +859,12 @@ fake_dat <- lavaan::simulateData(model = mtmm.model, sample.nobs = 4000)
 
 We'll also need to add a new parameter to our Stan model to account for the possibility that m1 and m4 covary. This only involves a few changes, namely:
 
-- **Parameters Block**: declare a matrix `L_corr_m1_m4` to represent the Cholesky factorization of a correlation matrix between m1 and m4;
-- **Transformed Parameters Block**: declare the Cholesky factorization of a covariance matrix `L_Sigma_m1_m4` and populate it by matrix-multiplying the standard deviations of m1 and m4 with the Cholesky factorization of the correlation matrix declared above;
-- **Model Block**:, declare m1 and m4 as drawn from a shared bivariate normal distribution separate from the other measured variables. This is equivalent to declaring all measured variales as drawn from a shared distribution like in the mathematical rendering of the model shown above, but it is simpler to implement. We can use the Cholesky factorization of a multivariate normal distribution, with the vector of the mu estimates of m1 and m4 as the mean vector, and the Cholesky factorization of the covariance matrix `L_Sigma_m1_m4` we declared above as the covariance matrix. 
-- **Generated Quantities Block**: pull out the correlation parameter for m1 and m4 from the estimated variance covariance matrix so we can analyze it. 
+-   **Parameters Block**: declare a matrix `L_corr_m1_m4` to represent the Cholesky factorization of a correlation matrix between m1 and m4;
+-   **Transformed Parameters Block**: declare the Cholesky factorization of a covariance matrix `L_Sigma_m1_m4` and populate it by matrix-multiplying the standard deviations of m1 and m4 with the Cholesky factorization of the correlation matrix declared above;
+-   **Model Block**:, declare m1 and m4 as drawn from a shared bivariate normal distribution separate from the other measured variables. This is equivalent to declaring all measured variales as drawn from a shared distribution like in the mathematical rendering of the model shown above, but it is simpler to implement. We can use the Cholesky factorization of a multivariate normal distribution, with the vector of the mu estimates of m1 and m4 as the mean vector, and the Cholesky factorization of the covariance matrix `L_Sigma_m1_m4` we declared above as the covariance matrix.
+-   **Generated Quantities Block**: pull out the correlation parameter for m1 and m4 from the estimated variance covariance matrix so we can analyze it.
 
-```stan
+``` stan
 data {
   int N; // sample size
   int P; // number of variables
@@ -1120,7 +1112,7 @@ data_list <- list(N=N,P=P,D=D,X=X, n_lam=6)
 # Fit the model
 fit <- model$sample(
   data = data_list,
-  seed = 199,
+  seed = 199,ftimes
   chains = 4,
   parallel_chains = 4,
   iter_warmup = 1000,
@@ -1256,7 +1248,7 @@ dplt |>
 
 ```
 
-Out of curiosity we can also check the MCMC diagnostics. The Rhats and effective sample sizes are looking a bit healthier than the previous model, which is interesting considering we've made the model more complex by adding a new parameter. 
+Out of curiosity we can also check the MCMC diagnostics. The Rhats and effective sample sizes are looking a bit healthier than the previous model, which is interesting considering we've made the model more complex by adding a new parameter.
 
 ```{r}
 #| label: mtmm-mcmc-diagnostics
@@ -1291,13 +1283,13 @@ draws |>
 
 ```
 
-## Fourth Example: Survival Analysis
+## Bayesian Parametric Survival Analysis with Latent Predictors
 
-Now that we're confident our CFA MTMM Stan model is well-specified, we can graft it onto the substantive regression model for the outcome of interest: time to employment. 
+Now that we're confident our CFA MTMM Stan model is well-specified, we can graft it onto the substantive regression model for the outcome of interest: time to employment.
 
-The updated model is shown below. All we've done is add two new lines at the top of the model. These lines say we imagine time-to-event $T$ for each person $i$ to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors $\text{adapt}$ and $\text{collab}$, as well as other measured variables in the matrix $\mathbf{X}$, each with its own coefficient in the vector $\boldsymbol{\beta}$. 
+The updated model is shown below. All we've done is add two new lines at the top of the model. These lines say we imagine time-to-event $T$ for each person $i$ to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors $\text{adapt}$ and $\text{collab}$, as well as other measured variables in the matrix $\mathbf{X}$, each with its own coefficient in the vector $\boldsymbol{\beta}$.
 
-$$
+```{tex}
 \begin{aligned}
 \color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
 \color{teal}\theta_i &\color{teal}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
@@ -1355,16 +1347,17 @@ m_{6}
 0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
 \end{bmatrix}
 \end{aligned}
+```
 
-$$
 
-Why a Weibull likelihood? According to @Collett2003, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we communicate about the parameter estimates, and allows us to not worry too much about the proportional hazards assumption. 
+Why a Weibull likelihood? According to @Collett2003, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as either a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we communicate about the parameter estimates, and allows us to not worry too much about the proportional hazards assumption.
 
 ### Data Simulation and Validation
 
-Unlike in previous sections, here we won't be able to rely on `lavaan::simulateData()` to create our simulated data, because it can't generate time-to-event data. So we'll need to generate the data ourselves. [Mark Lai](https://scholar.google.com/citations?user=s2LhwXAAAAAJ&hl=en) has shared [some nice code](https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html#full-example-of-a-small-scale-simulation) to do this. I use his approach, adapting it slightly allow for covariance between m1 and m4 as in the MTMM model above. For now we'll simulate the measured variables as continuous and gaussian, even though it is more realistic that in this context they would be ordinal likert-style. 
+Unlike in previous sections, here we won't be able to rely on `lavaan::simulateData()` to create our simulated data, because it can't generate time-to-event data. So we'll need to generate the data ourselves. [Mark Lai](https://scholar.google.com/citations?user=s2LhwXAAAAAJ&hl=en) has shared [some nice code](https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html#full-example-of-a-small-scale-simulation) to do this. I use his approach, adapting it slightly allow for covariance between m1 and m4 as in the MTMM model above. For now we'll simulate the measured variables as continuous and gaussian, even though it is more realistic that in this context they would be ordinal likert-style.
 
 ```{r}
+#| label: latent-variable-surv-sim
 
 # Define sample size
 N <- 4000
@@ -1436,128 +1429,139 @@ fit_test |>
 
 ```
 
-Now we can simulate the demographic variables and time-to-event data using the CFA data we simulated above. We can draw the covariates straightforwardly from the relevent distributions, but the times-to-event will require a bit more thought. There are existing packages for simulating survival data in R (such as [simsurv](https://cran.r-project.org/web/packages/simsurv/vignettes/simsurv_usage.html) by Sam Brilleman of rstanarm fame!) but since we're taking an explicit approach for the latent variables this time, it's nice to continue in that fashion for the entire dataset. I found [this Stack Exchange answer](https://stats.stackexchange.com/a/472260/337075) by user [Ryan SY Kwan](https://stats.stackexchange.com/users/206635/ryan-sy-kwan) helpful for learning an explicit workflow for simulating survival data from a Weibull distribution, which I implement here. 
+Now we can simulate the demographic variables and time-to-event data using the CFA data we simulated above. We can draw the covariates straightforwardly from the relevent distributions, but the times-to-event will require a bit more thought. There are existing packages for simulating survival data in R (such as [simsurv](https://cran.r-project.org/web/packages/simsurv/vignettes/simsurv_usage.html) by Sam Brilleman of rstanarm fame!) but since we're taking an explicit approach for the latent variables this time, it's nice to continue in that fashion for the entire dataset. I found [this Stack Exchange answer](https://stats.stackexchange.com/a/472260/337075) by user [Ryan SY Kwan](https://stats.stackexchange.com/users/206635/ryan-sy-kwan) helpful for learning an explicit workflow for simulating survival data from a Weibull distribution, which I implement here.
 
 The goal is to find a way of expressing the Weibull distribution's shape parameter with reference to the linear model, so that we can use R's built-in `rweibull()` function to sample our event times. We can start from [the PDF of the Weibull distribution](https://en.wikipedia.org/wiki/Weibull_distribution):
 
-$$
+\$\$
 
+```{=tex}
 \begin{equation}
 f(x; k, \lambda) = \begin{cases}
 \frac{k}{\lambda} \left( \frac{x}{\lambda} \right)^{k-1} e^{-(x/\lambda)^{k}} & x > 0, \\
 0 & x \leq 0.
 \end{cases}
 \end{equation}
-
-$$
+```
+\$\$
 
 And its cumulative density function given by:
 
-$$
+\$\$
 
+```{=tex}
 \begin{equation}
 F(x; k, \lambda) = 1 - \exp\left(-\left(\frac{x}{\lambda}\right)^{k}\right)
 \end{equation}
-
-$$
+```
+\$\$
 
 So the survival curve, given by 1 - CDF, is:
 
-$$
+\$\$
 
+```{=tex}
 \begin{equation}
 S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda}\right)^{k}\right)
 \end{equation}
-
-$$
+```
+\$\$
 
 And using the classic negative-log relationship between the survival function and the cumulative hazard function, we can say:
 
-$$
+\$\$
 
+```{=tex}
 \begin{equation}
 H(t) = -\log\left(\exp\left(-\left(\frac{t}{\lambda}\right)^{\rho}\right)\right)
 \end{equation}
+```
+\\\[1em\]
 
-\\[1em]
-
+```{=tex}
 \begin{equation}
 H(t) = \left(\frac{t}{\lambda}\right)^{\rho}
 \end{equation}
+```
+\$\$
 
-$$
+Now we have everything we need to implement the the classic form of a Cox Proportional Hazards regression, given by: \$\$
 
-Now we have everything we need to implement the the classic form of a Cox Proportional Hazards regression, given by:
-$$
-
+```{=tex}
 \begin{equation}
 H(t | \mathbf{X}) = H_0(t) \exp(\mathbf{\beta}' \mathbf{X})
 \end{equation}
+```
+\$\$
 
-$$
+Since this is directly equivalent to the model for the actual function of interest, the baseline hazard. As @Singer+Willett2003 put it, *"This direct equivalence may not be intuitive, but it certainly is invaluable."*
 
-Since this is directly equivalent to the model for the actual function of interest, the baseline hazard. As @Singer+Willett2003 put it, _"This direct equivalence may not be intuitive, but it certainly is invaluable."_
+\$\$
 
-$$
-
+```{=tex}
 \begin{equation}
 h(t | \mathbf{X}) = h_0(t) \exp(\mathbf{\beta}' \mathbf{X})
 \end{equation}
-
-$$
+```
+\$\$
 
 So we can take the definition of the Weibull cumulative hazard function we found above and substitute it into this equation, then take its negative exp to get it back in terms of the survival function:
 
-$$
+\$\$
 
+```{=tex}
 \begin{equation}
 S(t \mid \mathbf{x}) = \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(\mathbf{\beta}' \mathbf{x})\right)
 \end{equation}
-
-$$
+```
+\$\$
 
 Now we can rearrange things to make the scale parameter $\lambda$ itself a function of the linear model. This allows us to use R's built-in `rweibull()` function to generate the event times. All we need is some fancy algebra:
 
-$$
+\$\$
 
+```{=tex}
 \begin{align*}
 S(t \mid x, \lambda) &= \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(x' \beta)\right) \\
 &= \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp\left(\frac{x' \beta}{\rho}\right)\rho\right) \\
 &= \exp\left(-\left(\frac{t}{\frac{\lambda}{\exp\left(\frac{x' \beta}{\rho}\right)}}\right)^{\rho}\right) \\
 \end{align*}
-
-$$
+```
+\$\$
 
 Now the denominator incorporates both $\lambda$ and the linear model. So we can just take the whole denominator and call it its own new thing $\lambda'$:
 
-$$
+\$\$
 
+```{=tex}
 \begin{align*}
 \lambda' = \frac{\lambda}{\exp\left(\frac{x' \beta}{\rho}\right)}
 \end{align*}
-
-$$
+```
+\$\$
 
 Thus we've snuck our linear model into the classic no-model definition of the Weibull survival function we saw above, just with $\lambda'$ instead of $\lambda$:
 
-$$
+\$\$
 
+```{=tex}
 \begin{equation}
 S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 \end{equation}
-
-$$
+```
+\$\$
 
 This is the parameterization we can implement when we go to create our event times. We'll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We'll generate an event time and a censoring time for each person, and a person's status will be the shorter of those two times. We can start by choosing values for the Weibull distribution's `rho` and `lambda` parameters that generate a realistic-seeming distribution of times-to-employment in the absence of a linear model. This is simpler conceptually if we define `rho = 1`. After some trial and error I settled on `lambda = .02`, which results in a mean time-to-employment of 22 days in the simulated dataset.
 
 Now we can choose the simulated parameter estimates for the linear model. There's some tricky conversion we need to do to interpret our parametric estimates when we use the survival function, because the Weibull (and exponential, which is a special case of Weibull) results have the magic property of being able to be interpreted either as hazard ratios *or* acceleration factors. [This nice markdown document](https://rstudio-pubs-static.s3.amazonaws.com/5564_bc9e2d9a458c4660aa82882df90b7a6b.html) provides a walkthrough of the transformations required to move between these two interpretations. The canonical **survival** package implements Weibull regression as an accelerated failure time model by default, and I find this interpretation more user-friendly so I will stick with it for our purposes here. But in declaring the simulation parameter estimates we need to keep in mind that there are two different but equivalent ways of transforming the parameter estimates when interpretting the results of this sort of model. @Brilleman2020 provide a clear overview:
 
-- $\exp(-\beta_p(t))$ is an **acceleration factor**: Sub-zero values of the transformed parameter estimates correspond to _slower_ event times. 
-- $\exp(\beta_p(t))$ is a **survival time ratio**: Sub-zero values of the transformed parameter estimates correspond to _faster_ event times.
+-   $\exp(-\beta_p(t))$ is an **acceleration factor**: Sub-zero values of the transformed parameter estimates correspond to *slower* event times.
+-   $\exp(\beta_p(t))$ is a **survival time ratio**: Sub-zero values of the transformed parameter estimates correspond to *faster* event times.
 
-This is important to keep in mind when we declare our 'true' simulation parameter estimates. We can declare them as survival time ratios for simplicity when implementing the simulation, even though the {{survival}} package and Stan will return acceleration factors by default. For example, for this simulation we can imagine that being on employment insurance is associated with twice-as-fast time-to-employment because it means you have recent work experience. We simulate this by setting the coefficient `beta_ie <- log(2)`, which corresponds to an acceleration factor of .5. Likewise, we can imagine that a one-unit increase in the latent trait 'Collaboration Skills' is associated with 20% faster job attainment, so we set `beta_collab <- log(1.2)`, which corresponds to an acceleration factor of `exp(-log(1.2)) ~ 0.833`. We can proceed in the same way for the other parameter estimates. 
+This is important to keep in mind when we declare our 'true' simulation parameter estimates. We can declare them as survival time ratios for simplicity when implementing the simulation, even though the {{survival}} package and Stan will return acceleration factors by default. For example, for this simulation we can imagine that being on employment insurance is associated with twice-as-fast time-to-employment because it means you have recent work experience. We simulate this by setting the coefficient `beta_ie <- log(2)`, which corresponds to an acceleration factor of .5. Likewise, we can imagine that a one-unit increase in the latent trait 'Collaboration Skills' is associated with 20% faster job attainment, so we set `beta_collab <- log(1.2)`, which corresponds to an acceleration factor of `exp(-log(1.2)) ~ 0.833`. We can proceed in the same way for the other parameter estimates.
 
 ```{r}
+#| label: tte-surv-sim
 
 # Declare some parameter values for baseline hazard
 lambda <- .02
@@ -1582,8 +1586,7 @@ fake_dat <- fake_dat_measurement |>
 
     # Simulate the covariates
     age = rnorm(N), 
-    ei_status = rbinom(N, 1, .4),
-    n_previous_programs = sample(c(1, 2, 3, 4), N, prob = c(.5, .3, .15, .05), replace = TRUE)
+    ei_status = rbinom(N, 1, .4)
 
   ) |>
 
@@ -1670,7 +1673,7 @@ We can also do some basic exploratory analysis of the data to make sure the even
 #| label: viz-raw-event-times
 #| message: false
 #| warning: false
-#| fig-cap: "Histogram of times-to-event, including both events and censorings."
+#| fig-cap: "Histogram of times-to-event, including employment outcomes and censorings."
 
 fake_dat |>
 
@@ -1723,37 +1726,34 @@ plt$plot +
 
 ```
 
-### Prior Predictive Simulation 
+### Prior Predictive Simulation
 
-Unlike the factor analysis models we fit above, this model has substantive predictor variables, namely `age`, `ei_status`, and the two latent variables `adapt` and `collab`. Based on previous research, we have a sense of the types of parameter estimates that seem realistic for these predictors. So can use prior predictive simulation to specify informative priors. Here's what we'll do:
-1. Write some simple code to simulate from the prior distributions of interest;
-2. Transform the simulated values to check whether the priors make sense on the scale of interest;
-3. Once we arrive at reasonable-seeming priors for all of the parameters, we can use brms to simulate event times from the prior predictive distribution and make sure everything is making sense.
+Unlike the factor analysis models we fit above, this model has substantive predictor variables, namely `age`, `ei_status`, and the two latent variables `adapt` and `collab`. Based on previous research, we have a sense of the types of parameter estimates that seem realistic for these predictors. So can use prior predictive simulation to specify informative priors. Here's what we'll do: 1. Write some simple code to simulate from the prior distributions of interest; 2. Transform the simulated values to check whether the priors make sense on the scale of interest; 3. Once we arrive at reasonable-seeming priors for all of the parameters, we can use brms to simulate event times from the prior predictive distribution and make sure everything is making sense.
 
 The brms parameterization of the Weibull distribution [is slightly different](https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html) than the one used in the **survival** package, with **brms** specifying a mean parameter as a function of the scale and shape parameters of the more traditional parameterization:
 
-$$
+\$\$
 
 \begin{align*}
 s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
-\end{align*}
-$$
+\end{align*} \$\$
 
 So when we specify a prior for the intercept term in our Bayesian model, we're also specifying a prior for this transformation of the scale and shape parameters under the traditional parameterization:
 
-$$
+\$\$
 
+```{=tex}
 \begin{align*}
 \mu = s \times \Gamma\left(1 + \frac{1}{\alpha}\right)
 \end{align*}
+```
+\$\$
 
-$$
+I don't think this has any big implications: setting a prior for the intercept is more intuitive than setting a prior for the scale and shape parameters indivdually anyway. We can copy this approach when we go to fit our Stan model.
 
-I don't think this has any big implications: setting a prior for the intercept is more intuitive than setting a prior for the scale and shape parameters indivdually anyway. We can copy this approach when we go to fit our Stan model. 
+Let's start with the prior for the intercept, specifying a prior on the raw 'days-to-employment' scale because that helps keep things interpretable.
 
-Let's start with the prior for the intercept, specifying a prior on the raw 'days-to-employment' scale because that helps keep things interpretable. 
-
-Based on previous studies I've done at my work, an average time-to-employment of 30 days seems reasonable, and an average higher than 60 days seems very unlikely. After much trial and error with the code below it seems like a gaussian with `mean = 3.3, sd = .4` gives a distribution with appropriate characteristics: 
+Based on previous studies I've done at my work, an average time-to-employment of 30 days seems reasonable, and an average higher than 60 days seems very unlikely. After much trial and error with the code below it seems like a gaussian with `mean = 3.3, sd = .4` gives a distribution with appropriate characteristics:
 
 ```{r}
 #| label: prior-pred-weibull-intercept
@@ -1796,7 +1796,7 @@ sim |>
 
 ```
 
-Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 10 or more in either direction (I.E. 10 or 0.10) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with `mean = 0, sd = 1.45` captures this 'factor of 5' intuition, with a factor of 10 or greater being associated with a probability of only about 5% in either direction. 
+Now for the beta coefficients. We can think of ourselves as settings priors as on log acceleration factors, so the exponentiated draws from the prior should reflect our uncertainty about how a one-unit change in that covariate might be associated with a faster or slower time-to-employment, keeping all other measured covariates equal. For any of the covariates, an acceleration factor of 10 or more in either direction (I.E. 10 or 0.10) seems pretty unlikely. As with the intercept, we fiddle with the code until we get a distribution that has the properties we want. much trial and error it seems like a gaussian with `mean = 0, sd = 1.45` captures this 'factor of 5' intuition, with a factor of 10 or greater being associated with a probability of only about 5% in either direction.
 
 ```{r}
 #| label: prior-pred-weibull-coefs
@@ -1899,6 +1899,7 @@ prior_preds |>
   geom_density(aes(x = .prediction, group = .draw), alpha = 0, colour=alpha("mediumorchid", .1)) +
   scale_y_continuous(expand=c(0, 0)) +
   xlim(c(1, 365)) +
+  ylim(c(0, .08)) +
   theme_minimal() +
   theme(
     axis.text.y = element_blank(),
@@ -1907,7 +1908,7 @@ prior_preds |>
 
 ```
 
- We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something @Gelman2020 advocate in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven't told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could give the model this information in other ways, for example by changing the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let's stick with the plan and see if the model is able to recover the true parameter estimates and come up with reasonable posterior predictive distribution despite these imperfect priors. 
+We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something @Gelman2020 advocate in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven't told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could give the model this information in other ways, for example by changing the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let's stick with the plan and see if the model is able to recover the true parameter estimates and come up with reasonable posterior predictive distribution despite these imperfect priors.
 
 ```{r}
 #| label: prior-pred-1-means
@@ -1935,11 +1936,11 @@ fake_dat |>
 
 ```
 
-### Fitting the Stan Model 
+### Fitting the Stan Model
 
-Now we're ready to fit the survival model using the latent factors as predictors. 
+Now we're ready to fit the survival model using the latent factors as predictors.
 
-```stan
+``` stan
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -2053,7 +2054,6 @@ generated quantities {
     y_pred[n] = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
   }
 }
-
 ```
 
 ```{r}
@@ -2180,11 +2180,11 @@ generated quantities {
 
 Now compline the model and run. I've worked closely from the Stan code for the Weibull model we fit with **brms** above, essentially just grafting it onto the MTMM factor analysis model from before. This only involved a few steps:
 
-- **Data block:** add new vectors for the response variable `Y` and predictor variables `K` of the Weibull model, and for censoring status `cens`. Also declare the design matrix `X_weibull` of the necessary dimensions.
-- **Parameters block:** add a vector of coefficients `b` for the beta coefficients of the Weibull model.
-- **Transformed Parameters block:** declare the constant shape parameter for the Weibull model, as well as the linear predictor `mu` for each observation. Then exponentiate it. 
-- **Model block:** add the priors we simulated above, as well as the likelihood function conditional on censoring status.
-- **Generated Quantities block:** generate draws from the posterior predictive distribution, to help with model checking. 
+-   **Data block:** add new vectors for the response variable `Y` and predictor variables `K` of the Weibull model, and for censoring status `cens`. Also declare the design matrix `X_weibull` of the necessary dimensions.
+-   **Parameters block:** add a vector of coefficients `b` for the beta coefficients of the Weibull model.
+-   **Transformed Parameters block:** declare the constant shape parameter for the Weibull model, as well as the linear predictor `mu` for each observation. Then exponentiate it.
+-   **Model block:** add the priors we simulated above, as well as the likelihood function conditional on censoring status.
+-   **Generated Quantities block:** generate draws from the posterior predictive distribution, to help with model checking.
 
 One thing to note is that because we adopted **brms**'s `0 + Intercept` syntax in generating the Stan code to allow us to set the intercept prior on the raw outcome scale, we can do what Paul Bürkner does under the hood and feed an extra column of 1s into the design matrix `X_weibull`.
 
@@ -2246,10 +2246,8 @@ fit <- model$sample(
   refresh = 1 # print update at each iter
 )
 
-
 # Save the resulting model fit
 saveRDS(fit, "fits/b07.04.rds")
-
 
 ```
 
@@ -2288,7 +2286,7 @@ saveRDS(pp_draws, "fits/b07.04.post_pred_samples.rds")
 
 ```
 
-How did that go? We can plot the draws and look at the MCMC diagnostics like we did above. It looks like the model did a good job capturing all of the true parameter estimates in the form of acceleration factors. For example, where we simulated our true parameter value for the effect of a 1-year  It even did ok at recovering the true parameter estimates for `b_Collab`, even though the simulated factor loadings provide quite unreliable measurements of that latent predictor. This is all a big win for Bayes. 
+How did that go? We can plot the draws and look at the MCMC diagnostics like we did above. It looks like the model did a good job capturing all of the true parameter estimates in the form of acceleration factors. For example, where we simulated our true parameter value for the effect of a 1-year It even did ok at recovering the true parameter estimates for `b_Collab`, even though the simulated factor loadings provide quite unreliable measurements of that latent predictor. This is all a big win for Bayes.
 
 ```{r}
 
@@ -2369,10 +2367,414 @@ draws |>
 
 Bring the posterior checks code and saveRDS call down here for consistency.
 
-Plot baseline hazard, etc, other conventional time-to-event model diagnostics. 
+Plot baseline hazard, etc, other conventional time-to-event model diagnostics.
 
-## Multilevel Survival Analysis
+## Bayesian Multilevel Parametric Survival Analysis with Latent Predictors
 
-Let's say like 30 clusters. How to simulate? Vary cluster N to illustrate shrinkage in posterior predictions. 
+The model in the previous section is still missing some information we have: our program was delivered to ~70 cohorts of various sizes, each administered by a different non-profit or community college. This means our data has nested structure that we should tell the model about via a multilevel model. In short, we just tell the model that cohort-specific regression coefficients are drawn from a shared multivariate normal distribution, and we ask the model to estimate the mean vector and covariance matrix of that distribution. This allows the model to partially pool information across clusters insofar as it deems such pooling appropriate given its estimates of the between-cohort variance an covariance parameters: if the model estimates little variance between clusters then it will pool more, but if it estimates high variance then it will pool less. This biases the cluster-specific estimates by shrinking them towards the estimated 'grand mean', which is often a good thing because more bias means less variance. We only vary the substantive predictors, not the parameters of the CFA portion of the model, IE the factor loadings. Here's the new model definition:
+
+Does this formally correspond to the traditional definition of a 'shared frailty' model? It'd be nice to get clarity on that and write the traditional shared frailty model definition in latex for comparison. 
+
+$$
+
+\begin{aligned}
+\color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
+\color{teal}\theta_i &\color{teal}= \alpha + \beta_{\text{age}} \text{age}_i + \beta_{\text{ei}} \text{ei\_status}_i + \beta_{\text{adapt}} \text{adapt}_i + \beta_{\text{collab}} \text{collab}_i \\
+\\
+\begin{bmatrix}
+\alpha \\
+\beta_{\text{age}} \\
+\beta_{\text{ei}} \\
+\beta_{\text{adapt}} \\
+\beta_{\text{collab}}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{\alpha} \\
+\mu_{\text{age}} \\
+\mu_{\text{ei}} \\
+\mu_{\text{adapt}} \\
+\mu_{\text{collab}}
+\end{bmatrix},
+\Sigma_{\beta}
+\right) \\
+\\
+\begin{bmatrix}
+m_{1} \\
+m_{2} \\
+m_{3} \\
+m_{4} \\
+m_{5} \\
+m_{6}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_{m1} \\
+\mu_{m2} \\
+\mu_{m3} \\
+\mu_{m4} \\
+\mu_{m5} \\
+\mu_{m6}
+\end{bmatrix},
+\Sigma_m
+\right) \\
+\\
+\mu_{m1} &= \lambda_1 \text{adapt}, \quad \mu_{m2} = \lambda_2 \text{adapt}, \quad \mu_{m3} = \lambda_3 \text{adapt} \\
+\mu_{m4} &= \lambda_4 \text{collab}, \quad \mu_{m5} = \lambda_5 \text{collab}, \quad \mu_{m6} = \lambda_6 \text{collab} \\
+\\
+\begin{bmatrix}
+\text{adapt}_{i} \\
+\text{collab}_{i}
+\end{bmatrix}
+&\sim \text{MVNormal}
+\left(
+\begin{bmatrix}
+\mu_\text{adapt} \\
+\mu_\text{collab}
+\end{bmatrix},
+\Sigma_f
+\right) \\
+\\
+\Sigma_f &=
+\begin{bmatrix}
+\sigma_\text{adapt}^2 & \color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} \\
+\color{orchid}{\rho \sigma_\text{adapt} \sigma_\text{collab}} & \sigma_\text{adapt}^2
+\end{bmatrix}
+\\
+\\
+\Sigma_m &=
+\begin{bmatrix}
+\sigma_{m1}^2 & 0 & 0 & \color{orange}{\rho\ \sigma_{m1} \sigma_{m4}} & 0 & 0 \\
+0 & \sigma_{m2}^2 & 0 & 0 & 0 & 0 \\
+0 & 0 & \sigma_{m3}^2 & 0 & 0 & 0 \\
+\color{orange}{\rho \sigma_{m1} \sigma_{m4}} & 0 & 0 & \sigma_{m4}^2 & 0 & 0 \\
+0 & 0 & 0 & 0 & \sigma_{m5}^2 & 0 \\
+0 & 0 & 0 & 0 & 0 & \sigma_{m6}^2
+\end{bmatrix}
+\\
+\\
+\color{gray}{\Sigma_{\beta}} &= \color{gray}{
+\begin{bmatrix}
+\sigma_{\alpha}^2 & \rho_{\alpha,\text{age}} \sigma_{\alpha} \sigma_{\text{age}} & \rho_{\alpha,\text{ei}} \sigma_{\alpha} \sigma_{\text{ei}} & \rho_{\alpha,\text{adapt}} \sigma_{\alpha} \sigma_{\text{adapt}} & \rho_{\alpha,\text{collab}} \sigma_{\alpha} \sigma_{\text{collab}} \\
+\rho_{\alpha,\text{age}} \sigma_{\alpha} \sigma_{\text{age}} & \sigma_{\text{age}}^2 & \rho_{\text{age},\text{ei}} \sigma_{\text{age}} \sigma_{\text{ei}} & \rho_{\text{age},\text{adapt}} \sigma_{\text{age}} \sigma_{\text{adapt}} & \rho_{\text{age},\text{collab}} \sigma_{\text{age}} \sigma_{\text{collab}} \\
+\rho_{\alpha,\text{ei}} \sigma_{\alpha} \sigma_{\text{ei}} & \rho_{\text{age},\text{ei}} \sigma_{\text{age}} \sigma_{\text{ei}} & \sigma_{\text{ei}}^2 & \rho_{\text{ei},\text{adapt}} \sigma_{\text{ei}} \sigma_{\text{adapt}} & \rho_{\text{ei},\text{collab}} \sigma_{\text{ei}} \sigma_{\text{collab}} \\
+\rho_{\alpha,\text{adapt}} \sigma_{\alpha} \sigma_{\text{adapt}} & \rho_{\text{age},\text{adapt}} \sigma_{\text{age}} \sigma_{\text{adapt}} & \rho_{\text{ei},\text{adapt}} \sigma_{\text{ei}} \sigma_{\text{adapt}} & \sigma_{\text{adapt}}^2 & \rho_{\text{adapt},\text{collab}} \sigma_{\text{adapt}} \sigma_{\text{collab}} \\
+\rho_{\alpha,\text{collab}} \sigma_{\alpha} \sigma_{\text{collab}} & \rho_{\text{age},\text{collab}} \sigma_{\text{age}} \sigma_{\text{collab}} & \rho_{\text{ei},\text{collab}} \sigma_{\text{ei}} \sigma_{\text{collab}} & \rho_{\text{adapt},\text{collab}} \sigma_{\text{adapt}} \sigma_{\text{collab}} & \sigma_{\text{collab}}^2 \\
+\end{bmatrix}
+} \\
+\end{aligned}
+
+
+$$
+
+We'll need to simulate a new time-to-event dataset to reflect the fact that each cluster has its own parameter estimates drawn from a shared distribution. No changes are needed to the latent variables, so we can reuse our `fake_dat_measurement` from the previous example. But we'll need to change the way we simulated the event times such that each cluster has its own true parameter value for each of the regression coefficients of interest. We can use a slightly-modified version of the simulation approach provided by @KurzRethinking2023 in replicating the robot cafés example from @McElreath2020.
+
+Add an interaction effect between EI and age for fun?
+
+This is the brms-generated multilevel weibull model, for reference:
+
+```{stan}
+
+// from this model: bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status + (0 + Intercept + adapt + collab + age + ei_status | cohort))
+
+functions {
+  /* compute correlated group-level effects
+   * Args:
+   *   z: matrix of unscaled group-level effects
+   *   SD: vector of standard deviation parameters
+   *   L: cholesky factor correlation matrix
+   * Returns:
+   *   matrix of scaled group-level effects
+   */
+  matrix scale_r_cor(matrix z, vector SD, matrix L) {
+    // r is stored in another dimension order than z
+    return transpose(diag_pre_multiply(SD, L) * z);
+  }
+}
+data {
+  int<lower=1> N; // total number of observations
+  vector[N] Y; // response variable
+  array[N] int<lower=-1, upper=2> cens; // indicates censoring
+  int<lower=1> K; // number of population-level effects
+  matrix[N, K] X; // population-level design matrix
+  // data for group-level effects of ID 1
+  int<lower=1> N_1; // number of grouping levels
+  int<lower=1> M_1; // number of coefficients per level
+  array[N] int<lower=1> J_1; // grouping indicator per observation
+  // group-level predictor values
+  vector[N] Z_1_1;
+  vector[N] Z_1_2;
+  vector[N] Z_1_3;
+  vector[N] Z_1_4;
+  vector[N] Z_1_5;
+  int<lower=1> NC_1; // number of group-level correlations
+  int prior_only; // should the likelihood be ignored?
+}
+transformed data {
+  
+}
+parameters {
+  vector[K] b; // regression coefficients
+  real<lower=0> shape; // shape parameter
+  vector<lower=0>[M_1] sd_1; // group-level standard deviations
+  matrix[M_1, N_1] z_1; // standardized group-level effects
+  cholesky_factor_corr[M_1] L_1; // cholesky factor of correlation matrix
+}
+transformed parameters {
+  matrix[N_1, M_1] r_1; // actual group-level effects
+  // using vectors speeds up indexing in loops
+  vector[N_1] r_1_1;
+  vector[N_1] r_1_2;
+  vector[N_1] r_1_3;
+  vector[N_1] r_1_4;
+  vector[N_1] r_1_5;
+  real lprior = 0; // prior contributions to the log posterior
+  // compute actual group-level effects
+  r_1 = scale_r_cor(z_1, sd_1, L_1);
+  r_1_1 = r_1[ : , 1];
+  r_1_2 = r_1[ : , 2];
+  r_1_3 = r_1[ : , 3];
+  r_1_4 = r_1[ : , 4];
+  r_1_5 = r_1[ : , 5];
+  lprior += normal_lpdf(b[1] | 3.3, 0.4);
+  lprior += normal_lpdf(b[2] | 0, 1.45);
+  lprior += normal_lpdf(b[3] | 0, 1.45);
+  lprior += normal_lpdf(b[4] | 0, 1.45);
+  lprior += normal_lpdf(b[5] | 0, 1.45);
+  lprior += cauchy_lpdf(shape | 0, 2.5) - 1 * cauchy_lccdf(0 | 0, 2.5);
+  lprior += student_t_lpdf(sd_1 | 3, 0, 2.5)
+            - 5 * student_t_lccdf(0 | 3, 0, 2.5);
+  lprior += lkj_corr_cholesky_lpdf(L_1 | 1);
+}
+model {
+  // likelihood including constants
+  if (!prior_only) {
+    // initialize linear predictor term
+    vector[N] mu = rep_vector(0.0, N);
+    mu += X * b;
+    for (n in 1 : N) {
+      // add more terms to the linear predictor
+      mu[n] += r_1_1[J_1[n]] * Z_1_1[n] + r_1_2[J_1[n]] * Z_1_2[n]
+               + r_1_3[J_1[n]] * Z_1_3[n] + r_1_4[J_1[n]] * Z_1_4[n]
+               + r_1_5[J_1[n]] * Z_1_5[n];
+    }
+    mu = exp(mu);
+    for (n in 1 : N) {
+      // special treatment of censored data
+      if (cens[n] == 0) {
+        target += weibull_lpdf(Y[n] | shape, mu[n] / tgamma(1 + 1 / shape));
+      } else if (cens[n] == 1) {
+        target += weibull_lccdf(Y[n] | shape, mu[n] / tgamma(1 + 1 / shape));
+      } else if (cens[n] == -1) {
+        target += weibull_lcdf(Y[n] | shape, mu[n] / tgamma(1 + 1 / shape));
+      }
+    }
+  }
+  // priors including constants
+  target += lprior;
+  target += std_normal_lpdf(to_vector(z_1));
+}
+generated quantities {
+  // compute group-level correlations
+  corr_matrix[M_1] Cor_1 = multiply_lower_tri_self_transpose(L_1);
+  vector<lower=-1, upper=1>[NC_1] cor_1;
+  // extract upper diagonal of correlation matrix
+  for (k in 1 : M_1) {
+    for (j in 1 : (k - 1)) {
+      cor_1[choose(k - 1, 2) + j] = Cor_1[j, k];
+    }
+  }
+}
+
+```
+
+We can reuse the parameter estimates from our previous model as the means of the shared distribution from which the cluster-specific parameter values are drawn.
+
+Do the lambda primes look crazy??
+
+```{r}
+#| label: tte-surv-sim-multilevel
+
+# Average lambda parameter of Weibull baseline hazard
+avg_lambda <- .02
+rho <- 1 # keep rho = 1 to keep the conversions simple / make it easier to specify lambda
+avg_lambda_wiki <- avg_lambda^(-1 / rho) 
+
+# Average effects for the substantive predictors
+avg_beta_adapt <- log(1) # adaptability skills have no effect on time-to-employment
+avg_beta_collab <- log(1.2) # collaboration skills decrease time-to-employment by 20% for each standard deviation increase.
+avg_beta_age <- log(.9) # older people find employment a bit slower -- each increase in age of 1 standard deviation slows time-to-employment to 90% of what is was previously.
+avg_beta_ei <- log(2) # people on EI find employment twice as fast 
+
+# Standard deviations of lamba and the substantive predictors
+sd_lambda <- log(500)
+sd_beta_adapt <- log(1.1) 
+sd_beta_collab <- log(1.3) 
+sd_beta_age <- log(2) # the effect of age varies a lot by region
+sd_beta_ei <- log(0.2) # the effect of EI is very consistent
+
+# Pearson correlation coefficients for each pair of regression parameters
+rho_lambda_adapt <- .1  
+rho_lambda_collab <- .1
+rho_lambda_age <- .1
+rho_lambda_ei <- .1
+rho_adapt_collab <- .1
+rho_adapt_age <- .1
+rho_adapt_ei <- .1
+rho_collab_age <- .1
+rho_collab_ei <- .1
+rho_age_ei <- .1
+
+# Calculate the covariances
+cov_lambda_adapt <- sd_lambda * sd_beta_adapt * rho_lambda_adapt
+cov_lambda_collab <- sd_lambda * sd_beta_collab * rho_lambda_collab
+cov_lambda_age <- sd_lambda * sd_beta_age * rho_lambda_age
+cov_lambda_ei <- sd_lambda * sd_beta_ei * rho_lambda_ei
+cov_adapt_collab <- sd_beta_adapt * sd_beta_collab * rho_adapt_collab
+cov_adapt_age <- sd_beta_adapt * sd_beta_age * rho_adapt_age
+cov_adapt_ei <- sd_beta_adapt * sd_beta_ei * rho_adapt_ei
+cov_collab_age <- sd_beta_collab * sd_beta_age * rho_collab_age
+cov_collab_ei <- sd_beta_collab * sd_beta_ei * rho_collab_ei
+cov_age_ei <- sd_beta_age * sd_beta_ei * rho_age_ei
+
+
+# Bring it all together as a covariance matrix
+sigma <- matrix(c(
+    sd_lambda^2, cov_lambda_adapt, cov_lambda_collab, cov_lambda_age, cov_lambda_ei,
+    cov_lambda_adapt, sd_beta_adapt^2, cov_adapt_collab, cov_adapt_age, cov_adapt_ei,
+    cov_lambda_collab, cov_adapt_collab, sd_beta_collab^2, cov_collab_age, cov_collab_ei,
+    cov_lambda_age, cov_adapt_age, cov_collab_age, sd_beta_age^2, cov_age_ei,
+    cov_lambda_ei, cov_adapt_ei, cov_collab_ei, cov_age_ei, sd_beta_ei^2
+), ncol = 5)
+
+# Declare the rate for the exponential distribution from which we will sample censoring times
+censor_rate = .02
+
+```
+
+Now to define the cluster-specific true parameter values using the means and covariance matrix we defined above:
+
+```{r}
+
+# Assign people to clusters
+max_cluster_size <- N / 50
+min_cluster_size <- N / 100
+
+# Create a sequence of cluster sizes
+cluster_sizes <- sample(min_cluster_size:max_cluster_size, N, replace = TRUE)
+
+fake_dat_with_clusters <- fake_dat_measurement |>
+
+  mutate(cluster_id = rep(1:length(cluster_sizes), times=cluster_sizes)[1:N])
+
+# Generate the true cluster-specific parameter estimates
+n_clusters <- fake_dat_with_clusters |> distinct(cluster_id) |> nrow()
+
+cluster_params = MASS::mvrnorm(n_clusters, c(avg_lambda_wiki, avg_beta_adapt, avg_beta_collab, avg_beta_age, avg_beta_ei), sigma) |>
+
+  as.data.frame() |>
+
+  rowid_to_column() |>
+
+  rename(
+    "cluster_id" = 1,
+    "lambda_wiki" = 2,
+    "beta_adapt" = 3,
+    "beta_collab" = 4,
+    "beta_age" = 5,
+    "beta_ei" = 6
+  )
+
+```
+
+Lastly, generate the measured covariates, event times, and censoring statuses:
+
+```{r}
+# Simulate the cluster covariates and event times
+fake_dat <- fake_dat_with_clusters |>
+
+  # Bring in the cluster-specific 
+  left_join(cluster_params, by = "cluster_id") |>
+
+  mutate(
+    
+    # Simulate the covariates
+    age = rnorm(N), 
+    ei_status = rbinom(N, 1, .4)
+    
+  ) |>
+
+  rowid_to_column() |>
+
+  group_by(rowid) |>
+
+  mutate(
+    
+    # Simulate the event times and censoring times using cluster-specific parameter values
+    lambda_prime = lambda_wiki / exp((beta_adapt*adapt + beta_collab*collab + beta_age*age + beta_ei*ei_status) / rho),
+    time_event = rweibull(1, shape=rho, scale=lambda_prime),
+    time_censor = rexp(1, censor_rate),
+    time = min(time_event, time_censor),
+    censored = ifelse(time_censor <= time_event, 1, 0),
+    status = ifelse(time_censor > time_event, 1, 0)
+    
+  ) |>
+  
+  ungroup() 
+  
+  # Remove the intermediary variables we don't need
+ # select(-c(
+ #   lambda_prime,
+ #   time_event,
+ #   time_censor,
+ #   lambda_cluster,
+ #   beta_adapt_cluster,
+ #   beta_collab_cluster,
+ #   beta_age_cluster,
+ #   beta_ei_cluster
+ # ))
+
+```
+
+Do the simulated data have a realistic-seeming distribution of event times before proceeding?
+
+```{r}
+#| label: viz-raw-event-times-multilevel
+#| message: false
+#| warning: false
+#| fig-cap: "Histogram of times-to-event, including employment outcomes and censorings."
+
+fake_dat |>
+
+  mutate(mean = mean(time)) |>
+
+  ggplot() + 
+  geom_histogram(aes(x = time), colour = 1, fill = "cornflowerblue") +
+  geom_vline(aes(xintercept = mean), size = 2, linetype = 2) +
+  scale_x_continuous(limits = c(3, 180), n.breaks = 10, expand=c(0, 0)) +
+  scale_y_continuous(expand=c(0, 0)) +
+  labs(
+    x = "Days to Employment",
+    y = "N Graduates"
+  ) +
+  theme_bw() +
+  theme(
+    axis.ticks.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_blank()
+  )
+  
+```
+
+
+Visualize the cluster sizes and cluster-specific event times?
+
 
 Do a secret weapon plot for the cluster-specific estimates before fitting the full model!
+
+We can use the same priors as the other models, but maybe put cauchys and LKJs on the new varying effects sigma terms?
+
+Copy some posterior analysis plots for survival analysis from here? https://onlinelibrary.wiley.com/doi/full/10.1111/insr.12214
