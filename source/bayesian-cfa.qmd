@@ -1613,9 +1613,6 @@ fake_dat <- fake_dat_measurement |>
     time_censor
   ))
 
-fake_dat |>
-
-  summarize(what = mean(time))
 ```
 
 If we've done everything correctly then a basic survival analysis should be able to recover the true parameter estimates using the true model specification. Indeed, this is what we see:
@@ -2275,14 +2272,8 @@ draws <- fit$draws(
   )
 )
 
-pp_draws <- fit$draws(
-  variables = c(
-    "y_pred"
-  )
-)
 # Save the result
 saveRDS(draws, "fits/b07.04.samples.rds")
-saveRDS(pp_draws, "fits/b07.04.post_pred_samples.rds")
 
 ```
 
@@ -2362,11 +2353,87 @@ draws |>
   theme(panel.grid.major = element_blank()) +
   facet_wrap(~.variable, scales = "free_x") 
 
+```
+
+And the MCMC diagnostics for good measure:
+
+```{r}
+#| label: convergence-surv-summary
+#| eval: false
+#| message: false
+#| warnings: false
+
+# Precompute the summary, to save time at quarto render
+summary_draws <- draws |> summary() 
+saveRDS(summary_draws, "b07.04.summary.rds")
 
 ```
 
-Bring the posterior checks code and saveRDS call down here for consistency.
+```{r}
+#| label: convergence-surv
+#| message: false
+#| warnings: false
 
+summary_draws <- readRDS("b07.04.summary.rds")
+
+  select(variable, rhat, ess_bulk, ess_tail) |>
+
+  mutate(across(where(is.numeric), ~round(.x, 2))) |>
+
+  knitr::kable()
+
+```
+
+Another important thing to understand our model is to sample from the posterior predictive distribution. When we sampled from the prior predictive distribution we saw that the model thought unrealistic long-tail event times like 400,000 days were possible. If the model still believes those things then that's a problem, and there's more model improvement to be done because clearly we know things the model doesn't. 
+
+Start by retreiving the samples from the posterior predictive distribution we defined at the bottom of the Stan model's `generated quantities{}` block:
+
+```{r}
+#| eval: false
+
+# Get the draws from the posterior predictive distribution
+pp_draws <- fit$draws(variables = c("y_pred"))
+
+# Save the result
+saveRDS(pp_draws, "fits/b07.04.post_pred_samples.rds")
+
+```
+
+Load the samples from the cache:
+
+```{r}
+#| eval: false
+
+# Load the posterior preds from the cache
+pp_draws <- readRDS("fits/b07.04.post_pred_samples.rds")
+
+# Summarize the draws into points
+pp_summaries <- pp_draws |> summary()
+
+# Store the summary object again to save time at quarto render
+saveRDS(pp_summaries, "fits/b07.04.post_pred_summaries.rds")
+
+```
+
+```{r}
+
+pp_summaries <- readRDS("source/fits/b07.04.post_pred_summaries.rds")
+
+pp_summaries |>
+
+ # select(mean) |>
+
+  ggplot() + 
+  geom_density(aes(x = mean))
+
+
+
+
+
+  cbind
+
+  
+```
 Plot baseline hazard, etc, other conventional time-to-event model diagnostics.
 
 ## Bayesian Multilevel Parametric Survival Analysis with Latent Predictors
