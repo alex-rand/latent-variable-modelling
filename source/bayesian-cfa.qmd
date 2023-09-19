@@ -2374,7 +2374,7 @@ saveRDS(summary_draws, "fits/b07.04.summary.rds")
 #| message: false
 #| warnings: false
 
-summary_draws <- readRDS("fits/b07.04.summary.rds")
+summary_draws <- readRDS("source/fits/b07.04.summary.rds")
 
   select(variable, rhat, ess_bulk, ess_tail) |>
 
