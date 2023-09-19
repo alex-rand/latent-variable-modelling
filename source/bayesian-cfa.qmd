@@ -1940,7 +1940,7 @@ fake_dat |>
 
 Now we're ready to fit the survival model using the latent factors as predictors.
 
-``` stan
+```stan
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -2375,7 +2375,7 @@ The model in the previous section is still missing some information we have: our
 
 Does this formally correspond to the traditional definition of a 'shared frailty' model? It'd be nice to get clarity on that and write the traditional shared frailty model definition in latex for comparison. 
 
-$$
+```{=tex}
 
 \begin{aligned}
 \color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
@@ -2465,9 +2465,8 @@ m_{6}
 \end{bmatrix}
 } \\
 \end{aligned}
-
-
-$$
+ 
+```
 
 We'll need to simulate a new time-to-event dataset to reflect the fact that each cluster has its own parameter estimates drawn from a shared distribution. No changes are needed to the latent variables, so we can reuse our `fake_dat_measurement` from the previous example. But we'll need to change the way we simulated the event times such that each cluster has its own true parameter value for each of the regression coefficients of interest. We can use a slightly-modified version of the simulation approach provided by @KurzRethinking2023 in replicating the robot cafés example from @McElreath2020.
 
@@ -2590,9 +2589,7 @@ generated quantities {
 
 ```
 
-We can reuse the parameter estimates from our previous model as the means of the shared distribution from which the cluster-specific parameter values are drawn.
-
-Do the lambda primes look crazy??
+We can reuse the parameter estimates from our previous model as the means of the shared distribution from which the cluster-specific parameter values are drawn. When setting the rhos, it seems reasonable to imagine that perhaps clusters with high baseline hazard (given by high values of lambda) are located in areas with hotter labour markets in which employers are less choosy in their hiring, making it so that the other predictors will matter less in determining time-to-employment. So we can set those rhos to negative correlation between lambda and the substantive predictors. 
 
 ```{r}
 #| label: tte-surv-sim-multilevel
@@ -2616,15 +2613,15 @@ sd_beta_age <- log(2) # the effect of age varies a lot by region
 sd_beta_ei <- log(0.2) # the effect of EI is very consistent
 
 # Pearson correlation coefficients for each pair of regression parameters
-rho_lambda_adapt <- .1  
-rho_lambda_collab <- .1
-rho_lambda_age <- .1
-rho_lambda_ei <- .1
+rho_lambda_adapt <- -.3
+rho_lambda_collab <- -.1
+rho_lambda_age <- -.2
+rho_lambda_ei <- -.1
 rho_adapt_collab <- .1
-rho_adapt_age <- .1
+rho_adapt_age <- .2
 rho_adapt_ei <- .1
-rho_collab_age <- .1
-rho_collab_ei <- .1
+rho_collab_age <- .3
+rho_collab_ei <- 0
 rho_age_ei <- .1
 
 # Calculate the covariances
@@ -2721,20 +2718,20 @@ fake_dat <- fake_dat_with_clusters |>
     status = ifelse(time_censor > time_event, 1, 0)
     
   ) |>
-  
-  ungroup() 
-  
+
+  ungroup() |>
+
   # Remove the intermediary variables we don't need
- # select(-c(
- #   lambda_prime,
- #   time_event,
- #   time_censor,
- #   lambda_cluster,
- #   beta_adapt_cluster,
- #   beta_collab_cluster,
- #   beta_age_cluster,
- #   beta_ei_cluster
- # ))
+  select(-c(
+    time_event,
+    time_censor,
+    lambda_wiki,
+    lambda_prime,
+    beta_adapt,
+    beta_collab,
+    beta_age,
+    beta_ei
+  ))
 
 ```
 
@@ -2768,7 +2765,6 @@ fake_dat |>
   )
   
 ```
-
 
 Visualize the cluster sizes and cluster-specific event times?
 
