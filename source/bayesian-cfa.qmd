@@ -2365,7 +2365,7 @@ And the MCMC diagnostics for good measure:
 
 # Precompute the summary, to save time at quarto render
 summary_draws <- draws |> summary() 
-saveRDS(summary_draws, "b07.04.summary.rds")
+saveRDS(summary_draws, "fits/b07.04.summary.rds")
 
 ```
 
@@ -2374,7 +2374,7 @@ saveRDS(summary_draws, "b07.04.summary.rds")
 #| message: false
 #| warnings: false
 
-summary_draws <- readRDS("b07.04.summary.rds")
+summary_draws <- readRDS("fits/b07.04.summary.rds")
 
   select(variable, rhat, ess_bulk, ess_tail) |>
 
@@ -2383,6 +2383,16 @@ summary_draws <- readRDS("b07.04.summary.rds")
   knitr::kable()
 
 ```
+
+We can also do more conventional checks of parametric survival models recommended by @Collett2003, such as plotting the estimated baseline hazard function for various covariate combinations, and overlaying the estimated survival function against the Kaplan-Meier estimates. Let's start by visualizing posterior draws of the baseline hazard function, and comparing it to the true simulation baseline hazard function:
+
+```{r}
+
+
+
+
+```
+
 
 Another important thing to understand our model is to sample from the posterior predictive distribution. When we sampled from the prior predictive distribution we saw that the model thought unrealistic long-tail event times like 400,000 days were possible. If the model still believes those things then that's a problem, and there's more model improvement to be done because clearly we know things the model doesn't. 
 
@@ -2415,28 +2425,41 @@ saveRDS(pp_summaries, "fits/b07.04.post_pred_summaries.rds")
 
 ```
 
+The mean posterior predictions don't look so great compared to the data: they greatly understate the prevelance of short event times. They also have a weird bimodal, whereas the original data are unimodal. The mean posterior predictions don't suffer from the same long tail pathology as the prior predictions did, but they seem to actually understate the length of the tail. This all suggests that our model is misspecified. 
+
 ```{r}
 
 pp_summaries <- readRDS("source/fits/b07.04.post_pred_summaries.rds")
 
-pp_summaries |>
+fake_dat |>
 
- # select(mean) |>
+  select("time_dat" = time) |>
 
-  ggplot() + 
-  geom_density(aes(x = mean))
+  bind_cols(pp_summaries |> select("time_pred" = mean)) |>
 
+  pivot_longer(cols = everything(), names_to = "name", values_to = "time") |>
 
+  mutate(name = ifelse(name == "time_dat", "Data", "Mean posterior predictions")) |>
 
+  ggplot() +
+  geom_histogram(aes(x = time, fill = name, alpha = name), binwidth = 5, colour = "white", position = "identity") +
+  scale_fill_manual(values = c("#878787", "cornflowerblue")) +
+  scale_alpha_manual(values=c(1, .7)) +
 
+  scale_x_continuous(limits = c(0, 200), expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "bottom"
+  )
 
-  cbind
-
-  
 ```
-Plot baseline hazard, etc, other conventional time-to-event model diagnostics.
 
-## Bayesian Multilevel Parametric Survival Analysis with Latent Predictors
+In conclusion, our Weibull model was good in the sense that it recovered the true parameter values, but bad in the sense that its posterior predictions did not resemble the true data. 
+
+## Bayesian Multilevel Cox Regression with Latent Predictors
 
 The model in the previous section is still missing some information we have: our program was delivered to ~70 cohorts of various sizes, each administered by a different non-profit or community college. This means our data has nested structure that we should tell the model about via a multilevel model. In short, we just tell the model that cohort-specific regression coefficients are drawn from a shared multivariate normal distribution, and we ask the model to estimate the mean vector and covariance matrix of that distribution. This allows the model to partially pool information across clusters insofar as it deems such pooling appropriate given its estimates of the between-cohort variance an covariance parameters: if the model estimates little variance between clusters then it will pool more, but if it estimates high variance then it will pool less. This biases the cluster-specific estimates by shrinking them towards the estimated 'grand mean', which is often a good thing because more bias means less variance. We only vary the substantive predictors, not the parameters of the CFA portion of the model, IE the factor loadings. Here's the new model definition:
 
