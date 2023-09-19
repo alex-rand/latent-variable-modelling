@@ -1937,7 +1937,7 @@ fake_dat |>
 
 Now we're ready to fit the survival model using the latent factors as predictors.
 
-```stan
+```{stan}
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -2268,7 +2268,8 @@ draws <- fit$draws(
   "lam[6,2]",
   "Rho_factors[2,1]", 
   "Rho_m1_m4[2,1]",
-  "b"
+  "b",
+  "shape"
   )
 )
 
@@ -2282,7 +2283,7 @@ How did that go? We can plot the draws and look at the MCMC diagnostics like we 
 ```{r}
 
 # Load the draws saved in the previous block
-draws <- readRDS("fits/b07.04.samples.rds")
+draws <- readRDS("source/fits/b07.04.samples.rds")
 
 # Plot
 draws |>
@@ -2303,6 +2304,8 @@ draws |>
     `Rho_factors[2,1]`,
     `Rho_m1_m4[2,1]`
   ) |>
+  
+  distinct(.variable)
 
   mutate(.value = ifelse(.variable %in% c("b[1]", "b[2]", "b[3]", "b[4]", "b[5]"), exp(.value), .value)) |>
   
@@ -2374,7 +2377,9 @@ saveRDS(summary_draws, "fits/b07.04.summary.rds")
 #| message: false
 #| warnings: false
 
-summary_draws <- readRDS("source/fits/b07.04.summary.rds")
+summary_draws <- readRDS("fits/b07.04.summary.rds")
+
+summary_draws |> 
 
   select(variable, rhat, ess_bulk, ess_tail) |>
 
