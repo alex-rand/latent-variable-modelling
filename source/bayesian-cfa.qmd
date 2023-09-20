@@ -2248,6 +2248,8 @@ saveRDS(fit, "fits/b07.04.rds")
 
 ```
 
+### Posterior Checks
+
 ```{r}
 #| label: wrangle-draws-surv
 #| eval: false
@@ -2283,7 +2285,7 @@ How did that go? We can plot the draws and look at the MCMC diagnostics like we 
 ```{r}
 
 # Load the draws saved in the previous block
-draws <- readRDS("source/fits/b07.04.samples.rds")
+draws <- readRDS("fits/b07.04.samples.rds")
 
 # Plot
 draws |>
@@ -2393,7 +2395,49 @@ We can also do more conventional checks of parametric survival models recommende
 
 ```{r}
 
+# Define the survival function for Weibull
+weibull_survival_function <- function(t, lambda, rho, beta, x) {
+  exp(- (t / (lambda * exp(beta * x)))^rho)
+}
 
+# Compute the survival function for a sequence of time points and a grid of covariate values
+times <- seq(0, max(fake_dat$time), length.out = 1000)
+
+# For simplification, we will consider the mean of each covariate
+age_mean <- 0 # mean(fake_dat$age)
+ei_status_mean <- 0 #mean(fake_dat$ei_status)
+adapt_mean <- 0 #mean(fake_dat$adapt) # Assuming `fake_dat` has an 'adapt' column
+collab_mean <- 0 #mean(fake_dat$collab) # Assuming `fake_dat` has a 'collab' column
+
+survival_df <- data.frame(time = times)
+
+survival_df$S <- with(survival_df, weibull_survival_function(time, lambda_wiki, rho,
+                                          beta_adapt*adapt_mean + beta_collab*collab_mean + beta_age*age_mean + beta_ei*ei_status_mean, 1))
+
+# Get the KM curve for reference:
+km.object <- survfit(surv_object ~ 1, data = fake_dat)
+
+plt <- survminer::ggsurvplot(
+  fit = km.object,
+  conf.int = TRUE,
+  risk.table = FALSE,
+  legend = "none",
+  palette = c("cornflowerblue", "mediumorchid"),
+  title = "",
+  xlab = "Days Since Graduation", 
+  ylab = "Proportion Unemployed",
+  ggtheme = theme_bw()
+)  
+
+
+# Plotting
+ggplot(survival_df, aes(x = time, y = S)) +
+  geom_line() +
+  ggtitle("True Underlying Weibull Survival Function") +
+  ylab("Survival Probability") +
+  xlab("Time") +
+  
+  geom_line(data = plt$plot$data, aes(x = time, y = surv), colour = "darkgreen")
 
 
 ```
@@ -2434,7 +2478,9 @@ The mean posterior predictions don't look so great compared to the data: they gr
 
 ```{r}
 
-pp_summaries <- readRDS("source/fits/b07.04.post_pred_summaries.rds")
+pp_summaries <- readRDS("fits/b07.04.post_pred_summaries.rds")
+
+pp_summaries
 
 fake_dat |>
 
@@ -2462,11 +2508,62 @@ fake_dat |>
 
 ```
 
-In conclusion, our Weibull model was good in the sense that it recovered the true parameter values, but bad in the sense that its posterior predictions did not resemble the true data. 
+We can get a more detailed look at the model's uncertainty by plotting the densitities of draws from the posterior distribution against the distribution of the original data. Again we pre-process the draws so that rendering the Quarto document isn't slow:
+
+```{r}
+#| eval: false
+
+dplt <- pp_draws |>
+  
+  gather_draws(
+    y_pred[i],
+    ndraws = 10
+  ) |>
+
+  ungroup() |>
+  
+  select(i, .draw, .value) 
+
+saveRDS(dplt, "fits/b07.04.post_pred_20_draws.rds")
+
+```
+
+The result mirrors what we saw above with the distribution of the mean posterior predictions: the posterior predictive distribution of event times has a wider tail than the observed distribution. To a certain extent, this is expected behaviour: we have lots of censored data, and that creates uncertainty about how long the longest event times are likely to be. But if the posterior predictive distribution of event times has a longer tail than we would like, that means we have information we haven't given to the model. A quick investigation shows that the longest time-to-employment in the 20 draws plotted below is 850 days. This seems long compared to the observed data, but it is not impossible given the domain of research -- sometimes people leaving a skills training program _do_ hold off on getting a new job for a few years for various reasons. So the model's expectations are not outlandish and impossible, like they were when we sampled from the prior predictive distribution above. Still, if we think the tail of the posterior predictive distribution is too long then we have several ways of giving that information to the model. We'll implement one of those ways in the next section when we expand to a multilevel model (we'll use the rejection sampling approach given here by Eren M. Elçi, who encountered the same long-tail problem in his own Bayesian survival analysis vignette: https://ermeel86.github.io/case_studies/surv_stan_example.html)
+
+```{r}
+
+dplt <- readRDS("fits/b07.04.post_pred_20_draws.rds")
+
+dplt |>
+  
+  # Limit range for visual clarity
+  filter(.value <= 365) |>
+  
+  ggplot() +
+  geom_density(aes(x = .value, group = .draw), colour=alpha("cornflowerblue", .5)) +
+  geom_density(data = fake_dat |> filter(censored == 0), aes(x = time), colour = 'black') +
+  scale_fill_manual(
+    name='',
+    breaks=c('Posterior draws', 'Data'),
+    values=c('Posterior draws'='cornflowerblue', 'Data'='black')
+  ) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Days to employment") +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
+
+```
 
 ## Bayesian Multilevel Cox Regression with Latent Predictors
 
-The model in the previous section is still missing some information we have: our program was delivered to ~70 cohorts of various sizes, each administered by a different non-profit or community college. This means our data has nested structure that we should tell the model about via a multilevel model. In short, we just tell the model that cohort-specific regression coefficients are drawn from a shared multivariate normal distribution, and we ask the model to estimate the mean vector and covariance matrix of that distribution. This allows the model to partially pool information across clusters insofar as it deems such pooling appropriate given its estimates of the between-cohort variance an covariance parameters: if the model estimates little variance between clusters then it will pool more, but if it estimates high variance then it will pool less. This biases the cluster-specific estimates by shrinking them towards the estimated 'grand mean', which is often a good thing because more bias means less variance. We only vary the substantive predictors, not the parameters of the CFA portion of the model, IE the factor loadings. Here's the new model definition:
+The Stan model in the previous section is still missing some key information: our program was delivered to ~70 cohorts of various sizes, each administered by a different non-profit or community college. This means our data has nested structure that we should tell the model about via a multilevel model. In short, we just tell the model that cohort-specific regression coefficients are drawn from a shared multivariate normal distribution, and we ask the model to estimate the mean vector and covariance matrix of that distribution. This allows the model to partially pool information across clusters insofar as it deems such pooling appropriate given its estimates of the between-cohort variance an covariance parameters: if the model estimates little variance between clusters then it will pool more, but if it estimates high variance then it will pool less. This biases the cluster-specific estimates by shrinking them towards the estimated 'grand mean', which is often a good thing because more bias means less variance. We only vary the substantive predictors, not the parameters of the CFA portion of the model, IE the factor loadings. Here's the new model definition:
 
 Does this formally correspond to the traditional definition of a 'shared frailty' model? It'd be nice to get clarity on that and write the traditional shared frailty model definition in latex for comparison. 
 
