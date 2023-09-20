@@ -753,7 +753,7 @@ draws |>
 
 Overall we can feel ok about the model's performance here because it recovered the true parameter values fairly well, but the MCMC convergence checks suggest our chains were not totally happy.
 
-One last thing before moving on: as mentioned above, we could have simply used the blavaan package to fit this model instead of fussing with custom Stan code. The blavaan version fits way faster and recovers the true parameter estimates, but it is less flexible overall. And again, crucially for the present analysis, there is no way to do survival analysis with blavaan. But for posterity, below is the syntax we would use to fit the model with blavaan. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA))
+One last thing before moving on: as mentioned above, we could have simply used the blavaan package to fit this model instead of fussing with custom Stan code. The blavaan version fits way faster and recovers the true parameter estimates, but it is less flexible overall. And again, crucially for the present analysis, there is no way to do survival analysis with blavaan. But for posterity, below is the syntax we would use to fit the model with blavaan. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA)).
 
 ```{r}
 #| label: blavaan-2-fac
@@ -1289,7 +1289,7 @@ Now that we're confident our CFA MTMM Stan model is well-specified, we can graft
 
 The updated model is shown below. All we've done is add two new lines at the top of the model. These lines say we imagine time-to-event $T$ for each person $i$ to be drawn from a shared Weibull distribution, whose location parameter is a linear model of the latent factors $\text{adapt}$ and $\text{collab}$, as well as other measured variables in the matrix $\mathbf{X}$, each with its own coefficient in the vector $\boldsymbol{\beta}$.
 
-```{tex}
+```{=tex}
 \begin{aligned}
 \color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
 \color{teal}\theta_i &\color{teal}= \alpha + \beta_1 \text{adapt}_{i} + \beta_2 \text{collab}_{i} + \mathbf{X}_i \boldsymbol{\beta} \\
@@ -1851,11 +1851,11 @@ Now that we have some reasonable priors, we can sample from them to simulate fro
 bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status)
 
 # See how brms names the parameters, so we know how to specify priors form them
-get_prior(
-  formula = bf,
-  data = fake_dat,
-  family = weibull()
-)
+# get_prior(
+#  formula = bf,
+#  data = fake_dat,
+#  family = weibull()
+#)
 
 # Declare the priors we want
 priors <- c(
@@ -1937,7 +1937,7 @@ fake_dat |>
 
 Now we're ready to fit the survival model using the latent factors as predictors.
 
-```{stan}
+```stan
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -2306,8 +2306,6 @@ draws |>
     `Rho_factors[2,1]`,
     `Rho_m1_m4[2,1]`
   ) |>
-  
-  distinct(.variable)
 
   mutate(.value = ifelse(.variable %in% c("b[1]", "b[2]", "b[3]", "b[4]", "b[5]"), exp(.value), .value)) |>
   
@@ -2391,7 +2389,7 @@ summary_draws |>
 
 ```
 
-We can also do more conventional checks of parametric survival models recommended by @Collett2003, such as plotting the estimated baseline hazard function for various covariate combinations, and overlaying the estimated survival function against the Kaplan-Meier estimates. Let's start by visualizing posterior draws of the baseline hazard function, and comparing it to the true simulation baseline hazard function:
+We can also do more conventional checks of parametric survival models recommended by @Collett2003, such as plotting the estimated baseline hazard function for various covariate combinations, and overlaying the estimated survival function against the Kaplan-Meier estimates. Let's start by visualizing posterior draws of the survival lfunction, and comparing it to the true simulation survival function:
 
 ```{r}
 
@@ -2474,13 +2472,12 @@ saveRDS(pp_summaries, "fits/b07.04.post_pred_summaries.rds")
 
 ```
 
-The mean posterior predictions don't look so great compared to the data: they greatly understate the prevelance of short event times. They also have a weird bimodal, whereas the original data are unimodal. The mean posterior predictions don't suffer from the same long tail pathology as the prior predictions did, but they seem to actually understate the length of the tail. This all suggests that our model is misspecified. 
+The mean posterior predictions don't look so great compared to the data: they greatly understate the prevelance of short event times. They also have a weird bimodal shape, whereas the original data are unimodal. The mean posterior predictions don't suffer from the same long tail pathology as the prior predictions did, but they seem to actually understate the length of the tail:
 
 ```{r}
-
+#| message: false
+#| warning: false
 pp_summaries <- readRDS("fits/b07.04.post_pred_summaries.rds")
-
-pp_summaries
 
 fake_dat |>
 
@@ -2528,7 +2525,7 @@ saveRDS(dplt, "fits/b07.04.post_pred_20_draws.rds")
 
 ```
 
-The result mirrors what we saw above with the distribution of the mean posterior predictions: the posterior predictive distribution of event times has a wider tail than the observed distribution. To a certain extent, this is expected behaviour: we have lots of censored data, and that creates uncertainty about how long the longest event times are likely to be. But if the posterior predictive distribution of event times has a longer tail than we would like, that means we have information we haven't given to the model. A quick investigation shows that the longest time-to-employment in the 20 draws plotted below is 850 days. This seems long compared to the observed data, but it is not impossible given the domain of research -- sometimes people leaving a skills training program _do_ hold off on getting a new job for a few years for various reasons. So the model's expectations are not outlandish and impossible, like they were when we sampled from the prior predictive distribution above. Still, if we think the tail of the posterior predictive distribution is too long then we have several ways of giving that information to the model. We'll implement one of those ways in the next section when we expand to a multilevel model (we'll use the rejection sampling approach given here by Eren M. Elçi, who encountered the same long-tail problem in his own Bayesian survival analysis vignette: https://ermeel86.github.io/case_studies/surv_stan_example.html)
+The result mirrors what we saw above with the distribution of the mean posterior predictions: the posterior predictive distribution of event times has a wider tail than the observed distribution:
 
 ```{r}
 
@@ -2560,6 +2557,8 @@ dplt |>
   )
 
 ```
+
+To a certain extent, this is expected behaviour: we have lots of censored data, and that creates uncertainty about how long the longest event times are likely to be. But if the posterior predictive distribution of event times has a longer tail than we would like, that means we have information we haven't given to the model. A quick investigation shows that the longest time-to-employment in the 20 draws plotted below is 850 days. This seems long compared to the observed data, but it is not impossible given the domain of research -- sometimes people leaving a skills training program _do_ hold off on getting a new job for a few years for various reasons. So the model's expectations are not outlandish and impossible, like they were when we sampled from the prior predictive distribution above. Still, if we think the tail of the posterior predictive distribution is too long then we have several ways of giving that information to the model. We'll implement one of those ways in the next section when we expand to a multilevel model (we'll use the rejection sampling approach given here by Eren M. Elçi, who encountered the same long-tail problem in his own Bayesian survival analysis vignette: https://ermeel86.github.io/case_studies/surv_stan_example.html)
 
 ## Bayesian Multilevel Cox Regression with Latent Predictors
 
@@ -2666,7 +2665,7 @@ Add an interaction effect between EI and age for fun?
 
 This is the brms-generated multilevel weibull model, for reference:
 
-```{stan}
+```stan
 
 // from this model: bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status + (0 + Intercept + adapt + collab + age + ei_status | cohort))
 
