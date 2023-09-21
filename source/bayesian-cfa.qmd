@@ -16,6 +16,7 @@ library(brms)
 library(tidybayes)
 library(survival)
 library(survminer)
+library(ggridges)
 
 # MCMC specifications
 options(brms.backend = "cmdstanr")
@@ -1630,7 +1631,7 @@ surv_object <- Surv(fake_dat$time, fake_dat$status)
 test <- survreg(surv_object ~ adapt + collab + age + ei_status, data=fake_dat, dist='weibull')
 
 # Wrangle and plot
-tidied_results <- test |> 
+test |> 
   
   broom::tidy(conf.int = TRUE) |>
 
@@ -1687,10 +1688,8 @@ fake_dat |>
   ) +
   theme_bw() +
   theme(
-    axis.ticks.y = element_blank(),
     panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.text.y = element_blank()
+    panel.grid.minor = element_blank()
   )
 ```
 
@@ -2288,7 +2287,7 @@ How did that go? We can plot the draws and look at the MCMC diagnostics like we 
 draws <- readRDS("fits/b07.04.samples.rds")
 
 # Plot
-draws |>
+cleaned_draws <- draws |>
 
   # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
   gather_draws(
@@ -2342,7 +2341,9 @@ draws |>
     .variable == "Loading for m6" ~ -.4,
     .variable == "Covariance for f1 ~ f2" ~ .4,
     .variable == "Covariance for m1 ~ m4" ~ .4
-  )) |>
+  )) 
+
+cleaned_draws |>
 
   ggplot(aes(x = .value, fill = .variable)) +
   stat_halfeye(fill = "mediumorchid") +
@@ -2386,6 +2387,69 @@ summary_draws |>
   mutate(across(where(is.numeric), ~round(.x, 2))) |>
 
   knitr::kable()
+
+```
+
+How does this compare to the more common two-step approach of fitting to factor scores? Both models do well, which is not surprising because we know them to both be specified according to the true data generating process. But the advantage of the Bayesian approach is shown in the coefficient for `collab` below. This is the factor with looser loadings and poor convergent valiity, which has resulted in greater uncertainty in the frequentist lavaan model's estimated factor loadings and the ensuing factor score point estimates. However, the Bayesian model was able to incorporate the factor loading uncertainty into an estimated posterior distribution for each factor score, resulting in more precision in the regression parameter estimate for that variable. Meanwhile the frequentist and Bayesian estimates for the regression parameter for `adapt` are virtually identical, because the factor loadings for that loading are tight, resulting in less uncertainty in the lavaan model's estimate of those loadings and the ensuing parameter estimates, so Bayes' incorporation of uncertainty from the factor model matters less. 
+
+```{r}
+
+# get the factor scores from the lavaan model we fit above
+factor_scores <- predict(fit_test)
+
+# add the factor scores to fake_dat as predictors
+dat_factor_scores <- fake_dat |>
+
+  cbind(factor_scores) |>
+
+  rename("adapt_score" = f1, "collab_score" = f2) 
+
+# Fit the 2-stage Weibull AFT regression
+factor.score.model <- survreg(surv_object ~ adapt_score + collab_score + age + ei_status, data=dat_factor_scores, dist='weibull')
+
+# Rename some parts of the Stan model output to align with the frequentist output.
+cleaned_draws_dplt <- cleaned_draws |>
+
+  mutate(.variable = case_when(
+    .variable == "b_Collab" ~ "collab_score",
+    .variable == "b_Adapt" ~ "adapt_score",
+    .variable == "b_Age" ~ "age",
+    .variable == "b_EI Status" ~ "ei_status"
+  ))
+
+# Wrangle and plot
+factor.score.model |> 
+  
+  broom::tidy(conf.int = TRUE) |>
+
+  mutate(
+    estimate = exp(estimate),
+    conf.low = exp(conf.low),
+    conf.high = exp(conf.high)
+  ) |>
+
+  filter(!term %in% c("(Intercept)", "Log(scale)")) |>
+
+  mutate(true_loading = case_when(
+    term == "age" ~ 1.11,
+    term == "collab_score" ~ 0.833,
+    term == "adapt_score" ~ 1,
+    term == "ei_status" ~ 0.5
+  )) |>
+
+  ggplot() +
+    geom_point(aes(x = reorder(term, -estimate), y = estimate)) +
+    geom_linerange(aes(x = reorder(term, -estimate), y = estimate, ymin = conf.low, ymax = conf.high), size = 4, colour =   "cornflowerblue") +
+    geom_point(aes(x = reorder(term, -estimate), y = estimate), size = 7, colour = "cornflowerblue") +
+    geom_point(aes(x = reorder(term, -estimate), y = estimate), size = 5, color = "white") +
+    geom_point(aes(x = term, y = true_loading), colour = "red4", size = 7, shape =  13, stroke = 1) +
+    stat_halfeye(data = cleaned_draws_dplt , aes(x = .variable, y = .value), fill = "mediumorchid", alpha = .8) +
+    coord_flip() + 
+    labs(
+      y = "Estimated survival time ratio",
+      x = ""
+    ) +
+    theme_minimal() 
 
 ```
 
@@ -2838,7 +2902,7 @@ sigma <- matrix(c(
 ), ncol = 5)
 
 # Declare the rate for the exponential distribution from which we will sample censoring times
-censor_rate = .02
+censor_rate = .005
 
 ```
 
@@ -2926,7 +2990,7 @@ fake_dat <- fake_dat_with_clusters |>
 
 ```
 
-Do the simulated data have a realistic-seeming distribution of event times before proceeding?
+Do the simulated data have a realistic-seeming distribution of event times in aggregate?
 
 ```{r}
 #| label: viz-raw-event-times-multilevel
@@ -2957,10 +3021,176 @@ fake_dat |>
   
 ```
 
-Visualize the cluster sizes and cluster-specific event times?
+Let's take a look at how the distribution of event times varies from cluster to cluster. We can choose a few select clusters to give a sense of the total range. 
+
+```{r}
+
+# Get the clusters with representative mean times
+selected_clusters <- fake_dat |>
+
+  group_by(cluster_id) |>
+
+  summarise(median_time = median(time)) |>
+
+  arrange(desc(median_time)) |>
+
+  slice(seq(from = 1, to = 60, by = 1)) |>
+
+  pull(cluster_id)
+
+# Visualize the selected clusters
+fake_dat |>
+
+  group_by(cluster_id) |>
+
+  mutate(median_time = median(time)) |>
+
+  arrange(desc(median_time)) |>
+
+  filter(cluster_id %in% selected_clusters) |>
+
+  mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id))) |>
+
+  ggplot() +
+  geom_jitter(aes(x = time, y = cluster_id, colour = as.character(censored)), height = .1, alpha = .6) +
+  scale_colour_manual(values = c("cornflowerblue", "firebrick"))
+  
+  
 
 
-Do a secret weapon plot for the cluster-specific estimates before fitting the full model!
+
+```
+
+Or as a concise summary we can plot the median event times from each cluster, in descending order:
+
+```{r}
+
+fake_dat |>
+
+  filter(censored == 0) |>
+
+  group_by(cluster_id) |>
+
+  mutate(median_time = median(time)) |>
+
+  arrange(median_time) |>
+
+  ungroup() |>
+
+  mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id))) |>
+
+  ggplot() +
+  geom_point(aes(x = median_time, y = cluster_id), size=3, color="mediumorchid", stroke=1.5) +
+  labs(
+    x = "Cluster-specific median days employment",
+    y = "Clusters",
+  ) +
+  theme_bw() +  # Use the minimal theme as a starting point, which removes some gridlines
+  theme(
+    panel.grid.major.y = element_blank(),  # Remove horizontal
+    axis.text.y = element_blank(),         # Remove y axis text
+    axis.ticks.y = element_blank()         # Remove y axis ticks
+  )
+
+
+```
+
+And for a fuller sense, the distributions of event times:
+
+```{r}
+
+fake_dat |>
+
+  filter(censored == 0) |>
+
+  group_by(cluster_id) |>
+
+  mutate(median_time = median(time)) |>
+
+  arrange(median_time) |>
+
+  ungroup() |>
+
+  mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id))) |>
+
+  ggplot() +
+  geom_density_ridges(aes(x = time, y = cluster_id), alpha = 1, rel_min_height = 0.1) +
+  xlim(c(0, 100))
+
+```
+
+Before fitting the model we can get a sense of between-cluster variance in parameter estimates by fitting a model to each cluster in isolation and plotting the cluster-specific parameter estimates all together. @GelmanHill2007 call this plot the 'Secret Weapon' _"because it is so easy and powerful but yet is rarely used as a data-analytic tool."_ I use the true simulated values of the latent variables to fit the models here, but could do the two-step approach with the factor scores to make it more realistic? Should probably sort these by cluster size?
+
+```{r}
+#| label: secret-weapon
+#| message: false
+#| warning: false
+#| fig-cap: "Andrew Gelman's 'Secret Weapon' plot showing variation between cluster-specific parameter estimates for regression coefficients."
+#| fig-height: 15
+
+# Split data by cluster
+split_data <- fake_dat |>
+  group_by(cluster_id) |>
+  group_split()
+
+# Fit the model to each subset
+model_list <- map(split_data, function(data) {
+  surv_obj <- Surv(data$time, data$status)
+  survreg(surv_obj ~ adapt + collab + age + ei_status, data = data, dist = 'weibull')
+})
+
+# Extract and clean the cluster-specific parameter estimates
+model_summaries <- map(model_list, broom::tidy, conf.int = TRUE, exp = FALSE)
+
+# Add the cluster IDs, exponentiate the results
+tidy_results <- map2_df(model_summaries, unique(fake_dat$cluster_id), 
+                       function(model, cluster) {
+                         model <- model |>
+                           mutate(
+                            cluster_id = cluster,
+                            estimate = exp(estimate),
+                            std.error = exp(std.error),
+                            conf.low = exp(conf.low),
+                            conf.high = exp(conf.high)
+                           )
+                         return(model)
+                       })
+
+
+tidy_results |>
+
+  filter(term %in% c("adapt", "collab", "age", "ei_status")) |>
+
+  # add true mean effects
+  mutate(
+    true_effect = case_when(
+      term == "age" ~ 1.11,
+      term == "collab" ~ 0.833,
+      term == "adapt" ~ 1,
+      term == "ei_status" ~ 0.5
+    ))  |>
+
+  ggplot(aes(x = factor(cluster_id), y = estimate)) +
+  geom_hline(aes(yintercept = true_effect), linetype = 2) + 
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+                position = position_dodge(width = 0.5), width = 0.2) +
+  facet_wrap(~ term, scales = c("free"), ncol = 1) +
+  theme_light() +
+  scale_x_discrete(breaks = seq(from = 0, to = 65, by = 5)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  labs(
+    x = "Cluster ID",
+    y = "Estimate"
+  )
+
+```
+
+Now we can update our model 
+- Add rejection sampling to deal with the overdispersion we encountered in the previous moddel, as shown in https://ermeel86.github.io/case_studies/surv_stan_example.html)
+
 
 We can use the same priors as the other models, but maybe put cauchys and LKJs on the new varying effects sigma terms?
 
