@@ -1936,7 +1936,7 @@ fake_dat |>
 
 Now we're ready to fit the survival model using the latent factors as predictors.
 
-```stan
+```{stan}
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -2729,18 +2729,16 @@ Add an interaction effect between EI and age for fun?
 
 This is the brms-generated multilevel weibull model, for reference:
 
-```stan
 
 // from this model: bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status + (0 + Intercept + adapt + collab + age + ei_status | cohort))
 
 
 
-```
 
 We can reuse the parameter estimates from our previous model as the means of the shared distribution from which the cluster-specific parameter values are drawn. When setting the rhos, it seems reasonable to imagine that perhaps clusters with high baseline hazard (given by high values of lambda) are located in areas with hotter labour markets in which employers are less choosy in their hiring, making it so that the other predictors will matter less in determining time-to-employment. So we can set those rhos to negative correlation between lambda and the substantive predictors. 
 
 ```{r}
-#| label: tte-surv-sim-multilevel
+#| label: tte-surv-sim-mm
 
 # Average lambda parameter of Weibull baseline hazard
 avg_lambda <- .02
@@ -3089,7 +3087,7 @@ Now we can update our model, working closely from a brms-generated Stan model wi
 - Generate quantities: De-Cholesky the estimated correlation matrix, and extract one of the diagonals;
 - Add rejection sampling to deal with the overdispersion we encountered in the previous moddel, as documented in [Eren M. Elçi's vignette on Bayesian survival analysis in Stan](https://ermeel86.github.io/case_studies/surv_stan_example.html)). This isn't really rejection sampling in the traditional sense of sampling from a distribution $c*Q(x)$ known to be greater than $P(x)$ at all values of x. Rather, we're just sampling from a conditional, truncated version of the posterior predictive distribution. 
 
-```stan
+```{stan}
 functions {
   /* compute correlated group-level effects
    * Args:
@@ -3336,7 +3334,7 @@ data {
   int<lower=1> N_1; // number of clusters
   int<lower=1> M_1; // number of cluster-varying predictors
   array[N] int<lower=1> J_1; // Row-specific cluster-indicator. 
-  vector[N] Z_1_1; // Each row gets its own value of the group-level intercept and the 4 group-level predictors...
+  vector[N] Z_1_1; // Row-specific values of the cluster-level predictors:
   vector[N] Z_1_2;
   vector[N] Z_1_3;
   vector[N] Z_1_4;
@@ -3410,8 +3408,6 @@ transformed parameters {
               + r_1_5[J_1[n]] * Z_1_5[n];
   }
 }
-
-
 model {
   // Factor analysis priors
   L_corr_d ~ lkj_corr_cholesky(1);
@@ -3532,7 +3528,6 @@ model <- cmdstanr::cmdstan_model(stan_file)
 # Put the data into a list format Stan can understand
 P <- 8 # Because 6 measured variables + 2 factors 
 N <- nrow(fake_dat)
-D <- 2
 X_factor <- as.matrix(fake_dat |> select(matches("^m[1-9]$|^adapt$|^collab$")))
 
 Y <- fake_dat$time
@@ -3556,7 +3551,7 @@ data_list <- list(
   ### Factor analysis
   N=N, # Sample size
   P=P, # Parameters in the factor analysis
-  D=D, # Number of factors
+  D=2, # Number of factors
   X_factor=X_factor, # Data matrix for factor analysis
   n_lam=6, # N factor loadings
 
@@ -3569,7 +3564,7 @@ data_list <- list(
   ### Multilevel structure
   N_1 = N_clusters,
   M_1 = 5, # Number of varying effects
-  J_1  = fake_dat$cluster_id, # Row-specific cluster indicators
+  J_1  = as.integer(fake_dat$cluster_id), # Row-specific cluster indicators
   Z_1_1 = rep(1, N), # Cluster-level predictors...
   Z_1_2 = fake_dat$adapt,
   Z_1_3 = fake_dat$collab,
