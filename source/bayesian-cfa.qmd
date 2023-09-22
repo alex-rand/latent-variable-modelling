@@ -2733,114 +2733,7 @@ This is the brms-generated multilevel weibull model, for reference:
 
 // from this model: bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status + (0 + Intercept + adapt + collab + age + ei_status | cohort))
 
-functions {
-  /* compute correlated group-level effects
-   * Args:
-   *   z: matrix of unscaled group-level effects
-   *   SD: vector of standard deviation parameters
-   *   L: cholesky factor correlation matrix
-   * Returns:
-   *   matrix of scaled group-level effects
-   */
-  matrix scale_r_cor(matrix z, vector SD, matrix L) {
-    // r is stored in another dimension order than z
-    return transpose(diag_pre_multiply(SD, L) * z);
-  }
-}
-data {
-  int<lower=1> N; // total number of observations
-  vector[N] Y; // response variable
-  array[N] int<lower=-1, upper=2> cens; // indicates censoring
-  int<lower=1> K; // number of population-level effects
-  matrix[N, K] X; // population-level design matrix
-  // data for group-level effects of ID 1
-  int<lower=1> N_1; // number of grouping levels
-  int<lower=1> M_1; // number of coefficients per level
-  array[N] int<lower=1> J_1; // grouping indicator per observation
-  // group-level predictor values
-  vector[N] Z_1_1;
-  vector[N] Z_1_2;
-  vector[N] Z_1_3;
-  vector[N] Z_1_4;
-  vector[N] Z_1_5;
-  int<lower=1> NC_1; // number of group-level correlations
-  int prior_only; // should the likelihood be ignored?
-}
-transformed data {
-  
-}
-parameters {
-  vector[K] b; // regression coefficients
-  real<lower=0> shape; // shape parameter
-  vector<lower=0>[M_1] sd_1; // group-level standard deviations
-  matrix[M_1, N_1] z_1; // standardized group-level effects
-  cholesky_factor_corr[M_1] L_1; // cholesky factor of correlation matrix
-}
-transformed parameters {
-  matrix[N_1, M_1] r_1; // actual group-level effects
-  // using vectors speeds up indexing in loops
-  vector[N_1] r_1_1;
-  vector[N_1] r_1_2;
-  vector[N_1] r_1_3;
-  vector[N_1] r_1_4;
-  vector[N_1] r_1_5;
-  real lprior = 0; // prior contributions to the log posterior
-  // compute actual group-level effects
-  r_1 = scale_r_cor(z_1, sd_1, L_1);
-  r_1_1 = r_1[ : , 1];
-  r_1_2 = r_1[ : , 2];
-  r_1_3 = r_1[ : , 3];
-  r_1_4 = r_1[ : , 4];
-  r_1_5 = r_1[ : , 5];
-  lprior += normal_lpdf(b[1] | 3.3, 0.4);
-  lprior += normal_lpdf(b[2] | 0, 1.45);
-  lprior += normal_lpdf(b[3] | 0, 1.45);
-  lprior += normal_lpdf(b[4] | 0, 1.45);
-  lprior += normal_lpdf(b[5] | 0, 1.45);
-  lprior += cauchy_lpdf(shape | 0, 2.5) - 1 * cauchy_lccdf(0 | 0, 2.5);
-  lprior += student_t_lpdf(sd_1 | 3, 0, 2.5)
-            - 5 * student_t_lccdf(0 | 3, 0, 2.5);
-  lprior += lkj_corr_cholesky_lpdf(L_1 | 1);
-}
-model {
-  // likelihood including constants
-  if (!prior_only) {
-    // initialize linear predictor term
-    vector[N] mu = rep_vector(0.0, N);
-    mu += X * b;
-    for (n in 1 : N) {
-      // add more terms to the linear predictor
-      mu[n] += r_1_1[J_1[n]] * Z_1_1[n] + r_1_2[J_1[n]] * Z_1_2[n]
-               + r_1_3[J_1[n]] * Z_1_3[n] + r_1_4[J_1[n]] * Z_1_4[n]
-               + r_1_5[J_1[n]] * Z_1_5[n];
-    }
-    mu = exp(mu);
-    for (n in 1 : N) {
-      // special treatment of censored data
-      if (cens[n] == 0) {
-        target += weibull_lpdf(Y[n] | shape, mu[n] / tgamma(1 + 1 / shape));
-      } else if (cens[n] == 1) {
-        target += weibull_lccdf(Y[n] | shape, mu[n] / tgamma(1 + 1 / shape));
-      } else if (cens[n] == -1) {
-        target += weibull_lcdf(Y[n] | shape, mu[n] / tgamma(1 + 1 / shape));
-      }
-    }
-  }
-  // priors including constants
-  target += lprior;
-  target += std_normal_lpdf(to_vector(z_1));
-}
-generated quantities {
-  // compute group-level correlations
-  corr_matrix[M_1] Cor_1 = multiply_lower_tri_self_transpose(L_1);
-  vector<lower=-1, upper=1>[NC_1] cor_1;
-  // extract upper diagonal of correlation matrix
-  for (k in 1 : M_1) {
-    for (j in 1 : (k - 1)) {
-      cor_1[choose(k - 1, 2) + j] = Cor_1[j, k];
-    }
-  }
-}
+
 
 ```
 
@@ -3055,10 +2948,6 @@ fake_dat |>
   geom_jitter(aes(x = time, y = cluster_id, colour = as.character(censored)), height = .1, alpha = .6) +
   scale_colour_manual(values = c("cornflowerblue", "firebrick"))
   
-  
-
-
-
 ```
 
 Or as a concise summary we can plot the median event times from each cluster, in descending order:
@@ -3085,11 +2974,11 @@ fake_dat |>
     x = "Cluster-specific median days employment",
     y = "Clusters",
   ) +
-  theme_bw() +  # Use the minimal theme as a starting point, which removes some gridlines
+  theme_bw() + 
   theme(
-    panel.grid.major.y = element_blank(),  # Remove horizontal
-    axis.text.y = element_blank(),         # Remove y axis text
-    axis.ticks.y = element_blank()         # Remove y axis ticks
+    panel.grid.major.y = element_blank(),  
+    axis.text.y = element_blank(),        
+    axis.ticks.y = element_blank()      
   )
 
 
@@ -3188,10 +3077,522 @@ tidy_results |>
 
 ```
 
-Now we can update our model 
-- Add rejection sampling to deal with the overdispersion we encountered in the previous moddel, as shown in https://ermeel86.github.io/case_studies/surv_stan_example.html)
+No need to do prior predictive checking here: we can reuse our priors from the previous model for the means of the varying effects distributions, and use default non-informative priors for the varying effects standard deviations and correlation terms. 
+
+Now we can update our model, working closely from a brms-generated Stan model with the desired multilevel structure:
+
+- At the top of the model create a new `functions{}` block, and copy the `scale_r_cor` function from the brms-generated Stan code;
+- Data: add new variables to hold the cluster levels and cluster-specific parameters;
+- Parameters: add matrix z_1 for the _standardized_ cluster-specific parameter estimates (we'll calculate the unstandardized ones in the transformed parameters block), as well as the elements to construct the covariance matrix of the varying effects;
+- Transformed parameters: add a matrix r_1 for the _unstandardized_ cluster-specific parameter estimates, and then calculate them using our custom function from the functions block. Also define some of the priors. We need to fix up the positive-constrained prior distributions for the Weibull shape parameter and the standard deviations of the varying effects, which is why for each we subtract the log of the complement of the cumulative density function from itself. This has the effect of standardizing the area under the curve positivity-constrained portion of the curve so that it integrates to 1. I found [this explanation](https://vasishth.github.io/bayescogsci/book/ch-introstan.html) very clear and helpful for understanding this;
+- Model: expand the linear predictor for the Weibull likelihood to inclulde the cluster-specific varying effects defined in the previous blocks;
+- Generate quantities: De-Cholesky the estimated correlation matrix, and extract one of the diagonals;
+- Add rejection sampling to deal with the overdispersion we encountered in the previous moddel, as documented in [Eren M. Elçi's vignette on Bayesian survival analysis in Stan](https://ermeel86.github.io/case_studies/surv_stan_example.html)). This isn't really rejection sampling in the traditional sense of sampling from a distribution $c*Q(x)$ known to be greater than $P(x)$ at all values of x. Rather, we're just sampling from a conditional, truncated version of the posterior predictive distribution. 
+
+```stan
+functions {
+  /* compute correlated group-level effects
+   * Args:
+   *   z: matrix of unscaled group-level effects
+   *   SD: vector of standard deviation parameters
+   *   L: cholesky factor correlation matrix
+   * Returns:
+   *   matrix of scaled group-level effects
+   */
+  matrix scale_r_cor(matrix z, vector SD, matrix L) {
+    // r is stored in another dimension order than z
+    return transpose(diag_pre_multiply(SD, L) * z);
+  }
+}
+data {
+  // Factor Analysis
+  int N; // sample size for both models
+  int P; // number of variables in the factor analysis
+  int D; // number of factors
+  array[N] vector[P] X_factor; // data matrix for factor analysis
+  int n_lam; // how many factor loadings are estimated
+  
+  // Weibull Model
+  vector[N] Y; // response variable for Weibull model
+  array[N] int<lower=-1, upper=2> cens; // indicates censoring for Weibull model
+  int K; // number of predictors in Weibull model, now it should be D + 2 + intercept
+  matrix[N, K] X_weibull; // population-level design matrix for Weibull model
+
+  // Multilevel Structure 
+  int<lower=1> N_1; // number of clusters
+  int<lower=1> M_1; // number of cluster-varying predictors
+  array[N] int<lower=1> J_1; // Row-specific cluster-indicator. 
+  vector[N] Z_1_1; // Row-specific values of the cluster-level predictors:
+  vector[N] Z_1_2;
+  vector[N] Z_1_3;
+  vector[N] Z_1_4;
+  vector[N] Z_1_5;
+  int<lower=1> NC_1; // number of group-level correlations
+}
+parameters {
+  // Factor Analysis
+  matrix[N, D] FS_UNC; // factor scores
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
+  vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+  
+  // Weibull Model
+  real<lower=0> shape; // shape parameter for Weibull model
+  vector[K] b; // regression coefficients for Weibull model
+
+  // Multilevel Structure
+  vector<lower=0>[M_1] sd_1; // standard deviations of the underlying parameter distributions, to be estimated
+  matrix[M_1, N_1] z_1; // standardized cluster-specific estimates for each regression predictor
+  cholesky_factor_corr[M_1] L_1; // cholesky factor of correlation matrix for varying effects
+}
+transformed parameters {
+  // Factor Analysis transformed parameters
+  vector[D] M = rep_vector(0, D); // factor means
+  vector<lower=0>[D] Sd_d = rep_vector(1, D); // factor SDs
+  array[N] vector[P] mu_UNC; // A vector to hold the linear predictors for the manifest variables
+
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  cholesky_factor_cov[D] L_Sigma = diag_pre_multiply(Sd_d, L_corr_d); // var-covar matrix for the factors
+  cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
+
+  // Multilevel structure
+  matrix[N_1, M_1] r_1; // declare some variables to hold the actual cluster-specific effects, where in the parameter block we just declared the standardized ones z_1.
+  vector[N_1] r_1_1; // using vectors speeds up indexing in loops...
+  vector[N_1] r_1_2;
+  vector[N_1] r_1_3;
+  vector[N_1] r_1_4;
+  vector[N_1] r_1_5;
+  r_1 = scale_r_cor(z_1, sd_1, L_1); // use our custom function from the functions block to compute the unstandardized cluster-specific effects
+  r_1_1 = r_1[ : , 1];
+  r_1_2 = r_1[ : , 2];
+  r_1_3 = r_1[ : , 3];
+  r_1_4 = r_1[ : , 4];
+  r_1_5 = r_1[ : , 5];
+  real lprior = 0; // create a variable to contain the priors, to which we'll add some of the actual priors in the next few lines...
+  lprior += normal_lpdf(b[1] | 3.3, 0.4);
+  lprior += normal_lpdf(b[2] | 0, 1.45);
+  lprior += normal_lpdf(b[3] | 0, 1.45);
+  lprior += normal_lpdf(b[4] | 0, 1.45);
+  lprior += normal_lpdf(b[5] | 0, 1.45);
+  lprior += cauchy_lpdf(shape | 0, 2.5) - 1 * cauchy_lccdf(0 | 0, 2.5);
+  lprior += student_t_lpdf(sd_1 | 3, 0, 2.5) - 5 * student_t_lccdf(0 | 3, 0, 2.5);
+  lprior += lkj_corr_cholesky_lpdf(L_1 | 1);
+
+  // Weibull intercepts
+  vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
+  mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
+  for (n in 1 : N) { // Add all the cluster-specific varying effects to the linpred
+    mu_weibull[n] += r_1_1[J_1[n]] * Z_1_1[n] + r_1_2[J_1[n]] * Z_1_2[n]
+              + r_1_3[J_1[n]] * Z_1_3[n] + r_1_4[J_1[n]] * Z_1_4[n]
+              + r_1_5[J_1[n]] * Z_1_5[n];
+  }
+}
+model {
+  // Factor analysis priors
+  L_corr_d ~ lkj_corr_cholesky(1);
+  L_corr_m1_m4 ~ lkj_corr_cholesky(1);
+  lam_UNC ~ normal(0, 10);
+  sd_p ~ cauchy(0, 2.5);
+
+  // Factor analysis likelihood
+  for (i in 1 : N) {
+    for (j in {2,3,5,6}) {
+      X_factor[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    to_vector({X_factor[i, 1], X_factor[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+
+  // Weibull Survival Analysis priors
+  shape ~ cauchy(0, 2.5);
+  b[1] ~ normal(3.3, 0.4);
+  for (k in 2:K) {
+    b[k] ~ normal(0, 1.45);
+  }
+  
+  // Weibull Survival Analysis priors
+  for (n in 1 : N) {
+    if (cens[n] == 0) {
+      target += weibull_lpdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+    } else if (cens[n] == 1) {
+      target += weibull_lccdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+    } 
+  }
+
+  // priors including constants
+  target += lprior;
+  target += std_normal_lpdf(to_vector(z_1));
+}
+generated quantities {
+  // Factor analysis
+  corr_matrix[D] Rho_UNC; // correlation matrix for factors
+  corr_matrix[D] Rho_factors; // correlation matrix for factors
+  corr_matrix[D] Rho_m1_m4; // correlation matrix for m1 and m4
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores
+  
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho_factors = Rho_UNC;
+  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    if (lam_UNC[4] > 0) {
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    if (lam_UNC[1] > 0) {
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+
+  // Draws from posterior predictive distribution
+  vector[N] y_pred;
+  for (n in 1:N) {
+    y_pred[n] = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+  }
+
+  // Draws from the _truncated_ posterior predictive distribution
+  vector[N] y_pred_trunc;
+  {
+    real tmp;
+    real max_time;
+    max_time = max(Y); // Assuming Y holds both censored and uncensored times
+    
+    for (n in 1:N) {
+      tmp = max_time + 1; // Initialize tmp to a value just greater than max_time
+      while (tmp > max_time) {
+        tmp = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+      }
+      y_pred_trunc[n] = tmp;
+    }
+  }
+
+  // De-Choleskify the the estimated correlation matrix of the varying effects
+  corr_matrix[M_1] Cor_1 = multiply_lower_tri_self_transpose(L_1); // compute group-level correlations
+  vector<lower=-1, upper=1>[NC_1] cor_1;
+  for (k in 1 : M_1) {    // extract upper diagonal of correlation matrix
+    for (j in 1 : (k - 1)) {
+      cor_1[choose(k - 1, 2) + j] = Cor_1[j, k];
+    }
+  }
+}
+```
+
+```{r}
+#| label: stan-string-surv-mm
+#| eval: false
+#| include: false
+
+stan_model_code <- "
+functions {
+  /* compute correlated group-level effects
+   * Args:
+   *   z: matrix of unscaled group-level effects
+   *   SD: vector of standard deviation parameters
+   *   L: cholesky factor correlation matrix
+   * Returns:
+   *   matrix of scaled group-level effects
+   */
+  matrix scale_r_cor(matrix z, vector SD, matrix L) {
+    // r is stored in another dimension order than z
+    return transpose(diag_pre_multiply(SD, L) * z);
+  }
+}
+data {
+  // Factor Analysis
+  int N; // sample size for both models
+  int P; // number of variables in the factor analysis
+  int D; // number of factors
+  array[N] vector[P] X_factor; // data matrix for factor analysis
+  int n_lam; // how many factor loadings are estimated
+  
+  // Weibull Model
+  vector[N] Y; // response variable for Weibull model
+  array[N] int<lower=-1, upper=2> cens; // indicates censoring for Weibull model
+  int K; // number of predictors in Weibull model, now it should be D + 2 + intercept
+  matrix[N, K] X_weibull; // population-level design matrix for Weibull model
+
+  // Multilevel Structure 
+  int<lower=1> N_1; // number of clusters
+  int<lower=1> M_1; // number of cluster-varying predictors
+  array[N] int<lower=1> J_1; // Row-specific cluster-indicator. 
+  vector[N] Z_1_1; // Each row gets its own value of the group-level intercept and the 4 group-level predictors...
+  vector[N] Z_1_2;
+  vector[N] Z_1_3;
+  vector[N] Z_1_4;
+  vector[N] Z_1_5;
+  int<lower=1> NC_1; // number of group-level correlations
+}
+parameters {
+  // Factor Analysis
+  matrix[N, D] FS_UNC; // factor scores
+  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
+  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
+  vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
+  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
+  
+  // Weibull Model
+  real<lower=0> shape; // shape parameter for Weibull model
+  vector[K] b; // regression coefficients for Weibull model
+
+  // Multilevel Structure
+  vector<lower=0>[M_1] sd_1; // standard deviations of the underlying parameter distributions, to be estimated
+  matrix[M_1, N_1] z_1; // standardized cluster-specific estimates for each regression predictor
+  cholesky_factor_corr[M_1] L_1; // cholesky factor of correlation matrix for varying effects
+}
+transformed parameters {
+  // Factor Analysis transformed parameters
+  vector[D] M = rep_vector(0, D); // factor means
+  vector<lower=0>[D] Sd_d = rep_vector(1, D); // factor SDs
+  array[N] vector[P] mu_UNC; // A vector to hold the linear predictors for the manifest variables
+
+  for (i in 1 : N) {
+    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
+    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
+    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
+    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
+    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
+    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
+  }
+  
+  cholesky_factor_cov[D] L_Sigma = diag_pre_multiply(Sd_d, L_corr_d); // var-covar matrix for the factors
+  cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
+
+  // Multilevel structure
+  matrix[N_1, M_1] r_1; // declare some variables to hold the actual cluster-specific effects, where in the parameter block we just declared the standardized ones z_1.
+  vector[N_1] r_1_1; // using vectors speeds up indexing in loops...
+  vector[N_1] r_1_2;
+  vector[N_1] r_1_3;
+  vector[N_1] r_1_4;
+  vector[N_1] r_1_5;
+  r_1 = scale_r_cor(z_1, sd_1, L_1); // use our custom function from the functions block to compute the unstandardized cluster-specific effects
+  r_1_1 = r_1[ : , 1];
+  r_1_2 = r_1[ : , 2];
+  r_1_3 = r_1[ : , 3];
+  r_1_4 = r_1[ : , 4];
+  r_1_5 = r_1[ : , 5];
+  real lprior = 0; // create a variable to contain the priors, to which we'll add some of the actual priors in the next few lines...
+  lprior += normal_lpdf(b[1] | 3.3, 0.4);
+  lprior += normal_lpdf(b[2] | 0, 1.45);
+  lprior += normal_lpdf(b[3] | 0, 1.45);
+  lprior += normal_lpdf(b[4] | 0, 1.45);
+  lprior += normal_lpdf(b[5] | 0, 1.45);
+  lprior += cauchy_lpdf(shape | 0, 2.5) - 1 * cauchy_lccdf(0 | 0, 2.5);
+  lprior += student_t_lpdf(sd_1 | 3, 0, 2.5) - 5 * student_t_lccdf(0 | 3, 0, 2.5);
+  lprior += lkj_corr_cholesky_lpdf(L_1 | 1);
+
+  // Weibull intercepts
+  vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
+  mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
+  for (n in 1 : N) { // Add all the cluster-specific varying effects to the linpred
+    mu_weibull[n] += r_1_1[J_1[n]] * Z_1_1[n] + r_1_2[J_1[n]] * Z_1_2[n]
+              + r_1_3[J_1[n]] * Z_1_3[n] + r_1_4[J_1[n]] * Z_1_4[n]
+              + r_1_5[J_1[n]] * Z_1_5[n];
+  }
+}
 
 
-We can use the same priors as the other models, but maybe put cauchys and LKJs on the new varying effects sigma terms?
+model {
+  // Factor analysis priors
+  L_corr_d ~ lkj_corr_cholesky(1);
+  L_corr_m1_m4 ~ lkj_corr_cholesky(1);
+  lam_UNC ~ normal(0, 10);
+  sd_p ~ cauchy(0, 2.5);
+
+  // Factor analysis likelihood
+  for (i in 1 : N) {
+    for (j in {2,3,5,6}) {
+      X_factor[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
+    }
+    to_vector({X_factor[i, 1], X_factor[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
+    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
+  }
+
+  // Weibull Survival Analysis priors
+  shape ~ cauchy(0, 2.5);
+  b[1] ~ normal(3.3, 0.4);
+  for (k in 2:K) {
+    b[k] ~ normal(0, 1.45);
+  }
+  
+  // Weibull Survival Analysis priors
+  for (n in 1 : N) {
+    if (cens[n] == 0) {
+      target += weibull_lpdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+    } else if (cens[n] == 1) {
+      target += weibull_lccdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+    } 
+  }
+
+  // priors including constants
+  target += lprior;
+  target += std_normal_lpdf(to_vector(z_1));
+}
+generated quantities {
+  // Factor analysis
+  corr_matrix[D] Rho_UNC; // correlation matrix for factors
+  corr_matrix[D] Rho_factors; // correlation matrix for factors
+  corr_matrix[D] Rho_m1_m4; // correlation matrix for m1 and m4
+  matrix[P, D] lam; // factor loadings
+  matrix[N, D] FS; // factor scores
+  
+  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
+  Rho_factors = Rho_UNC;
+  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
+  FS = FS_UNC;
+  lam = rep_matrix(0, P, D);
+  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
+  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
+  
+  if (lam_UNC[1] < 0) {
+    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
+    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
+    if (lam_UNC[4] > 0) {
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+    }
+  }
+  if (lam_UNC[4] < 0) {
+    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
+    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
+    if (lam_UNC[1] > 0) {
+      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
+      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
+    }
+  }
+
+  // Draws from posterior predictive distribution
+  vector[N] y_pred;
+  for (n in 1:N) {
+    y_pred[n] = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+  }
+
+  // Draws from the _truncated_ posterior predictive distribution
+  vector[N] y_pred_trunc;
+  {
+    real tmp;
+    real max_time;
+    max_time = max(Y); // Assuming Y holds both censored and uncensored times
+    
+    for (n in 1:N) {
+      tmp = max_time + 1; // Initialize tmp to a value just greater than max_time
+      while (tmp > max_time) {
+        tmp = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
+      }
+      y_pred_trunc[n] = tmp;
+    }
+  }
+
+  // De-Choleskify the the estimated correlation matrix of the varying effects
+  corr_matrix[M_1] Cor_1 = multiply_lower_tri_self_transpose(L_1); // compute group-level correlations
+  vector<lower=-1, upper=1>[NC_1] cor_1;
+  for (k in 1 : M_1) {    // extract upper diagonal of correlation matrix
+    for (j in 1 : (k - 1)) {
+      cor_1[choose(k - 1, 2) + j] = Cor_1[j, k];
+    }
+  }
+}
+"
+```
+
+```{r}
+#| label: stanfit-surv-mm
+#| eval: false
+
+# Write the raw Stan code from an R string to a Stan file
+stan_file <- cmdstanr::write_stan_file(stan_model_code)
+
+# Autoformat the model syntax to preempt any warnings at compile time
+model <- cmdstanr::cmdstan_model(stan_file, compile = FALSE)
+model$format(canonicalize = TRUE)
+
+# Compile the model from the Stan file
+model <- cmdstanr::cmdstan_model(stan_file)
+
+# Put the data into a list format Stan can understand
+P <- 8 # Because 6 measured variables + 2 factors 
+N <- nrow(fake_dat)
+D <- 2
+X_factor <- as.matrix(fake_dat |> select(matches("^m[1-9]$|^adapt$|^collab$")))
+
+Y <- fake_dat$time
+cens <- fake_dat$censored
+X_weibull <- as.matrix(
+  fake_dat |> 
+    mutate(intercept = 1) |>
+    select(
+      intercept,
+      adapt,
+      collab,
+      age,
+      ei_status
+    ) 
+)
+
+N_clusters <- fake_dat |> distinct(cluster_id) |> nrow()
+
+
+data_list <- list(
+  ### Factor analysis
+  N=N, # Sample size
+  P=P, # Parameters in the factor analysis
+  D=D, # Number of factors
+  X_factor=X_factor, # Data matrix for factor analysis
+  n_lam=6, # N factor loadings
+
+  ### Time-to-event analysis
+  Y=Y, # Event times
+  K=5, # Four predictors plus a dummy column of 1s for the intercept
+  cens=cens, # Censoring status
+  X_weibull=X_weibull, # Data matrix for Weibull regression
+
+  ### Multilevel structure
+  N_1 = N_clusters,
+  M_1 = 5, # Number of varying effects
+  J_1  = fake_dat$cluster_id, # Row-specific cluster indicators
+  Z_1_1 = rep(1, N), # Cluster-level predictors...
+  Z_1_2 = fake_dat$adapt,
+  Z_1_3 = fake_dat$collab,
+  Z_1_4 = fake_dat$age,
+  Z_1_5 = fake_dat$ei_status,
+  NC_1 = 10 # Number of correlation terms for varying effect covariance matrix, (N * N-1 / 2)
+)
+
+# Fit the model
+fit <- model$sample(
+  data = data_list,
+  seed = 199,
+  chains = 4,
+  parallel_chains = 4,
+  iter_warmup = 1000,
+  iter_sampling = 6000,
+  output_dir = "fits",
+  refresh = 1 # print update at each iter
+)
+
+# Save the resulting model fit
+saveRDS(fit, "fits/b07.05.rds")
+
+```
 
 Copy some posterior analysis plots for survival analysis from here? https://onlinelibrary.wiley.com/doi/full/10.1111/insr.12214
