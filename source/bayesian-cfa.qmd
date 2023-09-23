@@ -3590,4 +3590,146 @@ saveRDS(fit, "fits/b07.05.rds")
 
 ```
 
+```{r}
+#| label: wrangle-draws-surv-mm
+#| eval: false
+
+fit <- readRDS("fits/b07.05.rds")
+
+# If you need to check variable names, call this and inspect the resulting object
+#summary <- fit$summary()
+
+# Load the MCMC draws from the variables we care about
+draws <- fit$draws(
+  variables = c(
+  "lam[1,1]",
+  "lam[2,1]",
+  "lam[3,1]",
+  "lam[4,2]",
+  "lam[5,2]",
+  "lam[6,2]",
+  "Rho_factors[2,1]", 
+  "Rho_m1_m4[2,1]",
+  "b",
+  "shape",
+  "r_1",
+  "sd_1",
+  "Cor_1"
+  )
+)
+
+# Save the result
+saveRDS(draws, "fits/b07.05.samples.rds")
+
+```
+
+
+```{r}
+
+# Load the draws saved in the previous block
+draws <- readRDS("fits/b07.05.samples.rds")
+
+# Plot
+cleaned_draws <- draws |>
+
+  # Get the raw draws for the factor loadings and the beween-factor correlation coefficient
+  gather_draws(
+    `b[1]`,
+    `b[2]`,
+    `b[3]`,
+    `b[4]`,
+    `b[5]`,
+    `lam[1,1]`,
+    `lam[2,1]`,
+    `lam[3,1]`,
+    `lam[4,2]`,
+    `lam[5,2]`,
+    `lam[6,2]`,
+    `Rho_factors[2,1]`,
+    `Rho_m1_m4[2,1]`
+  ) |>
+
+  mutate(.value = ifelse(.variable %in% c("b[1]", "b[2]", "b[3]", "b[4]", "b[5]"), exp(.value), .value)) |>
+  
+  # Do some renaming for clarity
+  mutate(.variable = case_when(
+   .variable == "b[1]" ~ "Intercept",
+   .variable == "b[2]" ~ "b_Adapt",
+   .variable == "b[3]" ~ "b_Collab",
+   .variable == "b[4]" ~ "b_Age",
+   .variable == "b[5]" ~ "b_EI Status",
+   .variable == "lam[1,1]" ~ "Loading for m1",
+   .variable == "lam[2,1]" ~ "Loading for m2",
+   .variable == "lam[3,1]" ~ "Loading for m3",
+   .variable == "lam[4,2]" ~ "Loading for m4",
+   .variable == "lam[5,2]" ~ "Loading for m5",
+   .variable == "lam[6,2]" ~ "Loading for m6",
+   .variable == "Rho_factors[2,1]" ~ "Covariance for f1 ~ f2",
+   .variable == "Rho_m1_m4[2,1]" ~ "Covariance for m1 ~ m4"
+ )) |>
+
+  filter(.variable != "Intercept") |>
+
+  # Add the true factor loadings for plotting
+  mutate(true_loading = case_when(
+    .variable == "b_Age" ~ 1.11,
+    .variable == "b_Collab" ~ 0.833,
+    .variable == "b_Adapt" ~ 1,
+    .variable == "b_EI Status" ~ 0.5,
+    .variable == "Loading for m1" ~ .8,
+    .variable == "Loading for m2" ~ .6,
+    .variable == "Loading for m3" ~ .9,
+    .variable == "Loading for m4" ~ .1,
+    .variable == "Loading for m5" ~ .2,
+    .variable == "Loading for m6" ~ -.4,
+    .variable == "Covariance for f1 ~ f2" ~ .4,
+    .variable == "Covariance for m1 ~ m4" ~ .4
+  )) 
+
+cleaned_draws |>
+
+  ggplot(aes(x = .value, fill = .variable)) +
+  stat_halfeye(fill = "mediumorchid") +
+  geom_vline(aes(xintercept = true_loading), linetype = 2) + 
+  scale_x_continuous(expand = c(0, 0.015)) +
+  scale_y_continuous(expand = c(0, 0.015)) +
+  guides(fill = "none") +
+  labs(x = "lab",
+     y = NULL)  +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank()) +
+  facet_wrap(~.variable, scales = "free_x") 
+
+```
+
+And the MCMC diagnostics for good measure:
+
+```{r}
+#| label: convergence-surv-summary
+#| eval: false
+#| message: false
+#| warnings: false
+
+# Precompute the summary, to save time at quarto render
+summary_draws <- draws |> summary() 
+saveRDS(summary_draws, "fits/b07.05.summary.rds")
+
+```
+
+```{r}
+#| label: convergence-surv
+#| message: false
+#| warnings: false
+
+summary_draws <- readRDS("fits/b07.05.summary.rds")
+
+summary_draws |> 
+
+  select(variable, rhat, ess_bulk, ess_tail) |>
+
+  mutate(across(where(is.numeric), ~round(.x, 2))) |>
+
+  knitr::kable()
+
+```
 Copy some posterior analysis plots for survival analysis from here? https://onlinelibrary.wiley.com/doi/full/10.1111/insr.12214
