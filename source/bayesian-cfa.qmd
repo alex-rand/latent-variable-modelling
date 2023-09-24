@@ -1360,6 +1360,8 @@ Unlike in previous sections, here we won't be able to rely on `lavaan::simulateD
 ```{r}
 #| label: latent-variable-surv-sim
 
+set.seed(199)
+
 # Define sample size
 N <- 4000
 
@@ -2725,20 +2727,12 @@ m_{6}
 
 We'll need to simulate a new time-to-event dataset to reflect the fact that each cluster has its own parameter estimates drawn from a shared distribution. No changes are needed to the latent variables, so we can reuse our `fake_dat_measurement` from the previous example. But we'll need to change the way we simulated the event times such that each cluster has its own true parameter value for each of the regression coefficients of interest. We can use a slightly-modified version of the simulation approach provided by @KurzRethinking2023 in replicating the robot cafés example from @McElreath2020.
 
-Add an interaction effect between EI and age for fun?
-
-This is the brms-generated multilevel weibull model, for reference:
-
-
-// from this model: bf <- formula(time | cens(censored) ~ 0 + Intercept + adapt + collab + age + ei_status + (0 + Intercept + adapt + collab + age + ei_status | cohort))
-
-
-
-
 We can reuse the parameter estimates from our previous model as the means of the shared distribution from which the cluster-specific parameter values are drawn. When setting the rhos, it seems reasonable to imagine that perhaps clusters with high baseline hazard (given by high values of lambda) are located in areas with hotter labour markets in which employers are less choosy in their hiring, making it so that the other predictors will matter less in determining time-to-employment. So we can set those rhos to negative correlation between lambda and the substantive predictors. 
 
 ```{r}
 #| label: tte-surv-sim-mm
+
+set.seed(3)
 
 # Average lambda parameter of Weibull baseline hazard
 avg_lambda <- .02
@@ -2781,7 +2775,6 @@ cov_adapt_ei <- sd_beta_adapt * sd_beta_ei * rho_adapt_ei
 cov_collab_age <- sd_beta_collab * sd_beta_age * rho_collab_age
 cov_collab_ei <- sd_beta_collab * sd_beta_ei * rho_collab_ei
 cov_age_ei <- sd_beta_age * sd_beta_ei * rho_age_ei
-
 
 # Bring it all together as a covariance matrix
 sigma <- matrix(c(
@@ -2827,7 +2820,7 @@ cluster_params = MASS::mvrnorm(n_clusters, c(avg_lambda_wiki, avg_beta_adapt, av
     "beta_adapt" = 3,
     "beta_collab" = 4,
     "beta_age" = 5,
-    "beta_ei" = 6
+    "beta_ei_status" = 6
   )
 
 ```
@@ -2872,11 +2865,7 @@ fake_dat <- fake_dat_with_clusters |>
     time_event,
     time_censor,
     lambda_wiki,
-    lambda_prime,
-    beta_adapt,
-    beta_collab,
-    beta_age,
-    beta_ei
+    lambda_prime
   ))
 
 ```
@@ -2895,7 +2884,7 @@ fake_dat |>
 
   ggplot() + 
   geom_histogram(aes(x = time), colour = 1, fill = "cornflowerblue") +
-  geom_vline(aes(xintercept = mean), size = 2, linetype = 2) +
+  geom_vline(aes(xintercept = mean), size = 1, linetype = 2) +
   scale_x_continuous(limits = c(3, 180), n.breaks = 10, expand=c(0, 0)) +
   scale_y_continuous(expand=c(0, 0)) +
   labs(
@@ -3013,7 +3002,7 @@ Before fitting the model we can get a sense of between-cluster variance in param
 #| message: false
 #| warning: false
 #| fig-cap: "Andrew Gelman's 'Secret Weapon' plot showing variation between cluster-specific parameter estimates for regression coefficients."
-#| fig-height: 15
+#| fig-height: 30
 
 # Split data by cluster
 split_data <- fake_dat |>
@@ -3043,22 +3032,25 @@ tidy_results <- map2_df(model_summaries, unique(fake_dat$cluster_id),
                          return(model)
                        })
 
+dplt_secret_weapon <- tidy_results |>
 
-tidy_results |>
-
+  # Only keep the variables we need
   filter(term %in% c("adapt", "collab", "age", "ei_status")) |>
 
   # add true mean effects
   mutate(
-    true_effect = case_when(
+    true_mean_effect = case_when(
       term == "age" ~ 1.11,
       term == "collab" ~ 0.833,
       term == "adapt" ~ 1,
       term == "ei_status" ~ 0.5
-    ))  |>
-
+    ))
+  
+dplt_secret_weapon |> 
+  
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
-  geom_hline(aes(yintercept = true_effect), linetype = 2) + 
+  geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
+#  geom_point(aes(y = true_cluster_effect), position = position_dodge(width = 0.5), size = 3, colour = "green3", shape = 1, stroke = 2) +
   geom_point(position = position_dodge(width = 0.5), size = 3) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
                 position = position_dodge(width = 0.5), width = 0.2) +
@@ -3072,6 +3064,8 @@ tidy_results |>
     x = "Cluster ID",
     y = "Estimate"
   )
+  
+  
 
 ```
 
@@ -3546,7 +3540,6 @@ X_weibull <- as.matrix(
 
 N_clusters <- fake_dat |> distinct(cluster_id) |> nrow()
 
-
 data_list <- list(
   ### Factor analysis
   N=N, # Sample size
@@ -3596,8 +3589,8 @@ saveRDS(fit, "fits/b07.05.rds")
 
 fit <- readRDS("fits/b07.05.rds")
 
-# If you need to check variable names, call this and inspect the resulting object
-#summary <- fit$summary()
+# Call this if you need to check variable names
+# fit$metadata() 
 
 # Load the MCMC draws from the variables we care about
 draws <- fit$draws(
@@ -3611,10 +3604,7 @@ draws <- fit$draws(
   "Rho_factors[2,1]", 
   "Rho_m1_m4[2,1]",
   "b",
-  "shape",
-  "r_1",
-  "sd_1",
-  "Cor_1"
+  "shape"
   )
 )
 
@@ -3623,6 +3613,7 @@ saveRDS(draws, "fits/b07.05.samples.rds")
 
 ```
 
+Let's visualize first the factor loadings and cfa covariance terms, then the substantive regression coefficients: 
 
 ```{r}
 
@@ -3699,6 +3690,152 @@ cleaned_draws |>
   theme_minimal() + 
   theme(panel.grid.major = element_blank()) +
   facet_wrap(~.variable, scales = "free_x") 
+
+```
+
+And how about the estimates of the hyperparameters, so like sd_1 and cor_1?
+
+```{r}
+#| label: wrangle-covar-draws-mm
+#| eval: false
+
+fit <- readRDS("fits/b07.05.rds")
+
+# Call this if you need to check variable names
+# fit$metadata() 
+
+# Load the MCMC draws from the variables we care about
+covar_draws <- fit$draws(
+  variables = c(
+    "sd_1",
+    "Cor_1"
+  )
+)
+
+covar_draws_summary <- covar_draws |> summary()
+
+# Save the result
+saveRDS(draws, "fits/b07.05.ranef.samples.rds")
+saveRDS(ranef_draws_summary, "fits/b07.05.ranef.samples.summary.rds")
+
+```
+
+
+
+Cluster-specific comparisons to demonstrate shrinkage? For this we can augment our secret weapon plot from before to compare the no-pooling parameter estimates and the partially pooled estimates from our Stan model:
+
+```{r}
+#| label: wrangle-ranef-draws
+#| eval: false
+
+fit <- readRDS("fits/b07.05.rds")
+
+# Call this if you need to check variable names
+# fit$metadata() 
+
+# Load the MCMC draws from the variables we care about
+ranef_draws <- fit$draws(
+  variables = c(
+    "r_1_1",
+    "r_1_2",
+    "r_1_3",
+    "r_1_4",
+    "r_1_5"
+  )
+)
+
+ranef_draws_summary <- ranef_draws |> summary()
+
+# Save the result
+saveRDS(draws, "fits/b07.05.ranef.samples.rds")
+saveRDS(ranef_draws_summary, "fits/b07.05.ranef.samples.summary.rds")
+
+```
+
+```{r}
+
+ranef_summary <- readRDS("fits/b07.05.ranef.samples.summary.rds")
+
+# Start with the data from the secret weapon plot we made before fitting the Stan model:
+dplt_secret_weapon |>
+  
+  # Add the cluster-specific true parameter values
+  left_join(
+    
+    fake_dat |> 
+      
+      select(cluster_id, starts_with("beta")) |> 
+      
+      distinct(cluster_id, .keep_all = TRUE) |>
+
+      pivot_longer(starts_with("beta"), names_to = "term", values_to = "true_cluster_effect") |> 
+      
+      mutate(
+        term = str_remove(term, "beta_"),
+        true_cluster_effect = exp(true_cluster_effect)
+      )
+  ) |> 
+  
+  # Add the Stan model's posterior summaries
+  left_join(
+    
+    ranef_summary |> 
+
+      mutate(
+        
+        across(where(is.numeric), exp),
+        
+        cluster_id = as.integer(str_extract(variable, "(?<=\\[)\\d+(?=\\])")),
+        
+        term = case_when(
+          str_detect(variable, "r_1_1") ~ "intercept",
+          str_detect(variable, "r_1_2") ~ "adapt",
+          str_detect(variable, "r_1_3") ~ "collab",
+          str_detect(variable, "r_1_4") ~ "age",
+          str_detect(variable, "r_1_5") ~ "ei_status",
+          TRUE ~ variable
+        )
+        
+      ) |> 
+      
+      rename(
+        "posterior_mean" = mean, 
+        "posterior_sd" = sd, 
+        "posterior_q5" = q5, 
+        "posterior_q95" = q95
+      ) |> 
+    
+     select(
+       cluster_id, 
+       term, 
+       posterior_mean, 
+       posterior_sd, 
+       posterior_q5, 
+       posterior_q95
+     )
+    
+  ) |> 
+  
+  # Plot
+  ggplot(aes(x = factor(cluster_id), y = estimate)) +
+  geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
+  geom_point(aes(y = true_cluster_effect), position = position_dodge(width = 0.5), size = 3, colour = "green3", shape = 1, stroke = 1) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
+                position = position_dodge(width = 0.5), width = 0.2) +
+  geom_point(aes(y = posterior_mean), position = position_dodge(width = 0.5), size = 3, colour = "mediumorchid", alpha = .7) +
+  geom_errorbar(aes(ymin = posterior_q5, ymax = posterior_q95),
+                position = position_dodge(width = 0.5), width = 0.2, colour = "mediumorchid", alpha = .7) +
+  facet_wrap(~ term, scales = c("free"), ncol = 1) +
+  theme_light() +
+  scale_x_discrete(breaks = seq(from = 0, to = 65, by = 5)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  labs(
+    x = "Cluster ID",
+    y = "Estimate"
+  )
 
 ```
 
