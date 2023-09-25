@@ -1436,7 +1436,6 @@ Now we can simulate the demographic variables and time-to-event data using the C
 
 The goal is to find a way of expressing the Weibull distribution's shape parameter with reference to the linear model, so that we can use R's built-in `rweibull()` function to sample our event times. We can start from [the PDF of the Weibull distribution](https://en.wikipedia.org/wiki/Weibull_distribution):
 
-\$\$
 
 ```{=tex}
 \begin{equation}
@@ -1446,33 +1445,27 @@ f(x; k, \lambda) = \begin{cases}
 \end{cases}
 \end{equation}
 ```
-\$\$
 
 And its cumulative density function given by:
 
-\$\$
 
 ```{=tex}
 \begin{equation}
 F(x; k, \lambda) = 1 - \exp\left(-\left(\frac{x}{\lambda}\right)^{k}\right)
 \end{equation}
 ```
-\$\$
 
 So the survival curve, given by 1 - CDF, is:
 
-\$\$
 
 ```{=tex}
 \begin{equation}
 S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda}\right)^{k}\right)
 \end{equation}
 ```
-\$\$
 
 And using the classic negative-log relationship between the survival function and the cumulative hazard function, we can say:
 
-\$\$
 
 ```{=tex}
 \begin{equation}
@@ -1486,7 +1479,6 @@ H(t) = -\log\left(\exp\left(-\left(\frac{t}{\lambda}\right)^{\rho}\right)\right)
 H(t) = \left(\frac{t}{\lambda}\right)^{\rho}
 \end{equation}
 ```
-\$\$
 
 Now we have everything we need to implement the the classic form of a Cox Proportional Hazards regression, given by: \$\$
 
@@ -1495,33 +1487,26 @@ Now we have everything we need to implement the the classic form of a Cox Propor
 H(t | \mathbf{X}) = H_0(t) \exp(\mathbf{\beta}' \mathbf{X})
 \end{equation}
 ```
-\$\$
 
 Since this is directly equivalent to the model for the actual function of interest, the baseline hazard. As @Singer+Willett2003 put it, *"This direct equivalence may not be intuitive, but it certainly is invaluable."*
-
-\$\$
 
 ```{=tex}
 \begin{equation}
 h(t | \mathbf{X}) = h_0(t) \exp(\mathbf{\beta}' \mathbf{X})
 \end{equation}
 ```
-\$\$
+
 
 So we can take the definition of the Weibull cumulative hazard function we found above and substitute it into this equation, then take its negative exp to get it back in terms of the survival function:
-
-\$\$
 
 ```{=tex}
 \begin{equation}
 S(t \mid \mathbf{x}) = \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(\mathbf{\beta}' \mathbf{x})\right)
 \end{equation}
 ```
-\$\$
 
 Now we can rearrange things to make the scale parameter $\lambda$ itself a function of the linear model. This allows us to use R's built-in `rweibull()` function to generate the event times. All we need is some fancy algebra:
 
-\$\$
 
 ```{=tex}
 \begin{align*}
@@ -1530,29 +1515,22 @@ S(t \mid x, \lambda) &= \exp\left(-\left(\frac{t}{\lambda}\right)^{\rho} \exp(x'
 &= \exp\left(-\left(\frac{t}{\frac{\lambda}{\exp\left(\frac{x' \beta}{\rho}\right)}}\right)^{\rho}\right) \\
 \end{align*}
 ```
-\$\$
 
 Now the denominator incorporates both $\lambda$ and the linear model. So we can just take the whole denominator and call it its own new thing $\lambda'$:
-
-\$\$
 
 ```{=tex}
 \begin{align*}
 \lambda' = \frac{\lambda}{\exp\left(\frac{x' \beta}{\rho}\right)}
 \end{align*}
 ```
-\$\$
 
 Thus we've snuck our linear model into the classic no-model definition of the Weibull survival function we saw above, just with $\lambda'$ instead of $\lambda$:
-
-\$\$
 
 ```{=tex}
 \begin{equation}
 S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 \end{equation}
 ```
-\$\$
 
 This is the parameterization we can implement when we go to create our event times. We'll also imagine censoring times to be drawn from an unconditional exponential distribution, which creates non-informative censoring. We'll generate an event time and a censoring time for each person, and a person's status will be the shorter of those two times. We can start by choosing values for the Weibull distribution's `rho` and `lambda` parameters that generate a realistic-seeming distribution of times-to-employment in the absence of a linear model. This is simpler conceptually if we define `rho = 1`. After some trial and error I settled on `lambda = .02`, which results in a mean time-to-employment of 22 days in the simulated dataset.
 
@@ -1693,6 +1671,7 @@ fake_dat |>
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank()
   )
+
 ```
 
 And we can plot some stratified kaplan-meier curves to make sure parameter estimates mean what we think they mean. For example, we see that when we stratify by `ei_status` those with `ei_status == TRUE` see faster estimated event times, which is what we intended when simulating the data:
@@ -2632,7 +2611,7 @@ The Stan model in the previous section is still missing some key information: ou
 
 Does this formally correspond to the traditional definition of a 'shared frailty' model? It'd be nice to get clarity on that and write the traditional shared frailty model definition in latex for comparison. 
 
-```{=tex}
+```{tex}
 
 \begin{aligned}
 \color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
@@ -2750,19 +2729,19 @@ sd_lambda <- log(500)
 sd_beta_adapt <- log(1.1) 
 sd_beta_collab <- log(1.3) 
 sd_beta_age <- log(2) # the effect of age varies a lot by region
-sd_beta_ei <- log(0.2) # the effect of EI is very consistent
+sd_beta_ei <- log(1.2) # the effect of EI is very consistent
 
 # Pearson correlation coefficients for each pair of regression parameters
-rho_lambda_adapt <- -.3
-rho_lambda_collab <- -.1
-rho_lambda_age <- -.2
-rho_lambda_ei <- -.1
-rho_adapt_collab <- .1
-rho_adapt_age <- .2
-rho_adapt_ei <- .1
-rho_collab_age <- .3
-rho_collab_ei <- 0
-rho_age_ei <- .1
+rho_lambda_adapt <- log(.3)
+rho_lambda_collab <- log(.1)
+rho_lambda_age <- log(.2)
+rho_lambda_ei <- log(.1)
+rho_adapt_collab <- log(.1)
+rho_adapt_age <- log(.2)
+rho_adapt_ei <- log(.1)
+rho_collab_age <- log(.3)
+rho_collab_ei <- log(0)
+rho_age_ei <- log(.1)
 
 # Calculate the covariances
 cov_lambda_adapt <- sd_lambda * sd_beta_adapt * rho_lambda_adapt
@@ -2956,7 +2935,7 @@ fake_dat |>
   mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id))) |>
 
   ggplot() +
-  geom_point(aes(x = median_time, y = cluster_id), size=3, color="mediumorchid", stroke=1.5) +
+  geom_point(aes(x = median_time, y = cluster_id), size=2, color="mediumorchid", stroke=1) +
   labs(
     x = "Cluster-specific median days employment",
     y = "Clusters",
@@ -3033,6 +3012,16 @@ tidy_results <- map2_df(model_summaries, unique(fake_dat$cluster_id),
                        })
 
 dplt_secret_weapon <- tidy_results |>
+  
+  left_join(
+    
+    fake_dat |> 
+      
+      group_by(cluster_id) |> 
+      
+      count()
+    
+  ) |> 
 
   # Only keep the variables we need
   filter(term %in% c("adapt", "collab", "age", "ei_status")) |>
@@ -3044,19 +3033,20 @@ dplt_secret_weapon <- tidy_results |>
       term == "collab" ~ 0.833,
       term == "adapt" ~ 1,
       term == "ei_status" ~ 0.5
-    ))
+    )) |> 
   
+  mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id[order(n)])))
+
 dplt_secret_weapon |> 
-  
+
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
   geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
-#  geom_point(aes(y = true_cluster_effect), position = position_dodge(width = 0.5), size = 3, colour = "green3", shape = 1, stroke = 2) +
   geom_point(position = position_dodge(width = 0.5), size = 3) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
                 position = position_dodge(width = 0.5), width = 0.2) +
   facet_wrap(~ term, scales = c("free"), ncol = 1) +
   theme_light() +
-  scale_x_discrete(breaks = seq(from = 0, to = 65, by = 5)) +
+#  scale_x_discrete(breaks = seq(from = 0, to = 65, by = 5)) +
   theme(legend.position = "none",
         axis.title.x = element_blank(),
         axis.title.y = element_blank()) +
@@ -3064,8 +3054,6 @@ dplt_secret_weapon |>
     x = "Cluster ID",
     y = "Estimate"
   )
-  
-  
 
 ```
 
@@ -3708,20 +3696,110 @@ fit <- readRDS("fits/b07.05.rds")
 covar_draws <- fit$draws(
   variables = c(
     "sd_1",
-    "Cor_1"
+    "cor_1"
   )
 )
 
 covar_draws_summary <- covar_draws |> summary()
 
 # Save the result
-saveRDS(draws, "fits/b07.05.ranef.samples.rds")
-saveRDS(ranef_draws_summary, "fits/b07.05.ranef.samples.summary.rds")
+saveRDS(covar_draws, "fits/b07.05.covar.samples.rds")
+saveRDS(covar_draws_summary, "fits/b07.05.covar.samples.summary.rds")
 
 ```
 
+```{r}
+
+# rho_lambda_adapt <- -.3
+# rho_lambda_collab <- -.1
+# rho_lambda_age <- -.2
+# rho_lambda_ei <- -.1
+rho_adapt_collab <- log(.1)
+rho_adapt_age <- .2
+rho_adapt_ei <- .1
+rho_collab_age <- .3
+rho_collab_ei <- 0
+rho_age_ei <- .1
+
+# exp(-.3)
+# exp(-.1)
+# exp(-.2)
+# exp(-.1)
+exp(.1)
+exp(.2)
+exp(.1)
+exp(.3)
+exp(0)
+exp(.1)
+
+covar_draws_summary |>
+  
+  mutate(mean = exp(mean)) |> 
+  
+  view()
+
+covar_draws <- readRDS("fits/b07.05.covar.samples.rds") 
+
+covar_draws |> 
+
+# Get the raw draws
+  gather_draws(
+    sd_1[i],
+    cor_1[i]
+  ) |> 
+  
+  # Do some renaming for clarity
+  mutate(.variable = case_when(
+    .variable == "sd_1" & i == 1 ~ "sd_intercept",
+    .variable == "sd_1" & i == 2 ~ "sd_adapt",
+    .variable == "sd_1" & i == 3 ~ "sd_collab",
+    .variable == "sd_1" & i == 4 ~ "sd_age",
+    .variable == "sd_1" & i == 5 ~ "sd_ei_status",
+    
+    .variable == "cor_1" & i == 1 ~ "cor_",
+    .variable == "cor_1" & i == 2 ~ "cor_",
+    .variable == "cor_1" & i == 3 ~ "cor_",
+    .variable == "cor_1" & i == 4 ~ "cor_",
+    .variable == "cor_1" & i == 5 ~ "cor_adapt_collab",
+    .variable == "cor_1" & i == 6 ~ "cor_adapt_age",
+    .variable == "cor_1" & i == 7 ~ "cor_adapt_ei_status",
+    .variable == "cor_1" & i == 8 ~ "cor_collab_age",
+    .variable == "cor_1" & i == 9 ~ "cor_collab_ei_status",
+    .variable == "cor_1" & i == 10 ~ "cor_age_ei__status"
+  )) |> 
+    
+ # filter(.variable != "sd_intercept") |> 
+  
+  mutate(.value = exp(.value)) |> 
+
+  # Add the true simulation parameter values
+  mutate(true_loading = case_when(
+    .variable == "sd_adapt" ~ 1.1,
+    .variable == "sd_collab" ~ 1.3,
+    .variable == "sd_age" ~ 2,
+    .variable == "sd_ei_status" ~ 1.2,
+    .variable == "cor_adapt_collab" ~ exp(.1),
+    .variable == "cor_adapt_age" ~ exp(.2),
+    .variable == "cor_adapt_ei_status" ~ exp(.1),
+    .variable == "cor_collab_age" ~ exp(.3),
+    .variable == "cor_collab_ei_status" ~ exp(0),
+    .variable ==  "cor_age_ei__status" ~ exp(.1)
+  )) |> 
+
+  ggplot(aes(x = .value, fill = .variable)) +
+  stat_halfeye(fill = "mediumorchid") +
+  geom_vline(aes(xintercept = true_loading), linetype = 2) + 
+  scale_x_continuous(expand = c(0, 0.015)) +
+  scale_y_continuous(expand = c(0, 0.015)) +
+  guides(fill = "none") +
+  labs(x = "lab",
+     y = NULL)  +
+  theme_minimal() + 
+  theme(panel.grid.major = element_blank()) +
+  facet_wrap(~.variable, scales = "free_x") 
 
 
+```
 Cluster-specific comparisons to demonstrate shrinkage? For this we can augment our secret weapon plot from before to compare the no-pooling parameter estimates and the partially pooled estimates from our Stan model:
 
 ```{r}
@@ -3744,11 +3822,12 @@ ranef_draws <- fit$draws(
   )
 )
 
-ranef_draws_summary <- ranef_draws |> summary()
+ranef_summary <- ranef_draws |> summary()
+
 
 # Save the result
 saveRDS(draws, "fits/b07.05.ranef.samples.rds")
-saveRDS(ranef_draws_summary, "fits/b07.05.ranef.samples.summary.rds")
+saveRDS(ranef_summary, "fits/b07.05.ranef.samples.summary.rds")
 
 ```
 
@@ -3757,7 +3836,7 @@ saveRDS(ranef_draws_summary, "fits/b07.05.ranef.samples.summary.rds")
 ranef_summary <- readRDS("fits/b07.05.ranef.samples.summary.rds")
 
 # Start with the data from the secret weapon plot we made before fitting the Stan model:
-dplt_secret_weapon |>
+dplt_secret_weapon |> 
   
   # Add the cluster-specific true parameter values
   left_join(
@@ -3771,22 +3850,28 @@ dplt_secret_weapon |>
       pivot_longer(starts_with("beta"), names_to = "term", values_to = "true_cluster_effect") |> 
       
       mutate(
-        term = str_remove(term, "beta_"),
-        true_cluster_effect = exp(true_cluster_effect)
+        term = str_remove(term, "beta_")
+    #    true_cluster_effect = exp(true_cluster_effect)
       )
   ) |> 
   
   # Add the Stan model's posterior summaries
   left_join(
     
-    ranef_summary |> 
+    ranef_summary |> view()
 
+      # Create the cluster_id variable
       mutate(
-        
         across(where(is.numeric), exp),
-        
-        cluster_id = as.integer(str_extract(variable, "(?<=\\[)\\d+(?=\\])")),
-        
+        cluster_id = as.factor(str_extract(variable, "(?<=\\[)\\d+(?=\\])"))
+      ) |> 
+
+      # get the precalculated cluster sizes
+      left_join(dplt_secret_weapon |> select(cluster_id, n) |> distinct(cluster_id, .keep_all = TRUE)) |> 
+      
+      # reorder the cluster_ids by cluster size and clean the `term` variable
+      mutate(
+        cluster_id = factor(cluster_id, levels = unique(cluster_id[order(n)])),
         term = case_when(
           str_detect(variable, "r_1_1") ~ "intercept",
           str_detect(variable, "r_1_2") ~ "adapt",
@@ -3795,14 +3880,13 @@ dplt_secret_weapon |>
           str_detect(variable, "r_1_5") ~ "ei_status",
           TRUE ~ variable
         )
-        
       ) |> 
-      
-      rename(
-        "posterior_mean" = mean, 
-        "posterior_sd" = sd, 
-        "posterior_q5" = q5, 
-        "posterior_q95" = q95
+    
+    rename(
+      "posterior_mean" = mean, 
+      "posterior_sd" = sd, 
+      "posterior_q5" = q5, 
+      "posterior_q95" = q95
       ) |> 
     
      select(
@@ -3812,9 +3896,13 @@ dplt_secret_weapon |>
        posterior_sd, 
        posterior_q5, 
        posterior_q95
-     )
+     ) |> view()
     
   ) |> 
+  
+  filter(term %in% c("ei_status")) |> 
+  
+  view()
   
   # Plot
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
