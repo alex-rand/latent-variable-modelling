@@ -740,7 +740,7 @@ The trace plots seem healthy overall, albeit with some occasional spikes and som
 #| warnings: false
 #| eval: false
 
-# Create a summary table
+# Trace plots
 draws |>
 
   bayesplot::mcmc_trace() + 
@@ -753,7 +753,7 @@ draws |>
 
 ```
 
-Overall we can feel ok about the model's performance here because it recovered the true parameter values fairly well, but the MCMC convergence checks suggest our chains were not totally happy.
+We can feel ok about the model's performance here because it recovered the true parameter values fairly well, but the MCMC convergence checks suggest our chains were not totally happy.
 
 One last thing before moving on: as mentioned above, we could have simply used the blavaan package to fit this model instead of fussing with custom Stan code. The blavaan version fits way faster and recovers the true parameter estimates, but it is less flexible overall. And again, crucially for the present analysis, there is no way to do survival analysis with blavaan. But for posterity, below is the syntax we would use to fit the model with blavaan. If we specify `mcmcfile = TRUE` then the resulting Stan file gets written to a new directory called `lavExport`, or we can supply a filepath as the argument in which case the Stan file will get written there. The file is very large (over 1000 lines) and confusing, I think because it is precompiled to handle any possible model you could specify in R. The Stan documentation includes [an example for specifying custom priors in a blavaan model](https://mc-stan.org/users/documentation/case-studies/sem.html#Confirmatory_Factor_Analysis_(CFA)).
 
@@ -776,7 +776,7 @@ blavInspect(blavfit.1, "mcobj")
 
 ## Bayesian CFA with Custom Covariance Structure
 
-In the previous section we moved beyond brms into raw Stan, which allowed us to estimate the correlation between latent variables. But often in latent variable modelling we also want to account for the possibility that certain measured variables are confounded by some shared unmeasured influences. One way to address this is to add another factor to the model to account for these unmeasured influences, but it can be simpler to just estimate a covariance term for those measured variables. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm].
+Often in latent variable modelling we want to account for the possibility that certain measured variables are confounded by some shared unmeasured influences. One way to address this is to add another factor to the model to account for these unmeasured influences, but it can be simpler to just estimate a covariance term for those measured variables. This is what @Brown2006 calls a 'correlated uniqueness model'. I have more detailed notes on these ideas in [Chapter -@sec-mtmm].
 
 As an example of this scenario, we can imagine that the measured variables m1 and m4 are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. To reflect this change in the model, we need to change the specification of the variance-covariance matrix of the shared multivariable likelihood of the measured variables: where before all of the off-diagonal elements were fixed at 0, now we need the off-diagonals representing the covariance between m1 and m4 to be freely estimated.
 
@@ -1918,7 +1918,7 @@ fake_dat |>
 
 Now we're ready to fit the survival model using the latent factors as predictors.
 
-```{stan}
+```stan
 data {
   // Factor Analysis
   int N; // sample size for both models
@@ -2375,6 +2375,8 @@ summary_draws |>
 How does this compare to the more common two-step approach of fitting to factor scores? Both models do well, which is not surprising because we know them to both be specified according to the true data generating process. But the advantage of the Bayesian approach is shown in the coefficient for `collab` below. This is the factor with looser loadings and poor convergent valiity, which has resulted in greater uncertainty in the frequentist lavaan model's estimated factor loadings and the ensuing factor score point estimates. However, the Bayesian model was able to incorporate the factor loading uncertainty into an estimated posterior distribution for each factor score, resulting in more precision in the regression parameter estimate for that variable. Meanwhile the frequentist and Bayesian estimates for the regression parameter for `adapt` are virtually identical, because the factor loadings for that loading are tight, resulting in less uncertainty in the lavaan model's estimate of those loadings and the ensuing parameter estimates, so Bayes' incorporation of uncertainty from the factor model matters less. 
 
 ```{r}
+#| message: false
+#| warning: false
 
 # get the factor scores from the lavaan model we fit above
 factor_scores <- predict(fit_test)
@@ -2612,8 +2614,7 @@ The Stan model in the previous section is still missing some key information: ou
 
 Does this formally correspond to the traditional definition of a 'shared frailty' model? It'd be nice to get clarity on that and write the traditional shared frailty model definition in latex for comparison. 
 
-```{tex}
-
+$$
 \begin{aligned}
 \color{teal}T_i &\color{teal}\sim \text{Weibull}(\theta_i, k) \\
 \color{teal}\theta_i &\color{teal}= \alpha + \beta_{\text{age}} \text{age}_i + \beta_{\text{ei}} \text{ei\_status}_i + \beta_{\text{adapt}} \text{adapt}_i + \beta_{\text{collab}} \text{collab}_i \\
@@ -2702,8 +2703,7 @@ m_{6}
 \end{bmatrix}
 } \\
 \end{aligned}
- 
-```
+$$
 
 We'll need to simulate a new time-to-event dataset to reflect the fact that each cluster has its own parameter estimates drawn from a shared distribution. No changes are needed to the latent variables, so we can reuse our `fake_dat_measurement` from the previous example. But we'll need to change the way we simulated the event times such that each cluster has its own true parameter value for each of the regression coefficients of interest. We can use a slightly-modified version of the simulation approach provided by @KurzRethinking2023 in replicating the robot cafés example from @McElreath2020.
 
@@ -2989,6 +2989,7 @@ plt$data.survplot |>
 
 
 ```
+
 Before fitting the model we can get a sense of between-cluster variance in parameter estimates by fitting a model to each cluster in isolation and plotting the cluster-specific parameter estimates all together. @GelmanHill2007 call this plot the 'Secret Weapon' _"because it is so easy and powerful but yet is rarely used as a data-analytic tool."_ These non-pooled estimates correspond to a dummy-variable approach for cluster-specific estimates. We'll repeat the two-stage factor score point estimates approach from above as well, since that would be a conventional approach for this situation. We'll focus on the two variables of interest, I.E. the latent variables `adapt` and `collab`:
 
 ```{r}
@@ -2996,7 +2997,7 @@ Before fitting the model we can get a sense of between-cluster variance in param
 #| message: false
 #| warning: false
 #| fig-cap: "Andrew Gelman's 'Secret Weapon' plot showing variation between cluster-specific parameter estimates for regression coefficients. The dashed line shows the true simulation mean effect."
-#| fig-height: 30
+#| fig-height: 8
 
 # Declare a lavaan factor model
 surv.measurement.model <- ' 
@@ -3060,17 +3061,17 @@ dplt_secret_weapon <- tidy_results |>
       
       count()
     
-  ) |> 
+  ) |>
 
   # Only keep the variables we need
-  filter(term %in% c("adapt", "collab")) |>
+  filter(term %in% c("adapt_score", "collab_score")) |>
 
   # add true mean effects
   mutate(
     true_mean_effect = case_when(
       term == "age" ~ 1.11,
-      term == "collab" ~ 0.833,
-      term == "adapt" ~ 1,
+      term == "collab_score" ~ 0.833,
+      term == "adapt_score" ~ 1,
       term == "ei_status" ~ 0.5
     )) |> 
   
@@ -3112,7 +3113,7 @@ Now we can update our model, working closely from a brms-generated Stan model wi
 - Generate quantities: De-Cholesky the estimated correlation matrix, and extract one of the diagonals;
 - Add rejection sampling to deal with the overdispersion we encountered in the previous moddel, as documented in [Eren M. Elçi's vignette on Bayesian survival analysis in Stan](https://ermeel86.github.io/case_studies/surv_stan_example.html)). This isn't really rejection sampling in the traditional sense of sampling from a distribution $c*Q(x)$ known to be greater than $P(x)$ at all values of x. Rather, we're just sampling from a conditional, truncated version of the posterior predictive distribution. 
 
-```{stan}
+```stan
 functions {
   /* compute correlated group-level effects
    * Args:
@@ -3798,6 +3799,7 @@ covar_draws |>
 
 
 ```
+
 And the MCMC diagnostics for good measure. All is looking good:
 
 ```{r}
@@ -3864,6 +3866,7 @@ saveRDS(ranef_summary, "fits/b07.05.ranef.samples.summary.rds")
 #| message: false
 #| warning: false
 #| fig-cap: "Shrinkage on display: posterior means and credible intervals (purple) are more stable and accurate than unpooled estimates (grey) when compared to true simulated effects (violet rings). The dashed line shows the true simulation mean effect."
+#| fig-height: 8
 
 ranef_summary <- readRDS("fits/b07.05.ranef.samples.summary.rds")
 
@@ -3876,7 +3879,7 @@ ranef_summary_cleaned <- ranef_summary |>
   ) |> 
   
   # get the precalculated cluster sizes
-  left_join(dplt_secret_weapon |> dplyr::select(cluster_id, n) |> distinct(cluster_id, .keep_all = TRUE)) |> 
+  left_join(dplt_secret_weapon |> select(cluster_id, n) |> distinct(cluster_id, .keep_all = TRUE)) |> 
   
   # reorder the cluster_ids by cluster size and clean the `term` variable
   mutate(
@@ -3898,7 +3901,7 @@ ranef_summary_cleaned <- ranef_summary |>
     "posterior_q95" = q95
   ) |> 
   
-  dplyr::select(
+  select(
     cluster_id, 
     term, 
     posterior_mean, 
@@ -3933,6 +3936,13 @@ true_cluster_effects <- fake_dat |>
   
 # Start with the data from the secret weapon plot we made before fitting the Stan model:
 dplt_secret_weapon |> 
+
+  # We fit the secret weapon estimates using factor scores. Rename them to align with the other elements of the present chart.
+  mutate(term = case_when(
+    term == "adapt_score" ~ "adapt",
+    term == "collab_score" ~ "collab",
+    TRUE ~ term
+  )) |>
   
   # Add the cluster-specific true parameter values
   left_join(true_cluster_effects) |> 
@@ -3940,7 +3950,7 @@ dplt_secret_weapon |>
   # Add the Stan model's posterior summaries
   left_join(ranef_summary_cleaned) |> 
   
-  filter(term %in% c("adapt", "collab")) |> 
+  filter(term %in% c("adapt", "collab")) |>
   
   # Plot
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
@@ -4082,9 +4092,11 @@ dplt <-
 saveRDS(dplt, "fits/b07.05.post_pred_20_draws.rds")
 
 ```
-The result mirrors what we saw above with the distribution of the mean posterior predictions: the posterior predictive distribution of event times has a wider tail than the observed distribution. The overall density isn't really different between the posterior predictions for the truncated vs untruncated sampling approaches, which reflects the fact that the absurdly long event times in the untruncated approach were only a tiny minority of events. Still, the truncated approach is better because it doesn't allow for these absurdities, making it more useful in a predictive context, for example.
 
+Both the truncated and untruncated posterior predictive distributions are a better fit to the data here than in the previous model with no multilevel structure. But the posterior predictive distribution of event times still is less peaked and has a wider tail than the observed distribution. The overall density isn't very different between the posterior predictions for the truncated vs untruncated sampling approaches, which reflects the fact that the absurdly long event times in the untruncated approach were only a tiny minority of events. Still, the truncated approach is better because it doesn't allow for these absurdities, making it more useful in a predictive context, for example. 
 ```{r}
+#| message: false
+#| warning: false
 
 dplt <- readRDS("fits/b07.05.post_pred_20_draws.rds")
 
@@ -4111,6 +4123,7 @@ ggplot() +
   xlim(c(0, 365))
 
 ```
+
 
 
 
