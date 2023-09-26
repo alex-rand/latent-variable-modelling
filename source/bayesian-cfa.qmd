@@ -8,6 +8,7 @@ format:
 ```{r}
 #| label: setup
 #| message: false
+#| warning: false
 
 library(tidyverse)
 library(lavaan)
@@ -2732,16 +2733,16 @@ sd_beta_age <- log(2) # the effect of age varies a lot by region
 sd_beta_ei <- log(1.2) # the effect of EI is very consistent
 
 # Pearson correlation coefficients for each pair of regression parameters
-rho_lambda_adapt <- log(.3)
-rho_lambda_collab <- log(.1)
-rho_lambda_age <- log(.2)
-rho_lambda_ei <- log(.1)
-rho_adapt_collab <- log(.1)
-rho_adapt_age <- log(.2)
-rho_adapt_ei <- log(.1)
-rho_collab_age <- log(.3)
-rho_collab_ei <- log(0)
-rho_age_ei <- log(.1)
+rho_lambda_adapt <- -.3
+rho_lambda_collab <- -.1
+rho_lambda_age <- -.2
+rho_lambda_ei <- -.1
+rho_adapt_collab <- .1
+rho_adapt_age <- .2
+rho_adapt_ei <- .1
+rho_collab_age <- .3
+rho_collab_ei <- 0
+rho_age_ei <- .1
 
 # Calculate the covariances
 cov_lambda_adapt <- sd_lambda * sd_beta_adapt * rho_lambda_adapt
@@ -2840,7 +2841,7 @@ fake_dat <- fake_dat_with_clusters |>
   ungroup() |>
 
   # Remove the intermediary variables we don't need
-  select(-c(
+  dplyr::select(-c(
     time_event,
     time_censor,
     lambda_wiki,
@@ -2949,39 +2950,77 @@ fake_dat |>
 
 
 ```
-
-And for a fuller sense, the distributions of event times:
+How about cluster-specific KM-curves?
 
 ```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Cluster-specific Kaplan-Meier curves for simulated data. There is a lot of variation between clusters."
 
-fake_dat |>
+surv_object <- Surv(fake_dat$time, fake_dat$status)
 
-  filter(censored == 0) |>
+# Get the KM curve for reference:
+km.object <- survfit(surv_object ~ 1 + cluster_id, data = fake_dat)
 
-  group_by(cluster_id) |>
+plt <- survminer::ggsurvplot(
+  fit = km.object,
+  conf.int = FALSE,
+  risk.table = FALSE,
+  legend = "none",
+  title = "",
+  xlab = "Days Since Graduation", 
+  ylab = "Proportion Unemployed",
+  ggtheme = theme_bw()
+)  
 
-  mutate(median_time = median(time)) |>
-
-  arrange(median_time) |>
-
-  ungroup() |>
-
-  mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id))) |>
-
+plt$data.survplot |> 
+  
+  select(time, surv, cluster_id) |> 
+  
   ggplot() +
-  geom_density_ridges(aes(x = time, y = cluster_id), alpha = 1, rel_min_height = 0.1) +
-  xlim(c(0, 100))
+  geom_line(aes(x = time, y = surv, group = cluster_id), alpha = .2, colour = "#8A2BE2") +
+  theme_bw() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(
+    x = "Time",
+    y = "Kaplan-Meier Estimate"
+  )
+
 
 ```
-
-Before fitting the model we can get a sense of between-cluster variance in parameter estimates by fitting a model to each cluster in isolation and plotting the cluster-specific parameter estimates all together. @GelmanHill2007 call this plot the 'Secret Weapon' _"because it is so easy and powerful but yet is rarely used as a data-analytic tool."_ I use the true simulated values of the latent variables to fit the models here, but could do the two-step approach with the factor scores to make it more realistic? Should probably sort these by cluster size?
+Before fitting the model we can get a sense of between-cluster variance in parameter estimates by fitting a model to each cluster in isolation and plotting the cluster-specific parameter estimates all together. @GelmanHill2007 call this plot the 'Secret Weapon' _"because it is so easy and powerful but yet is rarely used as a data-analytic tool."_ These non-pooled estimates correspond to a dummy-variable approach for cluster-specific estimates. We'll repeat the two-stage factor score point estimates approach from above as well, since that would be a conventional approach for this situation. We'll focus on the two variables of interest, I.E. the latent variables `adapt` and `collab`:
 
 ```{r}
 #| label: secret-weapon
 #| message: false
 #| warning: false
-#| fig-cap: "Andrew Gelman's 'Secret Weapon' plot showing variation between cluster-specific parameter estimates for regression coefficients."
+#| fig-cap: "Andrew Gelman's 'Secret Weapon' plot showing variation between cluster-specific parameter estimates for regression coefficients. The dashed line shows the true simulation mean effect."
 #| fig-height: 30
+
+# Declare a lavaan factor model
+surv.measurement.model <- ' 
+  f1 =~ m1 + m2 + m3
+  f2 =~ m4 + m5 + m6
+
+  f1 ~~ f1
+  f2 ~~ f2
+
+  m1 ~~ m4
+'
+
+# Fit the model
+fit_test <- cfa(surv.measurement.model, data = fake_dat_measurement |> dplyr::select(starts_with("m")), std.lv = TRUE)
+
+# get the factor scores from the lavaan model we fit above
+factor_scores <- lavaan::predict(fit_test)
+
+# add the factor scores to fake_dat as predictors
+fake_dat <- fake_dat |>
+
+  cbind(factor_scores) |>
+
+  rename("adapt_score" = f1, "collab_score" = f2) 
 
 # Split data by cluster
 split_data <- fake_dat |>
@@ -2991,7 +3030,7 @@ split_data <- fake_dat |>
 # Fit the model to each subset
 model_list <- map(split_data, function(data) {
   surv_obj <- Surv(data$time, data$status)
-  survreg(surv_obj ~ adapt + collab + age + ei_status, data = data, dist = 'weibull')
+  survreg(surv_obj ~ 1 + adapt_score + collab_score + age + ei_status, data = data, dist = 'weibull')
 })
 
 # Extract and clean the cluster-specific parameter estimates
@@ -3024,7 +3063,7 @@ dplt_secret_weapon <- tidy_results |>
   ) |> 
 
   # Only keep the variables we need
-  filter(term %in% c("adapt", "collab", "age", "ei_status")) |>
+  filter(term %in% c("adapt", "collab")) |>
 
   # add true mean effects
   mutate(
@@ -3041,19 +3080,23 @@ dplt_secret_weapon |>
 
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
   geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_point(position = position_dodge(width = 0.5), size = 3, colour = "#808080") +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
-                position = position_dodge(width = 0.5), width = 0.2) +
+                position = position_dodge(width = 0.5), width = 0.2, colour = "#808080") +
   facet_wrap(~ term, scales = c("free"), ncol = 1) +
-  theme_light() +
-#  scale_x_discrete(breaks = seq(from = 0, to = 65, by = 5)) +
-  theme(legend.position = "none",
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()) +
-  labs(
-    x = "Cluster ID",
-    y = "Estimate"
-  )
+  scale_x_discrete(
+    breaks = NULL,  # Removes numeric breaks
+    labels = NULL,  # Removes numeric labels
+    name = "<---- Smaller Clusters                              Bigger Clusters ---->"  # Custom x-axis title
+  ) +
+  ylab("Survival Time Ratio") +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),
+  ) +
+  labs(y = "Survival Time Ratio") +
+  facet_wrap(~ term, scales = c("free"), ncol = 1) 
 
 ```
 
@@ -3681,7 +3724,7 @@ cleaned_draws |>
 
 ```
 
-And how about the estimates of the hyperparameters, so like sd_1 and cor_1?
+The model also does a pretty good job recovering the true values of the standard deviation hyperparameters:
 
 ```{r}
 #| label: wrangle-covar-draws-mm
@@ -3690,7 +3733,7 @@ And how about the estimates of the hyperparameters, so like sd_1 and cor_1?
 fit <- readRDS("fits/b07.05.rds")
 
 # Call this if you need to check variable names
-# fit$metadata() 
+fit$metadata() 
 
 # Load the MCMC draws from the variables we care about
 covar_draws <- fit$draws(
@@ -3710,42 +3753,14 @@ saveRDS(covar_draws_summary, "fits/b07.05.covar.samples.summary.rds")
 
 ```{r}
 
-# rho_lambda_adapt <- -.3
-# rho_lambda_collab <- -.1
-# rho_lambda_age <- -.2
-# rho_lambda_ei <- -.1
-rho_adapt_collab <- log(.1)
-rho_adapt_age <- .2
-rho_adapt_ei <- .1
-rho_collab_age <- .3
-rho_collab_ei <- 0
-rho_age_ei <- .1
-
-# exp(-.3)
-# exp(-.1)
-# exp(-.2)
-# exp(-.1)
-exp(.1)
-exp(.2)
-exp(.1)
-exp(.3)
-exp(0)
-exp(.1)
-
-covar_draws_summary |>
-  
-  mutate(mean = exp(mean)) |> 
-  
-  view()
-
 covar_draws <- readRDS("fits/b07.05.covar.samples.rds") 
 
 covar_draws |> 
 
 # Get the raw draws
   gather_draws(
-    sd_1[i],
-    cor_1[i]
+    sd_1[i]
+  #  cor_1[i]
   ) |> 
   
   # Do some renaming for clarity
@@ -3754,21 +3769,10 @@ covar_draws |>
     .variable == "sd_1" & i == 2 ~ "sd_adapt",
     .variable == "sd_1" & i == 3 ~ "sd_collab",
     .variable == "sd_1" & i == 4 ~ "sd_age",
-    .variable == "sd_1" & i == 5 ~ "sd_ei_status",
-    
-    .variable == "cor_1" & i == 1 ~ "cor_",
-    .variable == "cor_1" & i == 2 ~ "cor_",
-    .variable == "cor_1" & i == 3 ~ "cor_",
-    .variable == "cor_1" & i == 4 ~ "cor_",
-    .variable == "cor_1" & i == 5 ~ "cor_adapt_collab",
-    .variable == "cor_1" & i == 6 ~ "cor_adapt_age",
-    .variable == "cor_1" & i == 7 ~ "cor_adapt_ei_status",
-    .variable == "cor_1" & i == 8 ~ "cor_collab_age",
-    .variable == "cor_1" & i == 9 ~ "cor_collab_ei_status",
-    .variable == "cor_1" & i == 10 ~ "cor_age_ei__status"
+    .variable == "sd_1" & i == 5 ~ "sd_ei_status"
   )) |> 
     
- # filter(.variable != "sd_intercept") |> 
+  filter(.variable != "sd_intercept") |> 
   
   mutate(.value = exp(.value)) |> 
 
@@ -3778,12 +3782,6 @@ covar_draws |>
     .variable == "sd_collab" ~ 1.3,
     .variable == "sd_age" ~ 2,
     .variable == "sd_ei_status" ~ 1.2,
-    .variable == "cor_adapt_collab" ~ exp(.1),
-    .variable == "cor_adapt_age" ~ exp(.2),
-    .variable == "cor_adapt_ei_status" ~ exp(.1),
-    .variable == "cor_collab_age" ~ exp(.3),
-    .variable == "cor_collab_ei_status" ~ exp(0),
-    .variable ==  "cor_age_ei__status" ~ exp(.1)
   )) |> 
 
   ggplot(aes(x = .value, fill = .variable)) +
@@ -3800,11 +3798,43 @@ covar_draws |>
 
 
 ```
-Cluster-specific comparisons to demonstrate shrinkage? For this we can augment our secret weapon plot from before to compare the no-pooling parameter estimates and the partially pooled estimates from our Stan model:
+And the MCMC diagnostics for good measure. All is looking good:
+
+```{r}
+#| label: convergence-surv-summary-mm
+#| eval: false
+#| message: false
+#| warnings: false
+
+# Precompute the summary, to save time at quarto render
+summary_draws <- draws |> summary() 
+saveRDS(summary_draws, "fits/b07.05.summary.rds")
+
+```
+
+```{r}
+#| label: convergence-surv-mm
+#| message: false
+#| warnings: false
+
+summary_draws <- readRDS("fits/b07.05.summary.rds")
+
+summary_draws |> 
+
+  select(variable, rhat, ess_bulk, ess_tail) |>
+
+  mutate(across(where(is.numeric), ~round(.x, 2))) |> 
+
+  knitr::kable()
+
+```
+
+Since this is a multilevel model, we should expect to see _shrinkage_ in the cluster-specific parameter estimates: the estimates should be pulled towards the mean of the distribution of estimates, especially for smaller clusters and clusters with more extreme unpooled parameter estimates. We can visualize this shrinkage by taking our secret-weapon plot from before and add in our Stan model's posterior estimates and compatibility intervals for the cluster-specific estimates. And because this is a simulation, we can add the true cluster-specific effects for comparison. Here we see shrinkage on full display for the main predictors of interest, with the Stan model showing more stable and accurate estimates in general, especially for clusters where the unpooled estimate is extreme:
 
 ```{r}
 #| label: wrangle-ranef-draws
 #| eval: false
+#| fig-height: 30
 
 fit <- readRDS("fits/b07.05.rds")
 
@@ -3824,7 +3854,6 @@ ranef_draws <- fit$draws(
 
 ranef_summary <- ranef_draws |> summary()
 
-
 # Save the result
 saveRDS(draws, "fits/b07.05.ranef.samples.rds")
 saveRDS(ranef_summary, "fits/b07.05.ranef.samples.summary.rds")
@@ -3832,129 +3861,257 @@ saveRDS(ranef_summary, "fits/b07.05.ranef.samples.summary.rds")
 ```
 
 ```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Shrinkage on display: posterior means and credible intervals (purple) are more stable and accurate than unpooled estimates (grey) when compared to true simulated effects (violet rings). The dashed line shows the true simulation mean effect."
 
 ranef_summary <- readRDS("fits/b07.05.ranef.samples.summary.rds")
 
+# Tidy up the posterior estimates 
+ranef_summary_cleaned <- ranef_summary |>
+  
+  mutate(
+    across(where(is.numeric), exp),
+    cluster_id = as.factor(str_extract(variable, "(?<=\\[)\\d+(?=\\])"))
+  ) |> 
+  
+  # get the precalculated cluster sizes
+  left_join(dplt_secret_weapon |> dplyr::select(cluster_id, n) |> distinct(cluster_id, .keep_all = TRUE)) |> 
+  
+  # reorder the cluster_ids by cluster size and clean the `term` variable
+  mutate(
+    cluster_id = factor(cluster_id, levels = unique(cluster_id[order(n)])),
+    term = case_when(
+      str_detect(variable, "r_1_1") ~ "intercept",
+      str_detect(variable, "r_1_2") ~ "adapt",
+      str_detect(variable, "r_1_3") ~ "collab",
+      str_detect(variable, "r_1_4") ~ "age",
+      str_detect(variable, "r_1_5") ~ "ei_status",
+      TRUE ~ variable
+    )
+  ) |> 
+  
+  rename(
+    "posterior_mean" = mean, 
+    "posterior_sd" = sd, 
+    "posterior_q5" = q5, 
+    "posterior_q95" = q95
+  ) |> 
+  
+  dplyr::select(
+    cluster_id, 
+    term, 
+    posterior_mean, 
+    posterior_sd, 
+    posterior_q5, 
+    posterior_q95
+  ) 
+  
+# Tidy the true cluster-specific parameter estimates:
+true_cluster_effects <- fake_dat |> 
+      
+    dplyr::select(cluster_id, starts_with("beta")) |> 
+      
+    distinct(cluster_id, .keep_all = TRUE) |>
+      
+    mutate(cluster_id = factor(cluster_id)) |> 
+  
+      # get the precalculated cluster sizes
+    left_join(dplt_secret_weapon |> dplyr::select(cluster_id, n) |> distinct(cluster_id, .keep_all = TRUE)) |> 
+        
+    mutate(cluster_id = factor(cluster_id, levels = unique(cluster_id[order(n)]))) |> 
+
+      
+    pivot_longer(starts_with("beta"), names_to = "term", values_to = "true_cluster_effect") |> 
+      
+    mutate(
+      # Clean the labels
+      term = str_remove(term, "beta_"),
+      # Convert the true simulated effects into survival time ratios
+      true_cluster_effect = exp(-true_cluster_effect)
+    )
+  
 # Start with the data from the secret weapon plot we made before fitting the Stan model:
 dplt_secret_weapon |> 
   
   # Add the cluster-specific true parameter values
-  left_join(
+  left_join(true_cluster_effects) |> 
     
-    fake_dat |> 
-      
-      select(cluster_id, starts_with("beta")) |> 
-      
-      distinct(cluster_id, .keep_all = TRUE) |>
-
-      pivot_longer(starts_with("beta"), names_to = "term", values_to = "true_cluster_effect") |> 
-      
-      mutate(
-        term = str_remove(term, "beta_")
-    #    true_cluster_effect = exp(true_cluster_effect)
-      )
-  ) |> 
-  
   # Add the Stan model's posterior summaries
-  left_join(
-    
-    ranef_summary |> view()
-
-      # Create the cluster_id variable
-      mutate(
-        across(where(is.numeric), exp),
-        cluster_id = as.factor(str_extract(variable, "(?<=\\[)\\d+(?=\\])"))
-      ) |> 
-
-      # get the precalculated cluster sizes
-      left_join(dplt_secret_weapon |> select(cluster_id, n) |> distinct(cluster_id, .keep_all = TRUE)) |> 
-      
-      # reorder the cluster_ids by cluster size and clean the `term` variable
-      mutate(
-        cluster_id = factor(cluster_id, levels = unique(cluster_id[order(n)])),
-        term = case_when(
-          str_detect(variable, "r_1_1") ~ "intercept",
-          str_detect(variable, "r_1_2") ~ "adapt",
-          str_detect(variable, "r_1_3") ~ "collab",
-          str_detect(variable, "r_1_4") ~ "age",
-          str_detect(variable, "r_1_5") ~ "ei_status",
-          TRUE ~ variable
-        )
-      ) |> 
-    
-    rename(
-      "posterior_mean" = mean, 
-      "posterior_sd" = sd, 
-      "posterior_q5" = q5, 
-      "posterior_q95" = q95
-      ) |> 
-    
-     select(
-       cluster_id, 
-       term, 
-       posterior_mean, 
-       posterior_sd, 
-       posterior_q5, 
-       posterior_q95
-     ) |> view()
-    
-  ) |> 
+  left_join(ranef_summary_cleaned) |> 
   
-  filter(term %in% c("ei_status")) |> 
-  
-  view()
+  filter(term %in% c("adapt", "collab")) |> 
   
   # Plot
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
   geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
-  geom_point(aes(y = true_cluster_effect), position = position_dodge(width = 0.5), size = 3, colour = "green3", shape = 1, stroke = 1) +
-  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_point(aes(y = true_cluster_effect), position = position_dodge(width = 0.5), size = 3, colour = "#D02090", shape = 1, stroke = 1) +
+  geom_point(position = position_dodge(width = 0.5), size = 3, colour = "#808080", alpha = .7) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
-                position = position_dodge(width = 0.5), width = 0.2) +
+                position = position_dodge(width = 0.5), width = 0.2, colour = "#808080", alpha = .7) +
   geom_point(aes(y = posterior_mean), position = position_dodge(width = 0.5), size = 3, colour = "mediumorchid", alpha = .7) +
   geom_errorbar(aes(ymin = posterior_q5, ymax = posterior_q95),
-                position = position_dodge(width = 0.5), width = 0.2, colour = "mediumorchid", alpha = .7) +
-  facet_wrap(~ term, scales = c("free"), ncol = 1) +
-  theme_light() +
-  scale_x_discrete(breaks = seq(from = 0, to = 65, by = 5)) +
-  theme(legend.position = "none",
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()) +
-  labs(
-    x = "Cluster ID",
-    y = "Estimate"
+                position = position_dodge(width = 0.5), width = 0.2, colour = "mediumorchid", alpha = .7) +         scale_x_discrete(
+    breaks = NULL,  # Removes numeric breaks
+    labels = NULL,  # Removes numeric labels
+    name = "<---- Smaller Clusters                              Bigger Clusters ---->"  # Custom x-axis title
+  ) +
+  ylab("Survival Time Ratio") +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),
+  ) +
+  labs(y = "Survival Time Ratio") +
+  facet_wrap(~ term, scales = c("free"), ncol = 1) 
+
+
+```
+
+How about the posterior predictions? Did sampling from the constrained posterior predictive distribution improve the model's predictions? Let's retrieving the samples from both the constrained and unconstrained posterior predictive distributions. We'll chunk the cleaning into steps so this document doesn't take ages to render.
+
+```{r}
+#| eval: false
+
+# Get the draws from the posterior predictive distribution
+pp_draws <- fit$draws(variables = c("y_pred"))
+pp_draws_trunc <- fit$draws(variables = c("y_pred_trunc"))
+
+# Save the results
+saveRDS(pp_draws, "fits/b07.05.post_pred_samples.rds")
+saveRDS(pp_draws_trunc, "fits/b07.05.post_pred_samples_trunc.rds")
+
+```
+
+Load the samples from the cache:
+
+```{r}
+#| eval: false
+
+# Load the posterior preds from the cache
+pp_draws <- readRDS("fits/b07.05.post_pred_samples.rds")
+pp_draws_trunc <- readRDS("fits/b07.05.post_pred_samples_trunc.rds")
+
+# Summarize the draws into points
+pp_summaries <- pp_draws |> summary()
+pp_summaries_trunc <- pp_draws_trunc |> summary()
+
+# Store the summary objects again to save time at quarto render
+saveRDS(pp_summaries, "fits/b07.05.post_pred_summaries.rds")
+saveRDS(pp_summaries_trunc, "fits/b07.05.post_pred_summaries_trunc.rds")
+
+```
+
+The mean posterior predictions: 
+
+```{r}
+#| message: false
+#| warning: false
+pp_summaries <- readRDS("fits/b07.05.post_pred_summaries.rds")
+pp_summaries_trunc <- readRDS("fits/b07.05.post_pred_summaries.rds")
+
+fake_dat |>
+
+  select("time_dat" = time) |>
+
+  bind_cols(
+    pp_summaries |> select("time_pred" = mean),
+    pp_summaries_trunc |> select("time_pred_trunc" = mean)
+  ) |> 
+  
+  pivot_longer(cols = everything(), names_to = "name", values_to = "time") |>
+
+  mutate(name = case_when(
+    name == "time_dat" ~ "Data",
+    name == "time_pred" ~ "Mean posterior predictions (untruncated)",
+    name == "time_pred_trunc" ~ "Mean posterior predictions (truncated)"
+  )) |> 
+
+  ggplot() +
+  geom_histogram(aes(x = time, fill = name, alpha = name), binwidth = 5, colour = "white", position = "identity") +
+  scale_fill_manual(values = c("#878787", "cornflowerblue", "firebrick")) +
+  scale_alpha_manual(values=c(1, .7, .3)) +
+  scale_x_continuous(limits = c(0, 200), expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "bottom"
   )
 
 ```
 
-And the MCMC diagnostics for good measure:
+We can get a more detailed look at the model's uncertainty by plotting the densitities of draws from the posterior distribution against the distribution of the original data. Again we pre-process the draws so that rendering the Quarto document isn't slow:
 
 ```{r}
-#| label: convergence-surv-summary
 #| eval: false
-#| message: false
-#| warnings: false
 
-# Precompute the summary, to save time at quarto render
-summary_draws <- draws |> summary() 
-saveRDS(summary_draws, "fits/b07.05.summary.rds")
+draws_untrunc <- pp_draws |>
+  
+  gather_draws(
+    y_pred[i],
+    ndraws = 10
+  ) |>
+
+  ungroup() |>
+  
+  select(i, .draw, .value) |> 
+  
+  mutate(group = "non-truncated")
+
+draws_trunc <- pp_draws_trunc |> 
+  
+  gather_draws(
+    y_pred_trunc[i],
+    ndraws = 10
+  ) |>
+
+  ungroup() |>
+  
+  select(i, .draw, .value) |> 
+  
+  mutate(group = "truncated")
+
+dplt <- 
+  rbind(
+    draws_trunc,
+    draws_untrunc
+  )
+
+saveRDS(dplt, "fits/b07.05.post_pred_20_draws.rds")
 
 ```
+The result mirrors what we saw above with the distribution of the mean posterior predictions: the posterior predictive distribution of event times has a wider tail than the observed distribution. The overall density isn't really different between the posterior predictions for the truncated vs untruncated sampling approaches, which reflects the fact that the absurdly long event times in the untruncated approach were only a tiny minority of events. Still, the truncated approach is better because it doesn't allow for these absurdities, making it more useful in a predictive context, for example.
 
 ```{r}
-#| label: convergence-surv
-#| message: false
-#| warnings: false
 
-summary_draws <- readRDS("fits/b07.05.summary.rds")
+dplt <- readRDS("fits/b07.05.post_pred_20_draws.rds")
 
-summary_draws |> 
-
-  select(variable, rhat, ess_bulk, ess_tail) |>
-
-  mutate(across(where(is.numeric), ~round(.x, 2))) |>
-
-  knitr::kable()
+ggplot() +
+  geom_density(data = dplt |> filter(group == "non-truncated"), aes(x = .value, group = .draw), colour=alpha("cornflowerblue", .5)) + 
+  geom_density(data = dplt |> filter(group == "truncated"), aes(x = .value, group = .draw), colour=alpha("firebrick", .2)) +
+  geom_density(data = fake_dat |> filter(censored == 0), aes(x = time), colour = 'black') +
+  scale_fill_manual(
+    name='',
+    breaks=c('Non-truncated posterior draws', 'Truncated posterior draws', 'Data'),
+    values=c('Non-truncated posterior draws'='cornflowerblue', 'Truncated posterior draws'='firebrick', 'Data'='black')
+  ) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0)) +
+  labs(x = "Days to employment") +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  ) +
+  xlim(c(0, 365))
 
 ```
+
+
+
 Copy some posterior analysis plots for survival analysis from here? https://onlinelibrary.wiley.com/doi/full/10.1111/insr.12214
