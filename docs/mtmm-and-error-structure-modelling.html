@@ -215,7 +215,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./bayesian-cfa.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian CFA</span></a>
+  <a href="./bayesian-cfa.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian Multilevel Survival Analysis with Latent Predictors</span></a>
   </div>
 </li>
       </ul>
@@ -270,9 +270,12 @@ div.csl-indent {
 
 <p>In this chapter we’ll learn some workflows for situations where we’re worried our measured variables are confounded by other unmeasured things besides just the unmeasured ‘factors’ we’re interested in, and how we can address that and reassure ourselves that our inferences about the factor structure are ok.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggdag)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>In the previous example we saw how we can sometimes improve model fit by freeing-up some of the residual covariance terms, rather than doing the typical thing of fixing them at 0. But this feels a bit icky to me – just pumping out some modification indexes and using that as a basis for opening up some free parameters feels pretty overfitty, because we don’t have a strong theory-driven reason for changing the model in that way.</p>
 <p>But there <em>are</em> more kosher-feeling theory-driven reasons for freeing up some of the residual covariance parameters. Let’s talk about two of them: the first relates to convergent validity, the second relates to discriminant validity.</p>
@@ -304,6 +307,8 @@ div.csl-indent {
 <p>This is exactly what <span class="citation" data-cites="Green-et-al-1993">al (<a href="#ref-Green-et-al-1993" role="doc-biblioref">n.d.</a>)</span> did. They collected a few columns each for ‘happy’ and ‘sad’, fit a factor model, and fit a CFA. Each within-factor column had its own measurement approach, but shared a measurement approach with one of the columns of the other factor. So we are at risk of our estimate of between-factor correlations being confounding due to shared measurement approach, which could be hurting my case for discriminant validity!</p>
 <p>Here’s how we can show this situation in a DAG:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set DAG coordinates</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">c</span>(</span>
@@ -375,6 +380,7 @@ div.csl-indent {
 <span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_edges</span>(<span class="fu">aes</span>(<span class="at">edge_colour =</span> edge_colour)) <span class="sc">+</span></span>
 <span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_text</span>() <span class="sc">+</span></span>
 <span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <p><img src="mtmm-and-error-structure-modelling_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -382,6 +388,8 @@ div.csl-indent {
 <p>See how the measurment effects M1, M2, and M3 each create a backdoor path between the two factors F1 and F2. So if I want to get better-seeming (and, under the DAG, more accurate) estimate of between-factor correlation, then I need to find a way to close those backdoor paths. The classic way to close these paths would be to condition on the measurement effects by adding them to the linear model, but I can’t directly do this because they are unmeasured. But, as discussed above, I can still sort of do it by adding them as factors to my CFA model, or by freely estimating residual correlation between the observed variables that share a measurement approach, which should work if my DAG is mostly accurate.</p>
 <p>Unfortunately, the authors of this paper haven’t published their data. But we can take this as an opportunity to practice simulating a dataset with relationships implied by a DAG.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Simulate Data from the DAG</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Set seed for replicable results</span></span>
@@ -411,9 +419,12 @@ div.csl-indent {
 <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">S2 =</span> .<span class="dv">7</span><span class="sc">*</span>F2 <span class="sc">+</span> <span class="fl">0.7</span><span class="sc">*</span>M2 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
 <span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">S3 =</span> .<span class="dv">9</span><span class="sc">*</span>F2 <span class="sc">+</span> <span class="fl">0.7</span><span class="sc">*</span>M3 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>) </span>
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Fun! Now we have our fake data to play with. For starters, since we actually <em>do</em> have the values of the latent variables in our dataset, we can demonstrate how directly controlling for the measurement effects in a regression model can close the backdoor path between the factors.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lm</span>(H1 <span class="sc">~</span> S1, dat_fake), </span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lm</span>(H1 <span class="sc">~</span> S1 <span class="sc">+</span> M1, dat_fake)</span>
@@ -422,6 +433,7 @@ div.csl-indent {
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(broom<span class="sc">::</span>tidy) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 
 <table class="kable_wrapper">
@@ -507,6 +519,8 @@ div.csl-indent {
 <p>To illustrate, we’ll fit 2 models: The first is a basic CFA model that just loads each measured variable on its corresponding factor. The second specifies that the residual correlation between the measurement-confounded variables should be freely estimated, IE not fixed at 0.</p>
 <p>First let’s define our utility function like we did in the previous chapter:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Define a custom function</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fit_measures <span class="ot">&lt;-</span> <span class="cf">function</span>(fit){</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -544,8 +558,11 @@ div.csl-indent {
 <span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  res</span>
 <span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>basic.definition <span class="ot">&lt;-</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'happy =~ H1 + H2 + H3</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="st">   sad =~ S1 + S2 + S3</span></span>
@@ -573,6 +590,7 @@ div.csl-indent {
 <span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>summary.correlated_uniqueness.fit <span class="ot">&lt;-</span> <span class="fu">summary</span>(correlated_uniqueness.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>summary.basic.fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lavaan 0.6.16 ended normally after 23 iterations
 
@@ -621,7 +639,10 @@ Variances:
     happy             0.667    0.114    5.860    0.000    1.000    1.000
     sad               0.822    0.119    6.886    0.000    1.000    1.000</code></pre>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>summary.correlated_uniqueness.fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lavaan 0.6.16 ended normally after 47 iterations
 
@@ -676,9 +697,12 @@ Variances:
     happy             0.545    0.073    7.450    0.000    1.000    1.000
     sad               0.749    0.086    8.762    0.000    1.000    1.000</code></pre>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fit_measures</span>(basic.fit) <span class="sc">%&gt;%</span> </span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Basic Model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 
 <table class="kable_wrapper">
@@ -784,9 +808,12 @@ Basic Model
 
 </table>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fit_measures</span>(correlated_uniqueness.fit) <span class="sc">%&gt;%</span> </span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Correlated Uniqueness Model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 
 <table class="kable_wrapper">
@@ -900,6 +927,8 @@ Correlated Uniqueness Model
 </blockquote>
 <p>Now let’s consider the other case in which measurement effects might be hurting us: the case in which <em>within</em>-factor measurements are confounded by measurement effects. Here’s the DAG:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>dag_coords <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">c</span>(</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">F1 =</span> <span class="dv">1</span>, </span>
@@ -964,6 +993,7 @@ Correlated Uniqueness Model
 <span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_edges</span>(<span class="fu">aes</span>(<span class="at">edge_colour =</span> edge_colour)) <span class="sc">+</span></span>
 <span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_dag_text</span>() <span class="sc">+</span></span>
 <span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <p><img src="mtmm-and-error-structure-modelling_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -971,6 +1001,8 @@ Correlated Uniqueness Model
 <p>This is the ‘true’ data-generating process we’ll be simulating data from in a moment. Notice that even though the researcher (who can’t see this DAG) might think that the unobseved factor causally influences all 3 measured variables, the reality is that each factor only influences one of the measured variables. However, the purported within-factor variables are confounded by measurement method.</p>
 <p>Let’s simulate the data and analyze:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set seed for replicable results</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">233</span>)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -996,9 +1028,12 @@ Correlated Uniqueness Model
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">S2 =</span> <span class="fl">0.7</span><span class="sc">*</span>F2 <span class="sc">+</span> <span class="fl">0.8</span><span class="sc">*</span>M2 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>),</span>
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">S3 =</span> <span class="fl">0.7</span><span class="sc">*</span>M2 <span class="sc">+</span> <span class="fu">rnorm</span>(N, <span class="dv">0</span>, .<span class="dv">3</span>) </span>
 <span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>First let’s fit a basic naive CFA model that does the standard thing of keeping the covariances between variables fixed at 0. Based on the DAG, we should expect this model to return a strong (publishable) but misleading answer – it will notice the correlation between variables that are considered within-factor under our hypothesis, and say ‘wow so correlated, that’s consistent with them being <em>caused</em> by that factor’. But we know this is wrong: their correlation is simply driven by the shared measurement method:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>basic.definition <span class="ot">&lt;-</span> </span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'happy =~ H1 + H2 + H3</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="st">   sad =~ S1 + S2 + S3</span></span>
@@ -1010,6 +1045,7 @@ Correlated Uniqueness Model
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(basic.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lavaan 0.6.16 ended normally after 25 iterations
 
@@ -1062,6 +1098,8 @@ Variances:
 <p>And there you have it – just as foretold, we have super strong factor loadings for all the variables, even those that are not actually causally influenced by the factor! So it may <em>look</em> like I have strong convergent validity, but hopefully if we try to publish this, a reviewer will raise the possibility that these correlations are confounded by measurement effects.</p>
 <p>Now I’m going to try closing the backdoor paths between the non-factor-caused variables by allowing the model to learn the covariances, thereby hopefully controlling for unobserved sources of confounding (like the measurement effect). If the loadings stay strong, then my claims to convergent validity are more reasonable.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>correlated_uniqueness.definition <span class="ot">&lt;-</span> </span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'happy =~ H1 + H2 + H3</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="st">   sad   =~ S1 + S2 + S3</span></span>
@@ -1078,6 +1116,7 @@ Variances:
 <span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_fake,</span>
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> correlated_uniqueness.definition</span>
 <span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in lav_model_vcov(lavmodel = lavmodel, lavsamplestats = lavsamplestats, : lavaan WARNING:
     Could not compute standard errors! The information matrix could
@@ -1088,7 +1127,10 @@ Variances:
 <pre><code>Warning in lav_object_post_check(object): lavaan WARNING: some estimated ov
 variances are negative</code></pre>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(correlated_uniqueness.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lavaan 0.6.16 ended normally after 593 iterations
 

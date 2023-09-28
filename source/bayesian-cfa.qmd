@@ -45,35 +45,31 @@ theme_posterior_densities <- function() {
 
 ## Summary {.unnumbered}
 
-I recently completed an analysis for a client that designs employment skills training programs. They had developed some scales to measure latent traits related to employability, and were interested in the relationship between those traits and time-to-employment following a skills training program. I approached this using a Bayesian multilevel model to simultaneously estimate a confirmatory factor model for the latent variables and include them as predictors in a time-to-event analysis. This document uses simulated data to demonstrate a simplified version of that approach, and show its advantages over traditional two-stage approaches. 
+I recently completed an analysis for a client that designs labour market training programs. They had developed some scales to measure latent traits related to employability, and were interested in the relationship between those traits and time-to-employment among program graduates. I approached this using a Bayesian multilevel model to simultaneously estimate a confirmatory factor model for the latent variables and include them as predictors in a time-to-event analysis. 
 
-Along the way we'll also see:
-
--  How to fit a factor analysis model in brms; 
-- various approaches to simulating latent variable and time-to-event data for model validation, and demonstrate the advantages of the Bayesian approach to including latent regressors in a statistical model, compared to traditional two-stage approaches involving factor score point estimates.
+This document uses simulated data to implement a simplified version of that model, and demonstrate its advantages over traditional two-stage approaches. 
 
 ## Introduction
 
 In the previous sections we've explored the traditional workflow for confirmatory factor analysis including the basic model structure, the concepts of validity and reliability, classic model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data.
 
-But often I'll want to do more than just see whether my data are consistent with [The Primordial CFA DAG -@sec-intro]: I'll also have some theories about how those imagined constructs relate to _other variables_. If those other variables are themselves latent factors then we enter the world of 'Structural Equation Modelling (SEM)', which expands on the concepts of factor analysis to account for relationships between latent variables. 
-I plan to add more chapters to this notebook covering the traditional SEM workflow, but as a first step towards full SEM it is helpful to explore a more basic situation where we and want to estimate the relationship between some latent variables and an _observed_ outcome variable, as opposed to a latent outcome variable with its own measurement model. 
+But often we want to do more than just see whether my data are consistent with [The Primordial CFA DAG -@sec-intro]: we also have some theories about how those imagined constructs relate to _other variables_. If those other variables are themselves latent factors then we enter the world of 'Structural Equation Modelling (SEM)', which expands on factor analysis to account for relationships between latent predictors and latent outcome variables. 
 
-A traditional way to incorporate latent variables from a factor analysis into a fuller regression analysis for a measured dependent variable proceeds in two steps:
+I plan to add more chapters to this notebook covering the traditional SEM workflow, but as a first step it's helpful to explore a more basic situation where we want to estimate the relationship between some latent variables and an _observed_ outcome variable, as opposed to a latent outcome variable with its own measurement model. A traditional way to incorporate latent variables into a regression analysis for a measured dependent variable proceeds like so:
 
-1.  Fit the CFA model;
-2.  Generate factor scores for each observation;
+1.  Fit a CFA model for the latent variables;
+2.  Use that CFA model to generate factor scores for each observation;
 3.  Use those factor scores as predictors in a regression.
 
-This is the approach used by @Kankaraš-et-all-2019 in their study of the relationship between latent social/emotional skills and life outcomes such as academic achievement: the authors use point-estimate factor scores for the latent variables as predictors in the subsequent regressions on life outcome data. In some cases they even do this iteratively, fitting measurement models on point-estimate factor scores from measurement models fit on point-estimate factor scores, and using *those* point-estimates as regression predictors! This approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates, about which there is uncertainty. By only using point-estimate factor scores in their regression models for the measured life outcomes, the authors ignore this uncertainty.
+This is the approach used by @Kankaraš-et-all-2019 in their study of the relationship between latent social/emotional skills and life outcomes such as academic achievement: the authors use point-estimate factor scores as predictors in regressions on life outcome data. In some cases they even do this iteratively, fitting CFA models on point-estimate factor scores from CFA models fit on point-estimate factor scores, and using *those* point-estimates as regression predictors! 
 
-A better option is to fit a Bayesian model that fits the measurement model and the substantive regression model simultaneously, so that the model can incorporate its uncertainty from the CFA model into its substantive parameter estimates and predictions. As we'll see below, this approach is essentially just a Bayesian missing data analysis, where the factor scores for each observation are treated as missing data for which the model estimates a unique observation-specific parameter, along with its own unique posterior distribution.
+This approach is unsatisfactory because factor scores are a function of the CFA model's parameter estimates, about which there is uncertainty. By only using point-estimate factor scores in their regression models for the measured life outcomes, the authors ignore this uncertainty.
+
+A better option is to fit a Bayesian model that estimates the factor analysis and the substantive regression model at the same time, incorporating its uncertainty from the CFA model into its substantive parameter estimates and predictions. As we'll see below, this approach is essentially just a Bayesian missing data analysis, where the factor scores for each observation are treated as missing data for which the model estimates a unique observation-specific parameter, along with its own unique posterior distribution.
 
 ## The Plan
 
-In this document I'll demonstrate how to implement this Bayesian approach with Stan. We'll iterate on this model a few times, gradually incorporating concepts from previous chapters such as MTMM factor analysis. At each stage we'll stick the following invented scenario: our client has designed scales for the latent skills "adaptability" and "collaboration", and wants to test the validity of those scales and estimate their relationship with time-to-employment for their program graduates.
-
-At each stage of the analysis we'll simulate a new dataset reflecting our updated model, and show that the model can recover the true simulation parameter estimates. We'll proceed as follows:
+In this document I'll demonstrate how to implement this Bayesian approach with Stan. We'll iterate on this model a few times, gradually incorporating concepts from previous chapters such as MTMM factor analysis. We'll stick to an invented scenario: a client has designed scales for the latent skills "adaptability" and "collaboration", and wants us to estimate the relationship between those skills and time-to-employment for their program graduates. As the model becomes more complex we'll simulate more complex datasets as well, and show that the model can recover the true simulation parameter estimates. We'll proceed as follows:
 
 1.  Fit a simple Bayesian CFA with one factor and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but where *all* of your observations are missing;
 2.  Fit a Bayesian CFA with two correlated factors. The brms package can't yet handle custom covariance structures for latent factors, so we swtich to raw Stan;
@@ -81,7 +77,7 @@ At each stage of the analysis we'll simulate a new dataset reflecting our update
 4.  Combine the MTMM model from the previous step with a parametric proportional hazards regression model;
 5.  Expand the model to include multilevel structure, with correlated varying effects for the regression predictors.
 
-This document assumes familiarity with Bayesian statistics, and with latent variable modelling at least up to the level covered in the previous sections of this workbook. 
+This document assumes familiarity with survival analysis, Bayesian statistics, and latent variable modelling at least up to the level covered in the previous sections of this workbook. 
 
 ## Simple Bayesian CFA with brms
 
@@ -631,7 +627,7 @@ We're interested in the loadings and the between-factor covariance. So we can wr
 #| label: viz-loadings-2-fac
 #| message: false
 #| warnings: false
-#| fig-cap: "Bayesian posterior intervals of factor loadings for CFA model fit with brms. All loadings are estimated because we do not use the 'marker variable approach' for identifiability"
+#| fig-cap: "Bayesian posterior intervals of factor loadings for CFA model fit with Stan. All loadings are estimated because we do not use the 'marker variable approach' for identifiability,"
 
 
 # Load the draws for the loadings and correlation 
@@ -1574,7 +1570,7 @@ beta_age <- log(.9) # older people find employment a bit slower -- each increase
 beta_ei <- log(2) # people on EI find employment twice as fast 
 
 # Declare the rate for the exponential distribution from which we will sample censoring times
-censor_rate = .02
+censor_rate = .005
 
 # Simulate the covariates and event times
 fake_dat <- fake_dat_measurement |>
@@ -1620,7 +1616,7 @@ If we've done everything correctly then a basic survival analysis should be able
 #| label: viz-weibull-frequentist
 #| message: false
 #| warning: false
-#| fig-cap: "A basic survival model recovers the true parameter values. Model estimates and 95% CIs shown in purple, true parameter values shown as red targets."
+#| fig-cap: "A basic survival model recovers the true parameter values. Estimates and 95% CIs shown in grey, true parameter values shown as red targets."
 
 # Create the surv object
 surv_object <- Surv(fake_dat$time, fake_dat$status)
@@ -1650,7 +1646,7 @@ test |>
 
   ggplot(aes(x = reorder(term, -estimate), y = estimate)) +
     geom_point() +
-    geom_linerange(aes(ymin = conf.low, ymax = conf.high), size = 2, colour = "grey") +
+    geom_linerange(aes(ymin = conf.low, ymax = conf.high), size = 2, colour = "#767676") +
     geom_point(size = 5, colour = "black") +
     geom_point(size = 3, color = "white") +
     geom_point(aes(x = term, y = true_loading), colour = "red4", size = 5, shape =  13, stroke = 1) +
@@ -1673,32 +1669,35 @@ Now that we've simulated our full dataset, we can do some basic exploratory anal
 
 fake_dat |>
 
-  mutate(mean = mean(time)) |>
+  mutate(
+    censored = as.factor(censored)
+  )|>
 
   ggplot() + 
-  geom_histogram(aes(x = time), colour = 1, fill = clrs$blue) +
-  geom_vline(aes(xintercept = mean), size = 2, linetype = 2) +
-  scale_x_continuous(limits = c(3, 180), n.breaks = 10, expand=c(0, 0)) +
+  geom_histogram(aes(x = time, fill = censored), colour = "black", position = "identity") +
+  scale_x_continuous(limits = c(3, 600), n.breaks = 10, expand=c(0, 0)) +
   scale_y_continuous(expand=c(0, 0)) +
+  scale_fill_manual(
+    values = c("0" = alpha(clrs$blue, 1), "1" = alpha(clrs$red, 1)),
+    name = NULL,  
+    labels = c("Employed", "Censored")  
+  ) +
   labs(
     x = "Days to Employment",
     y = "N Graduates"
   ) +
-  theme_bw() +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  )
+  theme_nice() +
+  theme(legend.position = "bottom")
 
 ```
 
-It's also a good idea to plot some stratified kaplan-meier curves to make sure parameter estimates mean what we think they mean. For example, we see that when we stratify by `ei_status` those with `ei_status == TRUE` see faster estimated event times, which is what we intended:
+It's also a good idea to plot some stratified Kaplan-Meier curves to make sure our simulated parameter estimates mean what we think they mean. For example, we see that when we stratify by `ei_status` those with `ei_status == TRUE` see faster estimated event times, which is what we intended:
 
 ```{r}
 #| label: viz-km-weibull-1
 #| message: false
 #| warning: false
-#| fig-cap: "Kaplan-Meier estimated survival curves, stratified by EI Status."
+#| fig-cap: "Kaplan-Meier estimated survival curves, stratified by EI Status. Crosses are censorings."
 
 km.object <- survfit(surv_object ~ 1 + ei_status, data = fake_dat)
 
@@ -1707,7 +1706,7 @@ plt <- survminer::ggsurvplot(
   conf.int = TRUE,
   risk.table = FALSE,
   legend = "none",
-  palette = c(clrs$blue, clrs$purple),
+  palette = c(clrs$purple, "#767676"),
   title = "",
   xlab = "Days Since Graduation", 
   ylab = "Proportion Unemployed",
@@ -1717,7 +1716,10 @@ plt <- survminer::ggsurvplot(
 plt$plot +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
-  theme(panel.grid.major = element_blank())
+  theme_nice() +
+  theme(
+    legend.position = "bottom"
+  )
 
 ```
 
@@ -1727,22 +1729,17 @@ Unlike the factor analysis models we fit above, this model has substantive predi
 
 The brms parameterization of the Weibull distribution [is slightly different](https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html) than the one used in the **survival** package, with **brms** specifying a mean parameter as a function of the scale and shape parameters of the more traditional parameterization:
 
-\$\$
-
 \begin{align*}
 s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
-\end{align*} \$\$
+\end{align*} 
 
 So when we specify a prior for the intercept term in our Bayesian model, we're also specifying a prior for this transformation of the scale and shape parameters under the traditional parameterization:
-
-\$\$
 
 ```{=tex}
 \begin{align*}
 \mu = s \times \Gamma\left(1 + \frac{1}{\alpha}\right)
 \end{align*}
 ```
-\$\$
 
 I don't think this has any big implications: setting a prior for the intercept is more intuitive than setting a prior for the scale and shape parameters indivdually anyway. We can copy this approach when we go to fit our Stan model.
 
@@ -1812,7 +1809,7 @@ sim |>
 
 ```
 
-Now that we have some reasonable priors, we can sample from them to simulate from the prior predictive distribution. I don't have any background knowledge to inform the estimate of the shape parameter, so we can set a conventional `cauchy(0, 2.5)` prior to keep it vague. The resulting densities of bounded 1-year times-to-event look reasonable to me, and there is plenty of uncertainty leftover for the model to refine its predictions after it sees the data.
+Now that we have some reasonable priors, we can sample from them to simulate from the prior predictive distribution. I don't have any background knowledge to inform the estimate of the shape parameter, so we can set a conventional `cauchy(0, 2.5)` prior to keep it vague. The resulting densities of bounded 1-year times-to-event look reasonable to me, and there is plenty of uncertainty leftover for the model to refine its predictions in response to the data.
 
 ```{r}
 #| label: prior-pred-1-densities
@@ -1867,7 +1864,7 @@ prior_preds <- fake_dat |>
 prior_preds |>
 
   ggplot() + 
-  geom_density(aes(x = .prediction, group = .draw), colour=alpha(clrs$pink, .3)) +
+  geom_density(aes(x = .prediction, group = .draw), colour=alpha(clrs$pink, .25)) +
   scale_y_continuous(expand=c(0, 0)) +
   xlim(c(1, 100)) +
   ylim(c(0, .08)) +
@@ -1878,14 +1875,14 @@ prior_preds |>
 
 ```
 
-We can also check the distribution of certain statistics under the prior predictive distribution, like the mean time to event. This is something @Gelman2020 advocate in their Bayesian Workflow paper. This reveals an area where our model seems a bit dumb: while the mode of the means is well within our desired range of values, there is a very long tail. This is because the Weibull distribution preserves a long tail of event times,and we haven't told it that event times like 400,000 days are strictly out of the question. And even though the model assigns very tiny probability to these types of numbers, they are still there, non-zero, pulling up the mean of the prior predictive distribution. We can address this when we go to code the raw Stan model by specifying better boundaries on priors and the outcome itself. Or we could give the model this information in other ways, for example by changing the response distribution entirely, perhaps using a 1-inflated beta distribution to model the proportion of a year until a person found a job, topcoding anybody who took more than a year as 1. But for now let's stick with the plan and see if the model is able to recover the true parameter estimates and come up with reasonable posterior predictive distribution despite these imperfect priors.
+We can also check the distribution of summary statistics under the prior predictive distribution, like the mean time to event within each draw. This is something @Gelman2020 advocate in their Bayesian Workflow paper. This reveals an area where our priors are lacking: while the mode of the means is well within our desired range of values, there is a very long tail. This is because the Weibull distribution preserves a long tail of event times, and we haven't told it that event times like 400,000 days are strictly out of the question. The model assigns very low probability to these types of numbers, but they still pull up the mean event time. We will address this in the next iteration of the model. For now let's stick with the plan and see if the model is able to recover the true parameter estimates and a reasonable posterior predictive distribution despite these imperfect priors.
 
 ```{r}
 #| label: prior-pred-1-means
 #| message: false
 #| warning: false
-#| fig-cap: "Mean event times of 500 draws from the prior predictive distribution of event times." 
-#| fig-alt: "Mean event times of 500 draws from the prior predictive distribution of event times."
+#| fig-cap: "Mean event times of 500 draws from the prior predictive distribution of event times. Many of the prior draws suggest mean event times that we know to be absurd." 
+#| fig-alt: "Mean event times of 500 draws from the prior predictive distribution of event times. Many of the prior draws suggest mean event times that we know to be absurd." 
 
 fake_dat |>
  
@@ -2032,131 +2029,19 @@ generated quantities {
 #| include: false
 
 stan_model_code <- "
-data {
-  // Factor Analysis
-  int N; // sample size for both models
-  int P; // number of variables in the factor analysis
-  int D; // number of factors
-  array[N] vector[P] X_factor; // data matrix for factor analysis
-  int n_lam; // how many factor loadings are estimated
-  
-  // Weibull Model
-  vector[N] Y; // response variable for Weibull model
-  array[N] int<lower=-1, upper=2> cens; // indicates censoring for Weibull model
-  int K; // number of predictors in Weibull model, now it should be D + 2 + intercept
-  matrix[N, K] X_weibull; // population-level design matrix for Weibull model
-}
-parameters {
-  matrix[N, D] FS_UNC; // factor scores
-  cholesky_factor_corr[D] L_corr_d; // cholesky correlation between factors
-  cholesky_factor_corr[2] L_corr_m1_m4; // cholesky correlation between the m1 and m4
-  vector<lower=0>[P] sd_p; // residual sd for each variable in factor analysis
-  vector<lower=-30, upper=30>[n_lam] lam_UNC; // A bunch of lightly-constrained factor loadings
-  
-  real<lower=0> shape; // shape parameter for Weibull model
-  vector[K] b; // regression coefficients for Weibull model
-}
-transformed parameters {
-  // Factor Analysis transformed parameters
-  vector[D] M = rep_vector(0, D); // factor means
-  vector<lower=0>[D] Sd_d = rep_vector(1, D); // factor SDs
-  array[N] vector[P] mu_UNC; // A vector to hold the linear predictors for the manifest variables
-
-  for (i in 1 : N) {
-    mu_UNC[i, 1] = lam_UNC[1] * FS_UNC[i, 1];
-    mu_UNC[i, 2] = lam_UNC[2] * FS_UNC[i, 1];
-    mu_UNC[i, 3] = lam_UNC[3] * FS_UNC[i, 1];
-    mu_UNC[i, 4] = lam_UNC[4] * FS_UNC[i, 2];
-    mu_UNC[i, 5] = lam_UNC[5] * FS_UNC[i, 2];
-    mu_UNC[i, 6] = lam_UNC[6] * FS_UNC[i, 2];
-  }
-  
-  cholesky_factor_cov[D] L_Sigma = diag_pre_multiply(Sd_d, L_corr_d); // var-covar matrix for the factors
-  cholesky_factor_cov[D] L_Sigma_m1_m4 = diag_pre_multiply(sd_p[{1, 4}], L_corr_m1_m4); // var-covar matrix of m1 and m4
-  
-  // Weibull transformed parameters
-  vector[N] mu_weibull = rep_vector(0.0, N); // initialize linear predictor term for Weibull model
-  mu_weibull += X_weibull * b; // use both factor scores and observed predictors as predictors
-}
-model {
-  // Factor Analysis
-  L_corr_d ~ lkj_corr_cholesky(1);
-  L_corr_m1_m4 ~ lkj_corr_cholesky(1);
-  lam_UNC ~ normal(0, 10);
-  sd_p ~ cauchy(0, 2.5);
-  
-  for (i in 1 : N) {
-    for (j in {2,3,5,6}) {
-      X_factor[i, j] ~ normal(mu_UNC[i, j], sd_p[j]);
-    }
-    to_vector({X_factor[i, 1], X_factor[i, 4]}) ~ multi_normal_cholesky([mu_UNC[i, 1], mu_UNC[i, 4]]', L_Sigma_m1_m4);
-    FS_UNC[i] ~ multi_normal_cholesky(M, L_Sigma);
-  }
-
-  // Weibull Survival Analysis
-  shape ~ cauchy(0, 2.5);
-  b[1] ~ normal(3.3, 0.4);
-  for (k in 2:K) {
-    b[k] ~ normal(0, 1.45);
-  }
-  for (n in 1 : N) {
-    if (cens[n] == 0) {
-      target += weibull_lpdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
-    } else if (cens[n] == 1) {
-      target += weibull_lccdf(Y[n] | shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
-    } 
-  }
-}
-generated quantities {
-  corr_matrix[D] Rho_UNC; // correlation matrix for factors
-  corr_matrix[D] Rho_factors; // correlation matrix for factors
-  corr_matrix[D] Rho_m1_m4; // correlation matrix for m1 and m4
-  matrix[P, D] lam; // factor loadings
-  matrix[N, D] FS; // factor scores
-  
-  Rho_UNC = multiply_lower_tri_self_transpose(L_corr_d);
-  Rho_factors = Rho_UNC;
-  Rho_m1_m4 = multiply_lower_tri_self_transpose(L_corr_m1_m4);
-  FS = FS_UNC;
-  lam = rep_matrix(0, P, D);
-  lam[1 : 3, 1] = to_vector(lam_UNC[1 : 3]);
-  lam[4 : 6, 2] = to_vector(lam_UNC[4 : 6]);
-  
-  if (lam_UNC[1] < 0) {
-    lam[1 : 3, 1] = to_vector(-1 * lam_UNC[1 : 3]);
-    FS[ : , 1] = to_vector(-1 * FS_UNC[ : , 1]);
-    if (lam_UNC[4] > 0) {
-      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
-      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
-    }
-  }
-  if (lam_UNC[4] < 0) {
-    lam[4 : 6, 2] = to_vector(-1 * lam_UNC[4 : 6]);
-    FS[ : , 2] = to_vector(-1 * FS_UNC[ : , 2]);
-    if (lam_UNC[1] > 0) {
-      Rho_factors[2, 1] = -1 * Rho_UNC[2, 1];
-      Rho_factors[1, 2] = -1 * Rho_UNC[1, 2];
-    }
-  }
-
-  // Draws from posterior predictive distribution
-  vector[N] y_pred;
-  for (n in 1:N) {
-    y_pred[n] = weibull_rng(shape, exp(mu_weibull[n]) / tgamma(1 + 1 / shape));
-  }
-}
+b
 "
 ```
 
-Now compline the model and run. I've worked closely from the Stan code for the Weibull model we fit with **brms** above, essentially just grafting it onto the MTMM factor analysis model from before. This only involved a few steps:
+Now compile the model and run. I've worked closely from the Stan code for a Weibull model generated by brms, essentially just grafting it onto our MTMM factor analysis Stan code from before. This only involved a few steps:
 
--   **Data block:** add new vectors for the response variable `Y` and predictor variables `K` of the Weibull model, and for censoring status `cens`. Also declare the design matrix `X_weibull` of the necessary dimensions.
--   **Parameters block:** add a vector of coefficients `b` for the beta coefficients of the Weibull model.
--   **Transformed Parameters block:** declare the constant shape parameter for the Weibull model, as well as the linear predictor `mu` for each observation. Then exponentiate it.
--   **Model block:** add the priors we simulated above, as well as the likelihood function conditional on censoring status.
+-   **Data block:** add new vectors for the response variable `Y` and predictor variables `K` of the Weibull model, and for censoring status `cens`. Also declare a design matrix `X_weibull` of the necessary dimensions;
+-   **Parameters block:** add a vector of coefficients `b` for the beta coefficients of the Weibull model;
+-   **Transformed Parameters block:** declare the constant shape parameter for the Weibull model, as well as the linear predictor `mu` for each observation, then exponentiate it;
+-   **Model block:** add the priors we simulated above, as well as the likelihood function conditional on censoring status;
 -   **Generated Quantities block:** generate draws from the posterior predictive distribution, to help with model checking.
 
-One thing to note is that because we adopted **brms**'s `0 + Intercept` syntax in generating the Stan code to allow us to set the intercept prior on the raw outcome scale, we can do what Paul Bürkner does under the hood and feed an extra column of 1s into the design matrix `X_weibull`.
+Note that we need to feed an extra column of 1s into the design matrix `X_weibull` to accound for the intercept. 
 
 ```{r}
 #| label: stanfit-surv
@@ -2253,7 +2138,7 @@ saveRDS(draws, "fits/b07.04.samples.rds")
 
 ```
 
-How did that go? We can plot the draws and look at the MCMC diagnostics like we did above. It looks like the model did a good job capturing all of the true parameter estimates in the form of acceleration factors. For example, where we simulated our true parameter value for the effect of a 1-year It even did ok at recovering the true parameter estimates for `b_Collab`, even though the simulated factor loadings provide quite unreliable measurements of that latent predictor. This is all a big win for Bayes.
+It looks like the model did a good job capturing the true time-to-event parameter estimates in the form of acceleration factors, as well as the CFA model parameters from before.
 
 ```{r}
 
@@ -2377,7 +2262,7 @@ cleaned_draws |>
 
 ```
 
-And the MCMC diagnostics for good measure:
+The MCMC diagnostics suggest the sampling went smoothly:
 
 ```{r}
 #| label: convergence-surv-summary
@@ -2408,7 +2293,7 @@ summary_draws |>
 
 ```
 
-How does this compare to the more common two-step approach of fitting to factor scores? Both models do well, which is not surprising because we know them to both be specified according to the true data generating process. But the advantage of the Bayesian approach is shown in the coefficient for `collab` below. This is the factor with looser loadings and poor convergent valiity, which has resulted in greater uncertainty in the frequentist lavaan model's estimated factor loadings and the ensuing factor score point estimates. However, the Bayesian model was able to incorporate the factor loading uncertainty into an estimated posterior distribution for each factor score, resulting in more precision in the regression parameter estimate for that variable. Meanwhile the frequentist and Bayesian estimates for the regression parameter for `adapt` are virtually identical, because the factor loadings for that loading are tight, resulting in less uncertainty in the lavaan model's estimate of those loadings and the ensuing parameter estimates, so Bayes' incorporation of uncertainty from the factor model matters less. 
+How does this compare to the traditional two-stage approach of fitting the time-to-event model to factor score point estimates? Both models do well, which is not surprising because we know them to both be specified according to the true data generating process. But the advantage of the Bayesian approach is shown in the coefficient for `collab` below. This is the factor with looser loadings and poor convergent valiity, which has resulted in greater uncertainty in the frequentist lavaan model's estimated factor loadings and the ensuing factor score point estimates. However, the Bayesian model was able to incorporate this uncertainty into an estimated posterior distribution for each factor score, allowing it to take that uncertainty into consideration when estimating the regression parameter estimates. This gives the Bayesian model more precision in its estimate of `b_collab`. 
 
 ```{r}
 #| message: false
@@ -2473,9 +2358,14 @@ factor.score.model |>
 
 ```
 
-We can also do more conventional checks of parametric survival models recommended by @Collett2003, such as plotting the estimated baseline hazard function for various covariate combinations, and overlaying the estimated survival function against the Kaplan-Meier estimates. Let's start by visualizing posterior draws of the survival lfunction, and comparing it to the true simulation survival function:
+We can also do more conventional checks of parametric survival models recommended by @Collett2003, such as plotting the estimated baseline hazard function for various covariate combinations, and overlaying the estimated survival function against the Kaplan-Meier estimates. Let's start by visualizing posterior draws of the survival lfunction, and comparing it to the true simulation survival function. 
 
 ```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Posterior distribution of estimated survival function."
+#| eval: false
+#| include: false
 
 # Define the survival function for Weibull
 weibull_survival_function <- function(t, lambda, rho, beta, x) {
@@ -2496,6 +2386,8 @@ survival_df <- data.frame(time = times)
 survival_df$S <- with(survival_df, weibull_survival_function(time, lambda_wiki, rho,
                                           beta_adapt*adapt_mean + beta_collab*collab_mean + beta_age*age_mean + beta_ei*ei_status_mean, 1))
 
+                          
+
 # Get the KM curve for reference:
 km.object <- survfit(surv_object ~ 1, data = fake_dat)
 
@@ -2503,29 +2395,27 @@ plt <- survminer::ggsurvplot(
   fit = km.object,
   conf.int = TRUE,
   risk.table = FALSE,
-  legend = "none",
-  palette = c(clrs$blue, clrs$purple),
+  legend = "none"
   title = "",
   xlab = "Days Since Graduation", 
   ylab = "Proportion Unemployed",
   ggtheme = theme_bw()
 )  
 
-
 # Plotting
 ggplot(survival_df, aes(x = time, y = S)) +
-  geom_line() +
+  geom_line(colour = clrs$blue) +
   ggtitle("True Underlying Weibull Survival Function") +
   ylab("Survival Probability") +
   xlab("Time") +
+  theme_nice() +
   
-  geom_line(data = plt$plot$data, aes(x = time, y = surv), colour = "darkgreen")
+  geom_line(data = plt$plot$data, aes(x = time, y = surv), colour = "black")
 
 
 ```
 
-
-Another important thing to understand our model is to sample from the posterior predictive distribution. When we sampled from the prior predictive distribution we saw that the model thought unrealistic long-tail event times like 400,000 days were possible. If the model still believes those things then that's a problem, and there's more model improvement to be done because clearly we know things the model doesn't. 
+The parameter estimates all look good individually, but we'll need to sample from the posterior predictive distribution to get a sense of whether our model is really useful. When we sampled from the prior predictive distribution we saw that the model thought unrealistic long-tail event times like 400,000 days were possible. If the model still believes those things we'll need to refine our code to give our model more background information, either in the form of priors or by changes to its overall structure. 
 
 Start by retreiving the samples from the posterior predictive distribution we defined at the bottom of the Stan model's `generated quantities{}` block:
 
@@ -2556,40 +2446,40 @@ saveRDS(pp_summaries, "fits/b07.04.post_pred_summaries.rds")
 
 ```
 
-The mean posterior predictions don't look so great compared to the data: they greatly understate the prevelance of short event times. They also have a weird bimodal shape, whereas the original data are unimodal. The mean posterior predictions don't suffer from the same long tail pathology as the prior predictions did, but they seem to actually understate the length of the tail:
+The mean posterior predictions don't suffer from the same degree of long tail pathology the prior predictions did: 
 
 ```{r}
 #| message: false
 #| warning: false
+#| fig-cap: "Means of draws from the posterior predictive distribution. These are more realistic than the means from the prior predictive distribution we plotted above."
+
 pp_summaries <- readRDS("fits/b07.04.post_pred_summaries.rds")
 
-fake_dat |>
+# Calculate the true mean time in the dataset
+mean_time <- mean(fake_dat$time)
 
-  select("time_dat" = time) |>
-
-  bind_cols(pp_summaries |> select("time_pred" = mean)) |>
+# Plot the posterior predicted means
+pp_summaries |> select("time_pred" = mean)|>
 
   pivot_longer(cols = everything(), names_to = "name", values_to = "time") |>
 
   mutate(name = ifelse(name == "time_dat", "Data", "Mean posterior predictions")) |>
 
   ggplot() +
-  geom_histogram(aes(x = time, fill = name, alpha = name), binwidth = 5, colour = "white", position = "identity") +
-  scale_fill_manual(values = c("#878787", clrs$blue)) +
+  geom_histogram(aes(x = time, fill = name, alpha = name), binwidth = 5, colour = "white", fill = clrs$blue, alpha = 1, position = "identity") +
+  geom_vline(aes(xintercept = mean_time), linetype = 2, size = 1.5) +
   scale_alpha_manual(values=c(1, .7)) +
-
   scale_x_continuous(limits = c(0, 200), expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
-  theme_bw() +
-  theme(
-    panel.grid = element_blank(),
-    legend.title = element_blank(),
-    legend.position = "bottom"
+  theme_nice()  +
+  labs(
+    x = 'Days since graduation', 
+    y = "N Posterior Draws"
   )
 
 ```
 
-We can get a more detailed look at the model's uncertainty by plotting the densitities of draws from the posterior distribution against the distribution of the original data. Again we pre-process the draws so that rendering the Quarto document isn't slow:
+We can get a more detailed look at the model's uncertainty by plotting the densitities of draws from the posterior distribution against the distribution of the original data. This shows that the posterior predictive distribution of event times skews longer the distribution in the dataset:
 
 ```{r}
 #| eval: false
@@ -2609,40 +2499,34 @@ saveRDS(dplt, "fits/b07.04.post_pred_20_draws.rds")
 
 ```
 
-The result mirrors what we saw above with the distribution of the mean posterior predictions: the posterior predictive distribution of event times has a wider tail than the observed distribution:
 
 ```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Densities of 20 draws from the posterior predictive distribution (blue) against the distribution of the data (black). The model expects slower times-to-employment overall than the distribution in the data."
 
 dplt <- readRDS("fits/b07.04.post_pred_20_draws.rds")
 
 dplt |>
   
-  # Limit range for visual clarity
-  filter(.value <= 365) |>
-  
   ggplot() +
-  geom_density(aes(x = .value, group = .draw), colour=alpha(clrs$blue, .5)) +
-  geom_density(data = fake_dat |> filter(censored == 0), aes(x = time), colour = 'black') +
-  scale_fill_manual(
+  geom_density(aes(x = .value, group = .draw, color = 'Posterior draws')) +
+  geom_density(data = fake_dat |> filter(censored == 0), aes(x = time, color = 'Data')) +
+  scale_color_manual(
     name='',
     breaks=c('Posterior draws', 'Data'),
-    values=c('Posterior draws'='cornflowerblue', 'Data'='black')
+    values=c('Posterior draws' = alpha(clrs$blue, .5), 'Data' = 'black')
   ) +
-  scale_x_continuous(expand = c(0, 0)) +
+  scale_x_continuous(limits = c(0, 365), expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   labs(x = "Days to employment") +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.text.y = element_blank()
-  )
+  theme_nice() +
+  theme_posterior_densities() +
+  theme(legend.position = "bottom")
 
 ```
 
-To a certain extent, this is expected behaviour: we have lots of censored data, and that creates uncertainty about how long the longest event times are likely to be. But if the posterior predictive distribution of event times has a longer tail than we would like, that means we have information we haven't given to the model. A quick investigation shows that the longest time-to-employment in the 20 draws plotted below is 850 days. This seems long compared to the observed data, but it is not impossible given the domain of research -- sometimes people leaving a skills training program _do_ hold off on getting a new job for a few years for various reasons. So the model's expectations are not outlandish and impossible, like they were when we sampled from the prior predictive distribution above. Still, if we think the tail of the posterior predictive distribution is too long then we have several ways of giving that information to the model. We'll implement one of those ways in the next section when we expand to a multilevel model (we'll use the rejection sampling approach given here by Eren M. Elçi, who encountered the same long-tail problem in [his own Bayesian survival analysis vignette](https://ermeel86.github.io/case_studies/surv_stan_example.html))
+To a certain extent this is expected: we have lots of censored data, and that creates uncertainty about how long the longest event times could be. A quick investigation shows that the longest time-to-employment in the 20 posterior draws plotted above is 850 days. This seems long compared to the observed data, but it is not impossible given the domain of research -- sometimes people leaving a skills training program _do_ hold off on getting a new job for a few years for various reasons. So the posterior expectations are not outlandish and impossible, like the prior expectations were.Still, if we think the tail of the posterior predictive distribution is too long then we have several ways of giving that information to the model. We'll implement one of those ways in the next section when we expand to a multilevel model. 
 
 ## Bayesian Multilevel Survival Analysis with Latent Predictors
 
@@ -2896,20 +2780,16 @@ Now that we have our clustered simulated dataset, we can explore it to make sure
 
 fake_dat |>
 
-  mutate(
-    mean = mean(time),
-    censored = as.factor(censored)
-  )|>
+  mutate(censored = as.factor(censored))|>
 
   ggplot() + 
   geom_histogram(aes(x = time, fill = censored), colour = "black", position = "identity") +
-  geom_vline(aes(xintercept = mean), size = 1, linetype = 2) +
   scale_x_continuous(limits = c(3, 600), n.breaks = 10, expand=c(0, 0)) +
   scale_y_continuous(expand=c(0, 0)) +
   scale_fill_manual(
     values = c("0" = alpha(clrs$blue, 1), "1" = alpha(clrs$red, 1)),
     name = NULL,  # Removes legend title
-    labels = c("Not censored", "Censored")  # Changes legend category labels
+    labels = c("Employed", "Censored")  # Changes legend category labels
   ) +
   labs(
     x = "Days to Employment",
@@ -2925,7 +2805,7 @@ The full distribution looks realistic. Now let's look at the distributions withi
 ```{r}
 #| message: false
 #| warning: false
-#| fig-cap: "Employment and censoring times for all simulated clusters."
+#| fig-cap: "Employment and censoring times for all simulated clusters. Each row is a cluster. Each dot is a program graduate."
 #| fig-height: 12
 
 # Visualize the selected clusters
@@ -2941,8 +2821,8 @@ fake_dat |>
   geom_jitter(aes(x = time, y = cluster_id, colour = as.character(censored)), height = .1, alpha = .5) +
   scale_colour_manual(
     values = c(clrs$blue, clrs$red),
-    name = "", # Change legend title here
-    labels = c("Not Censored", "Censored") # Change legend labels here
+    name = "", 
+    labels = c("Employed", "Censored")
   ) +
   scale_x_discrete(expand = c(0, 0)) +
   theme_minimal(base_family = "Lato") +
@@ -3002,7 +2882,7 @@ plt$data.survplot |>
 
 ```
 
-As a final check before fitting our updated Stan model, we can get a sense of between-cluster variance in specific parameter estimates by fitting a surival model to each cluster in isolation and plotting the cluster-specific parameter estimates in a single plot. @GelmanHill2007 call this plot the 'Secret Weapon' _"because it is so easy and powerful but yet is rarely used as a data-analytic tool."_ These non-pooled estimates correspond to a dummy-variable approach for cluster-specific estimates. We'll use the estimates we get using the two-stage factor score point estimates approach from above as well, since that would be a conventional approach for this situation. We'll focus on the two variables of interest to the client, I.E. the latent variables `adapt` and `collab`:
+As a final check before fitting our updated Stan model, we can get a sense of between-cluster variance in specific parameter estimates by fitting a time-to-event model to each cluster in isolation and plotting the cluster-specific parameter estimates in a single plot. @GelmanHill2007 call this plot the 'Secret Weapon' _"because it is so easy and powerful but yet is rarely used as a data-analytic tool."_ We'll fit these cluster-specific no-pooling models using the conventional two-stage factor scores approach, and we'll focus on the two variables of interest to the client, I.E. the latent variables `adapt` and `collab`:
 
 ```{r}
 #| label: secret-weapon
@@ -3098,9 +2978,9 @@ dplt_secret_weapon |>
 
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
   geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
-  geom_point(position = position_dodge(width = 0.5), size = 3, colour = "#808080") +
+  geom_point(position = position_dodge(width = 0.5), size = 3, colour = "#767676") +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
-                position = position_dodge(width = 0.5), width = 0.2, colour = "#808080") +
+                position = position_dodge(width = 0.5), width = 0.2, colour = "#767676") +
   facet_wrap(~ term, scales = c("free"), ncol = 1) +
   scale_x_discrete(
     breaks = NULL, 
@@ -3121,13 +3001,12 @@ dplt_secret_weapon |>
 
 Now we can update our model, working closely from a brms-generated Stan model with the desired multilevel structure:
 
-- At the top of the model create a new `functions{}` block, and copy the `scale_r_cor` function from the brms-generated Stan code;
-- Data: add new variables to hold the cluster levels and cluster-specific parameters;
-- Parameters: add matrix z_1 for the _standardized_ cluster-specific parameter estimates (we'll calculate the unstandardized ones in the transformed parameters block), as well as the elements to construct the covariance matrix of the varying effects;
-- Transformed parameters: add a matrix r_1 for the _unstandardized_ cluster-specific parameter estimates, and then calculate them using our custom function from the functions block. Also define some of the priors. We need to fix up the positive-constrained prior distributions for the Weibull shape parameter and the standard deviations of the varying effects, which is why for each we subtract the log of the complement of the cumulative density function from itself. This has the effect of standardizing the area under the curve positivity-constrained portion of the curve so that it integrates to 1. I found [this explanation](https://vasishth.github.io/bayescogsci/book/ch-introstan.html) very clear and helpful for understanding this;
-- Model: expand the linear predictor for the Weibull likelihood to inclulde the cluster-specific varying effects defined in the previous blocks;
-- Generate quantities: De-Cholesky the estimated correlation matrix, and extract one of the diagonals;
-- Add rejection sampling to deal with the overdispersion we encountered in the previous moddel, as documented in [Eren M. Elçi's vignette on Bayesian survival analysis in Stan](https://ermeel86.github.io/case_studies/surv_stan_example.html)). This isn't really rejection sampling in the traditional sense of sampling from a distribution $c*Q(x)$ known to be greater than $P(x)$ at all values of x. Rather, we're just sampling from a conditional, truncated version of the posterior predictive distribution. 
+- **Functions block:** At the top of the model create a new `functions{}` block, and copy the `scale_r_cor` function from the brms-generated Stan code;
+- **Data block:** add new variables to hold the cluster levels and cluster-specific parameters;
+- **Parameters block:** add a matrix `z_1` for the _standardized_ cluster-specific parameter estimates (we'll calculate the unstandardized ones in the transformed parameters block), as well as the elements to construct the covariance matrix of the varying effects;
+- **Transformed parameters block:** add a matrix `r_1` for the _unstandardized_ cluster-specific parameter estimates, and then calculate them using our custom function from the functions block. Also define some of the priors. We need to fix up the positive-constrained prior distributions for the Weibull shape parameter and the standard deviations of the varying effects, which is why for each we subtract the log of the complement of the cumulative density function from itself. This has the effect of standardizing the area under the positivity-constrained portion of the curve so that it integrates to 1. I found [this explanation](https://vasishth.github.io/bayescogsci/book/ch-introstan.html) very clear and helpful for understanding this;
+- **Model block:** expand the linear predictor for the Weibull likelihood to inclulde the cluster-specific varying effects defined in the previous blocks;
+- **Generated Quantities block:**: De-Cholesky the estimated correlation matrix, and extract one of the diagonals. Also add a new approach to sampling from the posterior predictive distribution, using rejection sampling to deal with the overdispersion we encountered in the previous moddel, as documented in [Eren M. Elçi's vignette on Bayesian survival analysis in Stan](https://ermeel86.github.io/case_studies/surv_stan_example.html)). This isn't really rejection sampling in the traditional sense of sampling from a distribution $c*Q(x)$ known to be greater than $P(x)$ at all values of x. Rather, we're just sampling from a conditional, truncated version of the posterior predictive distribution. 
 
 No need to do prior predictive checking here: we can reuse our priors from the previous model for the means of the varying effects distributions, and use default non-informative priors for the varying effects standard deviations and correlation terms. 
 
@@ -3824,13 +3703,14 @@ covar_draws |>
   #  cor_1[i]
   ) |> 
   
+  
   # Do some renaming for clarity
   mutate(.variable = case_when(
     .variable == "sd_1" & i == 1 ~ "sd_intercept",
-    .variable == "sd_1" & i == 2 ~ "sd_adapt",
-    .variable == "sd_1" & i == 3 ~ "sd_collab",
-    .variable == "sd_1" & i == 4 ~ "sd_age",
-    .variable == "sd_1" & i == 5 ~ "sd_ei_status"
+    .variable == "sd_1" & i == 2 ~ "sd_Adapt",
+    .variable == "sd_1" & i == 3 ~ "sd_Collab",
+    .variable == "sd_1" & i == 4 ~ "sd_Age",
+    .variable == "sd_1" & i == 5 ~ "sd_EI Status"
   )) |> 
     
   filter(.variable != "sd_intercept") |> 
@@ -3893,7 +3773,7 @@ summary_draws |>
 
 ```
 
-Since this is a multilevel model, we should expect to see _shrinkage_ in the cluster-specific parameter estimates: the estimates should be pulled towards the mean of the distribution of estimates, especially for smaller clusters and clusters with more extreme unpooled parameter estimates. We can visualize this shrinkage by taking our secret-weapon plot from before and add in our Stan model's posterior estimates and compatibility intervals for the cluster-specific estimates. And because this is a simulation, we can add the true cluster-specific effects for comparison. Here we see shrinkage on full display for the main predictors of interest, with the Stan model showing more stable and accurate estimates in general, especially for clusters where the unpooled estimate is extreme:
+Since this is a multilevel model, we should expect to see _shrinkage_ in the cluster-specific parameter estimates: the estimates should be pulled towards the mean of the distribution of estimates, especially for smaller clusters and clusters with more extreme unpooled parameter estimates. We can visualize this shrinkage by taking our secret-weapon plot from before and adding in our Stan model's cluster-specific posterior estimates. Here we see shrinkage on full display for the main predictors of interest, with the Stan model showing more stable and accurate estimates in general, especially for clusters where the unpooled estimate is extreme:
 
 ```{r}
 #| label: wrangle-ranef-draws
@@ -4020,9 +3900,9 @@ dplt_secret_weapon |>
   ggplot(aes(x = factor(cluster_id), y = estimate)) +
   geom_hline(aes(yintercept = true_mean_effect), linetype = 2) +
   geom_point(aes(y = true_cluster_effect), position = position_dodge(width = 0.5), size = 3, colour = "#D02090", shape = 1, stroke = 1) +
-  geom_point(position = position_dodge(width = 0.5), size = 3, colour = "#808080", alpha = .7) +
+  geom_point(position = position_dodge(width = 0.5), size = 3, colour = "#767676", alpha = .7) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high),
-                position = position_dodge(width = 0.5), width = 0.2, colour = "#808080", alpha = .7) +
+                position = position_dodge(width = 0.5), width = 0.2, colour = "#767676", alpha = .7) +
   geom_point(aes(y = posterior_mean), position = position_dodge(width = 0.5), size = 3, colour = clrs$purple, alpha = .7) +
   geom_errorbar(aes(ymin = posterior_q5, ymax = posterior_q95),
                 position = position_dodge(width = 0.5), width = 0.2, colour = clrs$purple, alpha = .7) +         scale_x_discrete(
@@ -4082,6 +3962,8 @@ The mean posterior predictions:
 ```{r}
 #| message: false
 #| warning: false
+#| eval: false
+#| include: false
 pp_summaries <- readRDS("fits/b07.05.post_pred_summaries.rds")
 pp_summaries_trunc <- readRDS("fits/b07.05.post_pred_summaries.rds")
 
@@ -4162,35 +4044,29 @@ Both the truncated and untruncated posterior predictive distributions are a bett
 ```{r}
 #| message: false
 #| warning: false
+#| fig-cap: "Densities of 20 draws from the posterior predictive distribution (blue) against the distribution of the data (black). The model expects slower times-to-employment overall than the distribution in the data."
 
 dplt <- readRDS("fits/b07.05.post_pred_20_draws.rds")
 
 ggplot() +
-  geom_density(data = dplt |> filter(group == "non-truncated"), aes(x = .value, group = .draw), colour=alpha(clrs$blue, .5)) + 
-  geom_density(data = dplt |> filter(group == "truncated"), aes(x = .value, group = .draw), colour=alpha("firebrick", .2)) +
-  geom_density(data = fake_dat |> filter(censored == 0), aes(x = time), colour = 'black') +
+  geom_density(data = dplt |> filter(group == "truncated"), 
+               aes(x = .value, group = .draw, fill = "Truncated posterior draws"), colour = alpha(clrs$red, .5)) +
+  geom_density(data = dplt |> filter(group == "non-truncated"), 
+               aes(x = .value, group = .draw, fill = "Non-truncated posterior draws"), colour = alpha(clrs$blue, .5)) + 
+  geom_density(data = fake_dat |> filter(censored == 0), 
+               aes(x = time, fill = "Data"), color = "black") +
   scale_fill_manual(
     name='',
     breaks=c('Non-truncated posterior draws', 'Truncated posterior draws', 'Data'),
-    values=c('Non-truncated posterior draws'='cornflowerblue', 'Truncated posterior draws'='firebrick', 'Data'='black')
+    values=c('Non-truncated posterior draws' = alpha(clrs$blue, 0), 
+             'Truncated posterior draws' = alpha(clrs$red, 0), 
+             'Data' = alpha('black', 0))
   ) +
-  scale_x_continuous(expand = c(0, 0)) +
+  scale_x_continuous(limits = c(0, 365), expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
   labs(x = "Days to employment") +
   theme_nice() +
-  theme_posterior_densities() +
-  theme(
-    legend.position = "bottom",
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.ticks.y = element_blank(),
-    axis.text.y = element_blank()
-  ) +
-  xlim(c(0, 365))
+  theme_posterior_densities() + 
+  theme(legend.position = "bottom")
 
 ```
-
-
-
-
-Copy some posterior analysis plots for survival analysis from here? https://onlinelibrary.wiley.com/doi/full/10.1111/insr.12214

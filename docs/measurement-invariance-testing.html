@@ -215,7 +215,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./bayesian-cfa.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian CFA</span></a>
+  <a href="./bayesian-cfa.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian Multilevel Survival Analysis with Latent Predictors</span></a>
   </div>
 </li>
       </ul>
@@ -273,9 +273,12 @@ div.csl-indent {
 
 <p>In this chapter we’ll work through another example of the Traditional CFA Workflow to get more practice. We’ll also introduce the concept of ‘Modification Indexes’, which researchers often use to improve their model goodness of fit in a way that seems a bit suss to me. Probably a good thing to know about.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggdag)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <section id="example-4-school-grades" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="example-4-school-grades">Example 4: School Grades</h2>
@@ -302,6 +305,8 @@ div.csl-indent {
 <h4 class="unnumbered anchored" data-anchor-id="configural-invariance">‘Configural’ Invariance</h4>
 <p>The first step is to fit the model separately for the two groups in isolation and see whether they both have OK goodness of fit. So let’s split the data into two subsets based on the group we’re interested in, and then define the <strong>lavaan</strong> models with the usual syntax, but specifying that want the linear model of each variable to also have an intercept, as explained above:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Load the data</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'../data/ucla/hsbdemo.csv'</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -322,6 +327,7 @@ div.csl-indent {
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="do">### Gaze at the parameter estimates</span></span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>onefac_models <span class="sc">%&gt;%</span> <span class="fu">map</span>(summary, <span class="at">standardized =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$onefac_boys
 lavaan 0.6.16 ended normally after 46 iterations
@@ -487,7 +493,10 @@ Variances:
 <p>The main exception to this I notice in the above model is that there’s a bunch more residual variance in ‘math’ for boys than for girls. So maybe that’s something to look out for.</p>
 <p>The next thing to do is fit the exact same model as above, but in a slightly fancier syntax. Specifically, we’re gonna fit it with a single command so that it can serve as the best-fitting big daddy model when we start constraining parameters to be equal across groups and doing the nested likelihood ratio test stuff we’ll be doing later. I think this is literally the exact same thing as the previous model but it serves that LRT-daddy role by giving us a single chi-squared goodness-of-fit statistic for the whole dataset, rather than one for each group in isolation. Honestly I’m not sure why both <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> and UCLA have us fit the previous model at all.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>configural.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, <span class="at">meanstructure =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Notice how we just did the exact same thing as before, but we used the full dataset instead of the split sub-datasets, and we used <code>cfa()</code> function’s <code>group</code> parameter to tell the model we’re interested in group stuff. I’m not actually gonna print the outputs for this model because the loadings and residual variances are the exact same for the previous model, and the single chi-squared statistic is simply the sum of the chi-squared statistics from the previous model.</p>
 </section>
@@ -496,10 +505,13 @@ Variances:
 <p>Next we’re gonna want to see if goodness-of-fit isn’t significantly reduced when we constrain the loading for each variable to be equal in both models. The idea is that if the loadings are pretty much equal then that’s consistent with the variables all being confounded <em>to the same degree</em> by the same unmeasured thing for both boys and girls. The conventional terrible name for this is ‘Metric’ invariance or ‘Weak’ invariance, but <span class="citation" data-cites="Brown">(<a href="#ref-Brown" role="doc-biblioref"><strong>Brown?</strong></a>)</span> just calls it ‘equal loadings’, which seems fine to me.</p>
 <p>We can fit this model in **lavaan* using the <code>cfa()</code> function’s <code>group.equal</code> argument.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>equal.loadings.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">group.equal =</span> <span class="fu">c</span>(<span class="st">"loadings"</span>), <span class="at">meanstructure =</span> <span class="cn">TRUE</span>) </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(equal.loadings.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lavaan 0.6.16 ended normally after 74 iterations
 
@@ -617,7 +629,10 @@ Variances:
 <p>Notice how in this output the unstandardized loadings are the same in each group, except for the loading for the first variable, which we sacrificed to define the scale of the factor like we usually do. But notice how the standardized loadings are still different.</p>
 <p>The loadings and residual variances still look pretty good in this model, but let’s do the likelihood ratio test to see if people will believe me when I tell them I have solid ‘metric’ invariance</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(configural.fit, equal.loadings.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Chi-Squared Difference Test
@@ -633,10 +648,13 @@ equal.loadings.fit  7 5524.2 5593.5 6.801      4.179 0.06269       3     0.2428<
 <h4 data-number="4.0.0.2" class="anchored" data-anchor-id="scalar-strong-invariance"><span class="header-section-number">4.0.0.2</span> ‘Scalar’ / ‘Strong’ Invariance</h4>
 <p>Moving on now to test whether the goodness of fit is still ok when we constrain the variable-level <em>means</em> to be equal:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>equal.intercepts.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(onefac, <span class="at">data =</span> dat, <span class="at">group =</span> <span class="st">"female"</span>, </span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">group.equal =</span> <span class="fu">c</span>(<span class="st">"loadings"</span>,<span class="st">"intercepts"</span>), <span class="at">meanstructure =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(equal.intercepts.fit, <span class="at">standardized =</span> <span class="cn">TRUE</span>, <span class="at">fit.measures =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lavaan 0.6.16 ended normally after 108 iterations
 
@@ -753,7 +771,10 @@ Variances:
 </div>
 <p>Yup, as expected, each variable mean is constrained to be the same across groups. And how about that likelihood ratio test?</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(configural.fit, equal.loadings.fit, equal.intercepts.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Chi-Squared Difference Test
@@ -777,12 +798,15 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </blockquote>
 <p>Personally yeah this seems like noise-mining, but let’s give it a try just for fun.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">modindices</span>(equal.intercepts.fit, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Arrange them in order of modification index</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(mi)) <span class="sc">%&gt;%</span> </span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(lhs, op, rhs, mi)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>     lhs op     rhs    mi
 1   read ~~    math 3.396
@@ -804,7 +828,10 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <p>Hmm, looks like our old friend <code>modindices()</code> doesn’t return estimates for parameters constrained to be equal across groups. But it is showing some interesting stuff. Like maybe instead of freeing up a group-constrained parameter, I could just free up that reading &lt;–&gt; math residual correlation. It feels like a real education researcher could whip up a path diagram that makes this seem justified, and I just tested it and it makes it so that the measurement invariance actually works for the intercepts, even when they are still constrained across groups! So maybe I would just proceed that way.</p>
 <p>But just for posterity, here’s how you can look at the modification indexes for the group-constrained parameters:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lavTestScore</span>(equal.intercepts.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>$test
 
@@ -830,6 +857,8 @@ univariate score tests:
 <p>Annoyingly, it doesn’t tell you the variable names. So you’ll need to check and see what they are called in the model output. Also I think these aren’t technically ‘modification indexes’ per se, but they are analogous.</p>
 <p>Looks like that .p11 == .p25 constraint is a juicy one to free up – this corresponds to the reading variable. To free it up I’ll need to refit the model with more explicit syntax. Specifically, I’ll need to use the <code>group.partial()</code> argument to override the fixedness introduced in the <code>group.equal()</code> argument:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Partial invariance model</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>partial.invariance.fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  onefac, </span>
@@ -838,10 +867,14 @@ univariate score tests:
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">group.equal =</span> <span class="fu">c</span>(<span class="st">"loadings"</span>, <span class="st">"intercepts"</span>), </span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">group.partial=</span><span class="fu">c</span>(<span class="st">"read~1"</span>), <span class="co"># This frees up the desired intercepts</span></span>
 <span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">meanstructure =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Now we can re-run the likelihood ratio test and see if we’re good to proceed to testing for invariance of the residual variance terms:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(configural.fit, equal.loadings.fit, partial.invariance.fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Chi-Squared Difference Test
