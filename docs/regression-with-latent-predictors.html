@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Latent Variable Modelling Workflow Reference - 6&nbsp; Bayesian Multilevel Survival Analysis with Latent Predictors</title>
+<title>Latent Variable Modelling Workflow Reference - 5&nbsp; Regression With Latent Predictors</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -113,7 +113,7 @@ div.csl-indent {
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
 <link href="./sem-intro.html" rel="next">
-<link href="./simulating-cfa-data.html" rel="prev">
+<link href="./measurement-invariance-testing.html" rel="prev">
 <script src="site_libs/quarto-html/quarto.js"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -153,7 +153,7 @@ div.csl-indent {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian Multilevel Survival Analysis with Latent Predictors</span></h1>
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression With Latent Predictors</span></h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -211,30 +211,13 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./simulating-cfa-data.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Simulating CFA data</span></a>
-  </div>
-</li>
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./bayesian-cfa.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian Multilevel Survival Analysis with Latent Predictors</span></a>
+  <a href="./regression-with-latent-predictors.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression With Latent Predictors</span></a>
   </div>
 </li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
-      <div class="sidebar-item-container"> 
-            <a href="./sem-intro.html" class="sidebar-item-text sidebar-link">Structural Equation Modelling</a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
-      </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
-          <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./latent-variable-regression.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Example: Survival Analysis with Latent Variables</span></a>
-  </div>
-</li>
-      </ul>
+      <span class="sidebar-item-text sidebar-link text-start">Structural Equation Modelling</span>
   </li>
     </ul>
     </div>
@@ -246,19 +229,24 @@ div.csl-indent {
    
   <ul>
   <li><a href="#summary" id="toc-summary" class="nav-link active" data-scroll-target="#summary">Summary</a></li>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="toc-section-number">6.1</span>  Introduction</a></li>
-  <li><a href="#the-plan" id="toc-the-plan" class="nav-link" data-scroll-target="#the-plan"><span class="toc-section-number">6.2</span>  The Plan</a></li>
-  <li><a href="#simple-bayesian-cfa-with-brms" id="toc-simple-bayesian-cfa-with-brms" class="nav-link" data-scroll-target="#simple-bayesian-cfa-with-brms"><span class="toc-section-number">6.3</span>  Simple Bayesian CFA with brms</a></li>
-  <li><a href="#bayesian-cfa-with-correlated-factors" id="toc-bayesian-cfa-with-correlated-factors" class="nav-link" data-scroll-target="#bayesian-cfa-with-correlated-factors"><span class="toc-section-number">6.4</span>  Bayesian CFA with Correlated Factors</a></li>
-  <li><a href="#bayesian-cfa-with-custom-covariance-structure" id="toc-bayesian-cfa-with-custom-covariance-structure" class="nav-link" data-scroll-target="#bayesian-cfa-with-custom-covariance-structure"><span class="toc-section-number">6.5</span>  Bayesian CFA with Custom Covariance Structure</a></li>
-  <li><a href="#bayesian-survival-analysis-with-latent-predictors" id="toc-bayesian-survival-analysis-with-latent-predictors" class="nav-link" data-scroll-target="#bayesian-survival-analysis-with-latent-predictors"><span class="toc-section-number">6.6</span>  Bayesian Survival Analysis with Latent Predictors</a>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction"><span class="toc-section-number">5.1</span>  Introduction</a></li>
+  <li><a href="#the-plan" id="toc-the-plan" class="nav-link" data-scroll-target="#the-plan"><span class="toc-section-number">5.2</span>  The Plan</a></li>
+  <li><a href="#simple-bayesian-cfa-with-brms" id="toc-simple-bayesian-cfa-with-brms" class="nav-link" data-scroll-target="#simple-bayesian-cfa-with-brms"><span class="toc-section-number">5.3</span>  Simple Bayesian CFA with brms</a></li>
+  <li><a href="#bayesian-cfa-with-correlated-factors" id="toc-bayesian-cfa-with-correlated-factors" class="nav-link" data-scroll-target="#bayesian-cfa-with-correlated-factors"><span class="toc-section-number">5.4</span>  Bayesian CFA with Correlated Factors</a></li>
+  <li><a href="#bayesian-cfa-with-custom-covariance-structure" id="toc-bayesian-cfa-with-custom-covariance-structure" class="nav-link" data-scroll-target="#bayesian-cfa-with-custom-covariance-structure"><span class="toc-section-number">5.5</span>  Bayesian CFA with Custom Covariance Structure</a></li>
+  <li><a href="#bayesian-survival-analysis-with-latent-predictors" id="toc-bayesian-survival-analysis-with-latent-predictors" class="nav-link" data-scroll-target="#bayesian-survival-analysis-with-latent-predictors"><span class="toc-section-number">5.6</span>  Bayesian Survival Analysis with Latent Predictors</a>
   <ul class="collapse">
-  <li><a href="#data-simulation-and-validation" id="toc-data-simulation-and-validation" class="nav-link" data-scroll-target="#data-simulation-and-validation"><span class="toc-section-number">6.6.1</span>  Data Simulation and Validation</a></li>
-  <li><a href="#prior-predictive-simulation" id="toc-prior-predictive-simulation" class="nav-link" data-scroll-target="#prior-predictive-simulation"><span class="toc-section-number">6.6.2</span>  Prior Predictive Simulation</a></li>
-  <li><a href="#fitting-the-stan-model" id="toc-fitting-the-stan-model" class="nav-link" data-scroll-target="#fitting-the-stan-model"><span class="toc-section-number">6.6.3</span>  Fitting the Stan Model</a></li>
-  <li><a href="#posterior-checks" id="toc-posterior-checks" class="nav-link" data-scroll-target="#posterior-checks"><span class="toc-section-number">6.6.4</span>  Posterior Checks</a></li>
+  <li><a href="#data-simulation-and-validation" id="toc-data-simulation-and-validation" class="nav-link" data-scroll-target="#data-simulation-and-validation"><span class="toc-section-number">5.6.1</span>  Data Simulation and Validation</a></li>
+  <li><a href="#prior-predictive-simulation" id="toc-prior-predictive-simulation" class="nav-link" data-scroll-target="#prior-predictive-simulation"><span class="toc-section-number">5.6.2</span>  Prior Predictive Simulation</a></li>
+  <li><a href="#fitting-the-stan-model" id="toc-fitting-the-stan-model" class="nav-link" data-scroll-target="#fitting-the-stan-model"><span class="toc-section-number">5.6.3</span>  Fitting the Stan Model</a></li>
+  <li><a href="#posterior-checks" id="toc-posterior-checks" class="nav-link" data-scroll-target="#posterior-checks"><span class="toc-section-number">5.6.4</span>  Posterior Checks</a></li>
   </ul></li>
-  <li><a href="#bayesian-multilevel-survival-analysis-with-latent-predictors" id="toc-bayesian-multilevel-survival-analysis-with-latent-predictors" class="nav-link" data-scroll-target="#bayesian-multilevel-survival-analysis-with-latent-predictors"><span class="toc-section-number">6.7</span>  Bayesian Multilevel Survival Analysis with Latent Predictors</a></li>
+  <li><a href="#bayesian-multilevel-survival-analysis-with-latent-predictors" id="toc-bayesian-multilevel-survival-analysis-with-latent-predictors" class="nav-link" data-scroll-target="#bayesian-multilevel-survival-analysis-with-latent-predictors"><span class="toc-section-number">5.7</span>  Bayesian Multilevel Survival Analysis with Latent Predictors</a>
+  <ul class="collapse">
+  <li><a href="#data-simulation-and-validation-1" id="toc-data-simulation-and-validation-1" class="nav-link" data-scroll-target="#data-simulation-and-validation-1"><span class="toc-section-number">5.7.1</span>  Data simulation and validation</a></li>
+  <li><a href="#fitting-the-stan-model-1" id="toc-fitting-the-stan-model-1" class="nav-link" data-scroll-target="#fitting-the-stan-model-1"><span class="toc-section-number">5.7.2</span>  Fitting the Stan Model</a></li>
+  <li><a href="#posterior-checks-1" id="toc-posterior-checks-1" class="nav-link" data-scroll-target="#posterior-checks-1"><span class="toc-section-number">5.7.3</span>  Posterior Checks</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -267,7 +255,7 @@ div.csl-indent {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian Multilevel Survival Analysis with Latent Predictors</span></h1>
+<h1 class="title d-none d-lg-block"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Regression With Latent Predictors</span></h1>
 </div>
 
 
@@ -319,14 +307,14 @@ div.csl-indent {
 </div>
 <section id="summary" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="summary">Summary</h2>
-<p>I recently completed an analysis for a client that designs labour market training programs. They had developed some scales to measure latent traits related to employability, and were interested in the relationship between those traits and time-to-employment among program graduates. I approached this using a Bayesian multilevel model to simultaneously estimate a confirmatory factor model for the latent variables and include them as predictors in a time-to-event analysis.</p>
-<p>This document uses simulated data to implement a simplified version of that model, and demonstrate its advantages over traditional two-stage approaches.</p>
+<p>I recently completed an analysis for a client who designs labour market training programs. They had developed some scales to measure latent traits related to employability, and were interested in the relationship between those traits and time-to-employment among program graduates. <strong>I approached this using a Bayesian multilevel survival model with latent predictors, simultaneously estimating a factor model for the latent variables and including them as predictors in a time-to-event analysis for employment outcomes.</strong></p>
+<p>This document uses simulated data to implement a simplified version of that model and demonstrate its advantages over traditional two-stage approaches for regression with latent predictors.</p>
 </section>
-<section id="introduction" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">6.1</span> Introduction</h2>
+<section id="introduction" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">5.1</span> Introduction</h2>
 <p>In the previous sections we’ve explored the traditional workflow for confirmatory factor analysis including the basic model structure, the concepts of validity and reliability, classic model goodness of fit tests, tests for measurement invariance, and experimenting with custom error covariance structures. These are all helpful tools for specifying quantitative theories about imaginary constructs, and testing those theories with data.</p>
-<p>But often we want to do more than just see whether my data are consistent with <a href="#sec-intro">The Primordial CFA DAG&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-intro</span></a>: we also have some theories about how those imagined constructs relate to <em>other variables</em>. If those other variables are themselves latent factors then we enter the world of ‘Structural Equation Modelling (SEM)’, which expands on factor analysis to account for relationships between latent predictors and latent outcome variables.</p>
-<p>I plan to add more chapters to this notebook covering the traditional SEM workflow, but as a first step it’s helpful to explore a more basic situation where we want to estimate the relationship between some latent variables and an <em>observed</em> outcome variable, as opposed to a latent outcome variable with its own measurement model. A traditional way to incorporate latent variables into a regression analysis for a measured dependent variable proceeds like so:</p>
+<p>But often we want to do more than just assess the construct validity of our factors: we may also have theories about how those imagined constructs relate to <em>other variables</em>. If those other variables are themselves latent factors then we enter the world of ‘Structural Equation Modelling (SEM)’, which expands on factor analysis to account for relationships between latent predictors and latent outcome variables.</p>
+<p>I plan to add more chapters to this notebook covering a traditional SEM workflow, but as a first step it’s helpful to explore a more basic situation where we want to estimate the relationship between some latent variables and an <em>observed</em> outcome variable. A traditional way to incorporate latent variables into a regression analysis for a measured dependent variable proceeds like so:</p>
 <ol type="1">
 <li>Fit a CFA model for the latent variables;</li>
 <li>Use that CFA model to generate factor scores for each observation;</li>
@@ -336,8 +324,8 @@ div.csl-indent {
 <p>This approach is unsatisfactory because factor scores are a function of the CFA model’s parameter estimates, about which there is uncertainty. By only using point-estimate factor scores in their regression models for the measured life outcomes, the authors ignore this uncertainty.</p>
 <p>A better option is to fit a Bayesian model that estimates the factor analysis and the substantive regression model at the same time, incorporating its uncertainty from the CFA model into its substantive parameter estimates and predictions. As we’ll see below, this approach is essentially just a Bayesian missing data analysis, where the factor scores for each observation are treated as missing data for which the model estimates a unique observation-specific parameter, along with its own unique posterior distribution.</p>
 </section>
-<section id="the-plan" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="the-plan"><span class="header-section-number">6.2</span> The Plan</h2>
+<section id="the-plan" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="the-plan"><span class="header-section-number">5.2</span> The Plan</h2>
 <p>In this document I’ll demonstrate how to implement this Bayesian approach with Stan. We’ll iterate on this model a few times, gradually incorporating concepts from previous chapters such as MTMM factor analysis. We’ll stick to an invented scenario: a client has designed scales for the latent skills “adaptability” and “collaboration”, and wants us to estimate the relationship between those skills and time-to-employment for their program graduates. As the model becomes more complex we’ll simulate more complex datasets as well, and show that the model can recover the true simulation parameter estimates. We’ll proceed as follows:</p>
 <ol type="1">
 <li>Fit a simple Bayesian CFA with one factor and a basic measurement error covariance structure. We use the brms package to illustrate how Bayesian factor analysis is the same as Bayesian missing data analysis, but where <em>all</em> of your observations are missing;</li>
@@ -348,8 +336,8 @@ div.csl-indent {
 </ol>
 <p>This document assumes familiarity with survival analysis, Bayesian statistics, and latent variable modelling at least up to the level covered in the previous sections of this workbook.</p>
 </section>
-<section id="simple-bayesian-cfa-with-brms" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="simple-bayesian-cfa-with-brms"><span class="header-section-number">6.3</span> Simple Bayesian CFA with brms</h2>
+<section id="simple-bayesian-cfa-with-brms" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="simple-bayesian-cfa-with-brms"><span class="header-section-number">5.3</span> Simple Bayesian CFA with brms</h2>
 <p>Before diving into a full model with our two factors for “adaptability” and “collabortion”, in this section we’ll see how to fit a simple Bayesian CFA in brms. Nothing fancy, just one factor with 6 measurements. Here’s the full model definition:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -504,7 +492,7 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-draws-basic-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-draws-basic-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Estimated posterior densities of factor loadings for CFA model fit with brms. The loading for m1 was not estimated because we used the marker variable approach for identifiability.</figcaption><p></p>
 </figure>
 </div>
@@ -513,9 +501,9 @@ m_{6}
 <p>The model didn’t do a great job, with the true parameter values falling outside the 95% interval for all loadings. But the results are not totally off-base, and the model has successfully captured the overall magnitude and sign of each loading. This illustrates the general proof of concept that we can do a decent CFA in brms.</p>
 <p>In practice I would probably not choose brms for a simple CFA of this kind, where we have no prior information to inform the parameter estimates and no need to incorporate uncertainty in factor score estimates into models of other variables. If I were committed to doing this sort of model Bayesianly then I would use the blavaan package, which works with lavaan syntax, allows you to specify custom priors, and is lightening-fast compared to the brms version implemented above. But blavaan is limited in the types of models it can handle, and cannot fit the type of time-to-event model we are heading towards here. Stan offers greater flexibility.</p>
 </section>
-<section id="bayesian-cfa-with-correlated-factors" class="level2" data-number="6.4">
-<h2 data-number="6.4" class="anchored" data-anchor-id="bayesian-cfa-with-correlated-factors"><span class="header-section-number">6.4</span> Bayesian CFA with Correlated Factors</h2>
-<p>Now let’s introduce our two factors “adaptability” and “collaboration”, and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors, as we saw in <a href="#sec-basic-workflow">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-basic-workflow</span></a>. The only change from the model in the previous section is that now we imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation <span class="math inline">\(\rho\)</span> and the two factor-specific variances. Here’s the updated model definition, with the covariance terms highlighted:</p>
+<section id="bayesian-cfa-with-correlated-factors" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="bayesian-cfa-with-correlated-factors"><span class="header-section-number">5.4</span> Bayesian CFA with Correlated Factors</h2>
+<p>Now let’s introduce our two factors “adaptability” and “collaboration”, and expand the model to assume these two latent factors may be correlated. People traditionally use this type of model to assess the discriminant validity of their factors, as we saw in <a href="traditional-cfa-workflow.html">Chapter&nbsp;<span>1</span></a>. The only change from the model in the previous section is that now we imagine the two factors to be drawn from a shared bivariate normal distribution in which the diagonals are the factor-specific residual variances and the off-diagonals are the between-factor covariance, given as the product of their estimated correlation <span class="math inline">\(\rho\)</span> and the two factor-specific variances. Here’s the updated model definition, with the covariance terms highlighted:</p>
 <p><span class="math display">\[
 \begin{aligned}
 \begin{bmatrix}
@@ -815,7 +803,7 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-loadings-2-fac-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-loadings-2-fac-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Bayesian posterior intervals of factor loadings for CFA model fit with Stan. All loadings are estimated because we do not use the ‘marker variable approach’ for identifiability,</figcaption><p></p>
 </figure>
 </div>
@@ -827,26 +815,29 @@ m_{6}
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dplt <span class="sc">|&gt;</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.variable <span class="sc">==</span> <span class="st">"Covariance for f1 ~ f2"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">fill =</span> .variable)) <span class="sc">+</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">fill =</span> clrs<span class="sc">$</span>red) <span class="sc">+</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="fu">aes</span>(<span class="at">xintercept =</span> true_loading), <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_nice</span>() <span class="sc">+</span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_posterior_densities</span>() <span class="sc">+</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Estimate"</span>,</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Density"</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    .variable <span class="sc">==</span> <span class="st">"Covariance for f1 ~ f2"</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    .value <span class="sc">&gt;=</span> <span class="dv">0</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">fill =</span> .variable)) <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_halfeye</span>(<span class="at">fill =</span> clrs<span class="sc">$</span>red) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="fu">aes</span>(<span class="at">xintercept =</span> true_loading), <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span> </span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.015</span>)) <span class="sc">+</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_nice</span>() <span class="sc">+</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_posterior_densities</span>() <span class="sc">+</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Estimate"</span>,</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Density"</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-cov-2-fac-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-cov-2-fac-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Posterior densitity of between-factor covariance.</figcaption><p></p>
 </figure>
 </div>
@@ -955,9 +946,9 @@ m_{6}
 </details>
 </div>
 </section>
-<section id="bayesian-cfa-with-custom-covariance-structure" class="level2" data-number="6.5">
-<h2 data-number="6.5" class="anchored" data-anchor-id="bayesian-cfa-with-custom-covariance-structure"><span class="header-section-number">6.5</span> Bayesian CFA with Custom Covariance Structure</h2>
-<p>Often in latent variable modelling we want to account for the possibility that certain measured variables are confounded by some shared unmeasured influences. One way to address this is to add another factor to the model to account for these unmeasured influences, but it can be simpler to just estimate a covariance term for those measured variables. This is what <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> calls a ‘correlated uniqueness model’. I have more detailed notes on these ideas in <a href="#sec-mtmm">Chapter&nbsp;<span class="quarto-unresolved-ref ref-noprefix">sec-mtmm</span></a>.</p>
+<section id="bayesian-cfa-with-custom-covariance-structure" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="bayesian-cfa-with-custom-covariance-structure"><span class="header-section-number">5.5</span> Bayesian CFA with Custom Covariance Structure</h2>
+<p>Often in latent variable modelling we want to account for the possibility that certain measured variables are confounded by some shared unmeasured influences. One way to address this is to add another factor to the model to account for these unmeasured influences, but it can be simpler to just estimate a covariance term for those measured variables. This is what <span class="citation" data-cites="Brown2006">Brown (<a href="#ref-Brown2006" role="doc-biblioref">2006</a>)</span> calls a ‘correlated uniqueness model’. I have more detailed notes on these ideas in <a href="mtmm-and-error-structure-modelling.html">Chapter&nbsp;<span>3</span></a>.</p>
 <p>As an example of this scenario, we can imagine that the measured variables m1 and m4 are confounded because they were both collected by participant survey, while the other four measures were each collected by different means. To reflect this change in the model, we need to change the specification of the variance-covariance matrix of the shared multivariable likelihood of the measured variables: where before all of the off-diagonal elements were fixed at 0, now we need the off-diagonals representing the covariance between m1 and m4 to be freely estimated.</p>
 <p>Here’s the updated model, with the new parameter highlighted in yellow:</p>
 <p><span class="math display">\[
@@ -1271,7 +1262,7 @@ m_{6}
 <span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/viz-draws-mtmm-loadings-1.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-draws-mtmm-loadings-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>And things are looking good for the covariance terms as well:</p>
@@ -1305,7 +1296,7 @@ m_{6}
 <span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/viz-draws-mtmm-covar-1.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-draws-mtmm-covar-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Out of curiosity we can also check the MCMC diagnostics. The Rhats and effective sample sizes are looking a bit healthier than the previous model, which is interesting considering we’ve made the model more complex by adding a new parameter.</p>
@@ -1401,8 +1392,8 @@ m_{6}
 </details>
 </div>
 </section>
-<section id="bayesian-survival-analysis-with-latent-predictors" class="level2" data-number="6.6">
-<h2 data-number="6.6" class="anchored" data-anchor-id="bayesian-survival-analysis-with-latent-predictors"><span class="header-section-number">6.6</span> Bayesian Survival Analysis with Latent Predictors</h2>
+<section id="bayesian-survival-analysis-with-latent-predictors" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="bayesian-survival-analysis-with-latent-predictors"><span class="header-section-number">5.6</span> Bayesian Survival Analysis with Latent Predictors</h2>
 <p>Now that we’re confident our CFA MTMM Stan model is well-specified, we can incorporate the substantive regression model for the outcome of interest: time to employment.</p>
 <p>The updated model is shown below. All we’ve done is add two new lines at the top, shown in blue. These lines say we imagine time-to-event <span class="math inline">\(T\)</span> for each person <span class="math inline">\(i\)</span> to be drawn from a Weibull distribution, whose location parameter is a linear model of the latent factors <span class="math inline">\(\text{adapt}\)</span> and <span class="math inline">\(\text{collab}\)</span>, as well as other measured variables in the matrix <span class="math inline">\(\mathbf{X}\)</span>, each with its own coefficient in the vector <span class="math inline">\(\boldsymbol{\beta}\)</span>.</p>
 <span class="math display">\[\begin{aligned}
@@ -1463,8 +1454,8 @@ m_{6}
 \end{bmatrix}
 \end{aligned}\]</span>
 <p>Why a Weibull likelihood? According to <span class="citation" data-cites="Collett2003">Collett (<a href="#ref-Collett2003" role="doc-biblioref">2003</a>)</span>, this is a common choice for parameteric survival analysis because it corresponds to a flexible monotonic baseline hazard function, which often feels like a safe assumption that is neither too rigid (like an exponential likelihood and corresponding flat baseline hazard function) nor too flexible (like a spline with many knots). It also has the advantage of being interpretable as both a Proportional Hazards regression or as an Accelerated Failure Time regression, which gives us flexibility in how we communicate about the parameter estimates, and allows us to not worry too much about the proportional hazards assumption.</p>
-<section id="data-simulation-and-validation" class="level3" data-number="6.6.1">
-<h3 data-number="6.6.1" class="anchored" data-anchor-id="data-simulation-and-validation"><span class="header-section-number">6.6.1</span> Data Simulation and Validation</h3>
+<section id="data-simulation-and-validation" class="level3" data-number="5.6.1">
+<h3 data-number="5.6.1" class="anchored" data-anchor-id="data-simulation-and-validation"><span class="header-section-number">5.6.1</span> Data Simulation and Validation</h3>
 <p>Unlike in previous sections, here we won’t be able to rely on <code>lavaan::simulateData()</code> to create our simulated data, because it can’t generate time-to-event data. So we’ll need to generate the data ourselves. <a href="https://scholar.google.com/citations?user=s2LhwXAAAAAJ&amp;hl=en">Mark Lai</a> has shared <a href="https://bookdown.org/marklhc/notes/simulation-example-on-structural-equation-modeling-sem.html#full-example-of-a-small-scale-simulation">some nice code</a> to do this, which I adapt slightly to allow for covariance between m1 and m4 as in the MTMM model above.</p>
 <div class="cell">
 <details>
@@ -1482,7 +1473,7 @@ m_{6}
 <span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>                <span class="fl">0.4</span>, <span class="dv">1</span>), <span class="at">nrow =</span> <span class="dv">2</span>)  </span>
 <span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="co"># factor loadings</span></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>Lambda <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">c</span>(.<span class="dv">8</span>, .<span class="dv">6</span>, .<span class="dv">9</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>), </span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>Lambda <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">c</span>(.<span class="dv">6</span>, .<span class="dv">6</span>, .<span class="dv">5</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>), </span>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>                <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">1</span>, .<span class="dv">2</span>, <span class="sc">-</span>.<span class="dv">4</span>))  </span>
 <span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Error structure of measured variables</span></span>
@@ -1549,27 +1540,27 @@ m_{6}
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m1</td>
-<td style="text-align: right;">0.8517471</td>
+<td style="text-align: right;">0.6678483</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 =~ m2</td>
-<td style="text-align: right;">0.5845361</td>
+<td style="text-align: right;">0.5770462</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 =~ m3</td>
-<td style="text-align: right;">0.9020232</td>
+<td style="text-align: right;">0.5188564</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m4</td>
-<td style="text-align: right;">0.1672665</td>
+<td style="text-align: right;">0.1762007</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f2 =~ m5</td>
-<td style="text-align: right;">0.2142330</td>
+<td style="text-align: right;">0.2140015</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f2 =~ m6</td>
-<td style="text-align: right;">-0.3874742</td>
+<td style="text-align: right;">-0.3767890</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">f1 ~~ f1</td>
@@ -1581,35 +1572,35 @@ m_{6}
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m1 ~~ m4</td>
-<td style="text-align: right;">0.4026940</td>
+<td style="text-align: right;">0.3992284</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m1 ~~ m1</td>
-<td style="text-align: right;">0.9362546</td>
+<td style="text-align: right;">0.9306335</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m2 ~~ m2</td>
-<td style="text-align: right;">0.9463030</td>
+<td style="text-align: right;">0.9550032</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m3 ~~ m3</td>
-<td style="text-align: right;">0.9816329</td>
+<td style="text-align: right;">0.9701072</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m4 ~~ m4</td>
-<td style="text-align: right;">0.9741829</td>
+<td style="text-align: right;">0.9710964</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">m5 ~~ m5</td>
-<td style="text-align: right;">0.9947676</td>
+<td style="text-align: right;">0.9948669</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">m6 ~~ m6</td>
-<td style="text-align: right;">0.9817417</td>
+<td style="text-align: right;">0.9899081</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">f1 ~~ f2</td>
-<td style="text-align: right;">0.4249148</td>
+<td style="text-align: right;">0.4361973</td>
 </tr>
 </tbody>
 </table>
@@ -1758,7 +1749,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate)) <span class="sc">+</span></span>
 <span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
 <span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_linerange</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">size =</span> <span class="dv">2</span>, <span class="at">colour =</span> <span class="st">"#767676"</span>) <span class="sc">+</span></span>
-<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">5</span>, <span class="at">colour =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">5</span>, <span class="at">colour =</span> <span class="st">"#767676"</span>) <span class="sc">+</span></span>
 <span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">color =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
 <span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> term, <span class="at">y =</span> true_loading), <span class="at">colour =</span> <span class="st">"red4"</span>, <span class="at">size =</span> <span class="dv">5</span>, <span class="at">shape =</span>  <span class="dv">13</span>, <span class="at">stroke =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
 <span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_flip</span>() <span class="sc">+</span> </span>
@@ -1771,8 +1762,8 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-weibull-frequentist-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">A basic survival model recovers the true parameter values. Estimates and 95% CIs shown in grey, true parameter values shown as red targets.</figcaption><p></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-weibull-frequentist-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption class="figure-caption">A basic survival model recovers the true parameter values. Estimates and 95% CIs shown in grey; true parameter values shown as red targets.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1806,7 +1797,7 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-raw-event-times-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-raw-event-times-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Histogram of times-to-event, including employment outcomes and censorings.</figcaption><p></p>
 </figure>
 </div>
@@ -1841,15 +1832,15 @@ S(x; k, \lambda) = \exp\left(-\left(\frac{x}{\lambda'}\right)^{k}\right)
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-km-weibull-1-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-km-weibull-1-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Kaplan-Meier estimated survival curves, stratified by EI Status. Crosses are censorings.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="prior-predictive-simulation" class="level3" data-number="6.6.2">
-<h3 data-number="6.6.2" class="anchored" data-anchor-id="prior-predictive-simulation"><span class="header-section-number">6.6.2</span> Prior Predictive Simulation</h3>
+<section id="prior-predictive-simulation" class="level3" data-number="5.6.2">
+<h3 data-number="5.6.2" class="anchored" data-anchor-id="prior-predictive-simulation"><span class="header-section-number">5.6.2</span> Prior Predictive Simulation</h3>
 <p>Unlike the factor analysis models we fit above, this model has substantive predictor variables, namely <code>age</code>, <code>ei_status</code>, and the two latent variables <code>adapt</code> and <code>collab</code>. Based on previous research, we have a sense of the types of parameter estimates that seem realistic for these predictors. So can use prior predictive simulation to specify informative priors. Here’s what we’ll do: 1. Write some simple code to simulate from the prior distributions of interest; 2. Transform the simulated values to check whether the priors make sense on the scale of interest; 3. Once we arrive at reasonable-seeming priors for all of the parameters, we can use brms to simulate event times from the prior predictive distribution and make sure everything is making sense.</p>
 <p>The brms parameterization of the Weibull distribution <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_families.html">is slightly different</a> than the one used in the <strong>survival</strong> package, with <strong>brms</strong> specifying a mean parameter as a function of the scale and shape parameters of the more traditional parameterization:</p>
 <p><span class="math display">\[\begin{align*}
@@ -1889,7 +1880,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/prior-pred-weibull-intercept-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/prior-pred-weibull-intercept-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Prior predictive check for average time-to-employment: draws from a gaussian distribution with mean = 3.3, and sd = .4</figcaption><p></p>
 </figure>
 </div>
@@ -1923,7 +1914,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/prior-pred-weibull-coefs-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/prior-pred-weibull-coefs-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Prior predictive check for Weibull regression parameter estimates: exponentiated draws from a gaussian distribution with mean = 0, and sd = 1.45</figcaption><p></p>
 </figure>
 </div>
@@ -1991,7 +1982,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/prior-pred-1-densities-1.png" class="img-fluid figure-img" alt="Densities for 500 draws from the prior predictive distribution of event times. X-axis truncated for visual clarity." width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/prior-pred-1-densities-1.png" class="img-fluid figure-img" alt="Densities for 500 draws from the prior predictive distribution of event times. X-axis truncated for visual clarity." width="672"></p>
 <p></p><figcaption class="figure-caption">Densities for 500 draws from the prior predictive distribution of event times. X-axis truncated for visual clarity.</figcaption><p></p>
 </figure>
 </div>
@@ -2021,15 +2012,15 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/prior-pred-1-means-1.png" class="img-fluid figure-img" alt="Mean event times of 500 draws from the prior predictive distribution of event times. Many of the prior draws suggest mean event times that we know to be absurd." width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/prior-pred-1-means-1.png" class="img-fluid figure-img" alt="Mean event times of 500 draws from the prior predictive distribution of event times. Many of the prior draws suggest mean event times that we know to be absurd." width="672"></p>
 <p></p><figcaption class="figure-caption">Mean event times of 500 draws from the prior predictive distribution of event times. Many of the prior draws suggest mean event times that we know to be absurd.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="fitting-the-stan-model" class="level3" data-number="6.6.3">
-<h3 data-number="6.6.3" class="anchored" data-anchor-id="fitting-the-stan-model"><span class="header-section-number">6.6.3</span> Fitting the Stan Model</h3>
+<section id="fitting-the-stan-model" class="level3" data-number="5.6.3">
+<h3 data-number="5.6.3" class="anchored" data-anchor-id="fitting-the-stan-model"><span class="header-section-number">5.6.3</span> Fitting the Stan Model</h3>
 <p>Now we’re ready to fit the survival model using the latent factors as predictors.</p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Factor Analysis</span></span>
@@ -2215,8 +2206,8 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 </details>
 </div>
 </section>
-<section id="posterior-checks" class="level3" data-number="6.6.4">
-<h3 data-number="6.6.4" class="anchored" data-anchor-id="posterior-checks"><span class="header-section-number">6.6.4</span> Posterior Checks</h3>
+<section id="posterior-checks" class="level3" data-number="5.6.4">
+<h3 data-number="5.6.4" class="anchored" data-anchor-id="posterior-checks"><span class="header-section-number">5.6.4</span> Posterior Checks</h3>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -2329,7 +2320,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <span id="cb36-78"><a href="#cb36-78" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
@@ -2354,7 +2345,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-36-2.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-36-2.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
@@ -2378,7 +2369,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-36-3.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-36-3.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>The MCMC diagnostics suggest the sampling went smoothly:</p>
@@ -2551,11 +2542,11 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
 <span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate)) <span class="sc">+</span></span>
-<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_linerange</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate, <span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">size =</span> <span class="dv">4</span>, <span class="at">colour =</span>   clrs<span class="sc">$</span>blue) <span class="sc">+</span></span>
-<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate), <span class="at">size =</span> <span class="dv">7</span>, <span class="at">colour =</span> clrs<span class="sc">$</span>blue) <span class="sc">+</span></span>
+<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_linerange</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate, <span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">size =</span> <span class="dv">4</span>, <span class="at">colour =</span> <span class="st">"#878787"</span>) <span class="sc">+</span></span>
+<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate), <span class="at">size =</span> <span class="dv">7</span>, <span class="at">colour =</span> <span class="st">"#878787"</span>) <span class="sc">+</span></span>
 <span id="cb41-48"><a href="#cb41-48" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(term, <span class="sc">-</span>estimate), <span class="at">y =</span> estimate), <span class="at">size =</span> <span class="dv">5</span>, <span class="at">color =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
 <span id="cb41-49"><a href="#cb41-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> term, <span class="at">y =</span> true_loading), <span class="at">colour =</span> <span class="st">"red4"</span>, <span class="at">size =</span> <span class="dv">7</span>, <span class="at">shape =</span>  <span class="dv">13</span>, <span class="at">stroke =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>(<span class="at">data =</span> cleaned_draws_dplt , <span class="fu">aes</span>(<span class="at">x =</span> .variable, <span class="at">y =</span> .value), <span class="at">fill =</span> clrs<span class="sc">$</span>purple, <span class="at">alpha =</span> .<span class="dv">8</span>) <span class="sc">+</span></span>
+<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_halfeye</span>(<span class="at">data =</span> cleaned_draws_dplt , <span class="fu">aes</span>(<span class="at">x =</span> .variable, <span class="at">y =</span> .value), <span class="at">fill =</span> clrs<span class="sc">$</span>blue, <span class="at">alpha =</span> .<span class="dv">8</span>) <span class="sc">+</span></span>
 <span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">coord_flip</span>() <span class="sc">+</span> </span>
 <span id="cb41-52"><a href="#cb41-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
 <span id="cb41-53"><a href="#cb41-53" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="st">"Estimated survival time ratio"</span>,</span>
@@ -2564,7 +2555,12 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <span id="cb41-56"><a href="#cb41-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid" width="672"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid figure-img" width="672"></p>
+<p></p><figcaption class="figure-caption">A Bayesian win: posterior estimates for regression coefficients of latent predictors (blue densities) are more precise than estimates from the traditional two-stage approach using factor score point estimates (grey point-ranges).</figcaption><p></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We can also do more conventional checks of parametric survival models recommended by <span class="citation" data-cites="Collett2003">Collett (<a href="#ref-Collett2003" role="doc-biblioref">2003</a>)</span>, such as plotting the estimated baseline hazard function for various covariate combinations, and overlaying the estimated survival function against the Kaplan-Meier estimates. Let’s start by visualizing posterior draws of the survival lfunction, and comparing it to the true simulation survival function.</p>
@@ -2625,7 +2621,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-43-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-43-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Means of draws from the posterior predictive distribution. These are more realistic than the means from the prior predictive distribution we plotted above.</figcaption><p></p>
 </figure>
 </div>
@@ -2666,7 +2662,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">365</span>), <span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
 <span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Days to employment"</span>) <span class="sc">+</span></span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Days to employment"</span>, <span class="at">y =</span> <span class="st">"Density"</span>) <span class="sc">+</span></span>
 <span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_nice</span>() <span class="sc">+</span></span>
 <span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_posterior_densities</span>() <span class="sc">+</span></span>
 <span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2674,7 +2670,7 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-45-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-45-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Densities of 20 draws from the posterior predictive distribution (blue) against the distribution of the data (black). The model expects slower times-to-employment overall than the distribution in the data.</figcaption><p></p>
 </figure>
 </div>
@@ -2683,10 +2679,9 @@ s = \frac{\mu}{\Gamma\left(1 + \frac{1}{\alpha}\right)}
 <p>To a certain extent this is expected: we have lots of censored data, and that creates uncertainty about how long the longest event times could be. A quick investigation shows that the longest time-to-employment in the 20 posterior draws plotted above is 850 days. This seems long compared to the observed data, but it is not impossible given the domain of research – sometimes people leaving a skills training program <em>do</em> hold off on getting a new job for a few years for various reasons. So the posterior expectations are not outlandish and impossible, like the prior expectations were.Still, if we think the tail of the posterior predictive distribution is too long then we have several ways of giving that information to the model. We’ll implement one of those ways in the next section when we expand to a multilevel model.</p>
 </section>
 </section>
-<section id="bayesian-multilevel-survival-analysis-with-latent-predictors" class="level2" data-number="6.7">
-<h2 data-number="6.7" class="anchored" data-anchor-id="bayesian-multilevel-survival-analysis-with-latent-predictors"><span class="header-section-number">6.7</span> Bayesian Multilevel Survival Analysis with Latent Predictors</h2>
+<section id="bayesian-multilevel-survival-analysis-with-latent-predictors" class="level2" data-number="5.7">
+<h2 data-number="5.7" class="anchored" data-anchor-id="bayesian-multilevel-survival-analysis-with-latent-predictors"><span class="header-section-number">5.7</span> Bayesian Multilevel Survival Analysis with Latent Predictors</h2>
 <p>The Stan model in the previous section is still missing some key information: our program was delivered to ~70 cohorts of various sizes, each administered by a different non-profit or community college. This means our data has nested structure that we should tell the model about via a multilevel model. In short, we just tell the model that cohort-specific regression coefficients are drawn from a shared multivariate normal distribution, and we ask the model to estimate the mean vector and covariance matrix of that distribution. This allows the model to partially pool information across clusters insofar as it deems such pooling appropriate given its estimates of the between-cohort variance an covariance parameters: if the model estimates little variance between clusters then it will pool more, but if it estimates high variance then it will pool less. This biases the cluster-specific estimates by shrinking them towards the estimated ‘grand mean’, which is often a good thing because more bias means less variance. We only vary the substantive predictors, not the parameters of the CFA portion of the model, IE the factor loadings. Here’s the new model definition:</p>
-<p>Does this formally correspond to the traditional definition of a ‘shared frailty’ model? It’d be nice to get clarity on that and write the traditional shared frailty model definition in latex for comparison.</p>
 <p><span class="math display">\[
 \begin{aligned}
 \color{#3c4b99}T_i &amp;\color{#3c4b99}\sim \text{Weibull}(\theta_{i,j}, k) \\
@@ -2777,6 +2772,8 @@ m_{6}
 } \\
 \end{aligned}
 \]</span></p>
+<section id="data-simulation-and-validation-1" class="level3" data-number="5.7.1">
+<h3 data-number="5.7.1" class="anchored" data-anchor-id="data-simulation-and-validation-1"><span class="header-section-number">5.7.1</span> Data simulation and validation</h3>
 <p>We’ll need to simulate a new time-to-event dataset to reflect the fact that each cluster has its own parameter estimates drawn from a shared distribution. No changes are needed to the latent variables, so we can reuse our <code>fake_dat_measurement</code> from the previous example. But we’ll need to change the way we simulated the event times such that each cluster has its own true parameter value for each of the regression coefficients of interest. We can use a slightly-modified version of the simulation approach provided by <span class="citation" data-cites="KurzRethinking2023">Kurz (<a href="#ref-KurzRethinking2023" role="doc-biblioref">2023</a>)</span> in replicating the robot cafés example from <span class="citation" data-cites="McElreath2020">McElreath (<a href="#ref-McElreath2020" role="doc-biblioref">2020</a>)</span>.</p>
 <p>We can reuse the parameter estimates from our previous model as the means of the shared distribution from which the cluster-specific parameter values are drawn. When setting the rhos, it seems reasonable to imagine that perhaps clusters with high baseline hazard (given by high values of lambda) are located in areas with hotter labour markets in which employers are less choosy in their hiring, making it so that the other predictors will matter less in determining time-to-employment. So we can set those rhos to negative correlation between lambda and the substantive predictors.</p>
 <div class="cell">
@@ -2945,7 +2942,7 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/viz-raw-event-times-multilevel-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/viz-raw-event-times-multilevel-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Histogram of times-to-event, including employment outcomes and censorings.</figcaption><p></p>
 </figure>
 </div>
@@ -2990,7 +2987,7 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-50-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-50-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Employment and censoring times for all simulated clusters. Each row is a cluster. Each dot is a program graduate.</figcaption><p></p>
 </figure>
 </div>
@@ -3033,7 +3030,7 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-51-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-51-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Cluster-specific Kaplan-Meier curves for simulated data. There is a lot of variation between clusters.</figcaption><p></p>
 </figure>
 </div>
@@ -3140,7 +3137,7 @@ m_{6}
 <span id="cb53-95"><a href="#cb53-95" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"&lt;---- Smaller Clusters                                           Bigger Clusters ----&gt;"</span>  <span class="co"># Custom x-axis title</span></span>
 <span id="cb53-96"><a href="#cb53-96" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb53-97"><a href="#cb53-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Survival Time Ratio"</span>) <span class="sc">+</span></span>
-<span id="cb53-98"><a href="#cb53-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb53-98"><a href="#cb53-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_nice</span>() <span class="sc">+</span></span>
 <span id="cb53-99"><a href="#cb53-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
 <span id="cb53-100"><a href="#cb53-100" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"bottom"</span>,</span>
 <span id="cb53-101"><a href="#cb53-101" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.border =</span> <span class="fu">element_blank</span>()</span>
@@ -3152,12 +3149,15 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/secret-weapon-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/secret-weapon-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Andrew Gelman’s ‘Secret Weapon’ plot showing variation between cluster-specific parameter estimates for regression coefficients. The dashed line shows the true simulation mean effect.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
+</section>
+<section id="fitting-the-stan-model-1" class="level3" data-number="5.7.2">
+<h3 data-number="5.7.2" class="anchored" data-anchor-id="fitting-the-stan-model-1"><span class="header-section-number">5.7.2</span> Fitting the Stan Model</h3>
 <p>Now we can update our model, working closely from a brms-generated Stan model with the desired multilevel structure:</p>
 <ul>
 <li><strong>Functions block:</strong> At the top of the model create a new <code>functions{}</code> block, and copy the <code>scale_r_cor</code> function from the brms-generated Stan code;</li>
@@ -3450,6 +3450,9 @@ m_{6}
 <span id="cb55-71"><a href="#cb55-71" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(fit, <span class="st">"fits/b07.05.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+</section>
+<section id="posterior-checks-1" class="level3" data-number="5.7.3">
+<h3 data-number="5.7.3" class="anchored" data-anchor-id="posterior-checks-1"><span class="header-section-number">5.7.3</span> Posterior Checks</h3>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3562,7 +3565,7 @@ m_{6}
 <span id="cb57-78"><a href="#cb57-78" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-56-1.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-56-1.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
@@ -3587,7 +3590,7 @@ m_{6}
 <span id="cb58-19"><a href="#cb58-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-56-2.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-56-2.png" class="img-fluid" width="672"></p>
 </div>
 <details>
 <summary>Code</summary>
@@ -3611,7 +3614,7 @@ m_{6}
 <span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>.variable, <span class="at">scales =</span> <span class="st">"free_x"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-56-3.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-56-3.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <div class="cell">
@@ -3690,7 +3693,7 @@ m_{6}
 <pre><code>Warning: Removed 96000 rows containing missing values (`geom_vline()`).</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-58-1.png" class="img-fluid" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-58-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>The MCMCM diagnostics all look good:</p>
@@ -3945,19 +3948,15 @@ m_{6}
 <span id="cb66-99"><a href="#cb66-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"&lt;---- Smaller Clusters                              Bigger Clusters ----&gt;"</span>  </span>
 <span id="cb66-100"><a href="#cb66-100" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb66-101"><a href="#cb66-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Survival Time Ratio"</span>) <span class="sc">+</span></span>
-<span id="cb66-102"><a href="#cb66-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
-<span id="cb66-103"><a href="#cb66-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb66-104"><a href="#cb66-104" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">"bottom"</span>,</span>
-<span id="cb66-105"><a href="#cb66-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb66-106"><a href="#cb66-106" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.border =</span> <span class="fu">element_blank</span>()</span>
-<span id="cb66-107"><a href="#cb66-107" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb66-108"><a href="#cb66-108" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Survival Time Ratio"</span>) <span class="sc">+</span></span>
-<span id="cb66-109"><a href="#cb66-109" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> term, <span class="at">scales =</span> <span class="fu">c</span>(<span class="st">"free"</span>), <span class="at">ncol =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb66-102"><a href="#cb66-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_nice</span>() <span class="sc">+</span></span>
+<span id="cb66-103"><a href="#cb66-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"bottom"</span>) <span class="sc">+</span></span>
+<span id="cb66-104"><a href="#cb66-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Survival Time Ratio"</span>) <span class="sc">+</span></span>
+<span id="cb66-105"><a href="#cb66-105" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> term, <span class="at">scales =</span> <span class="fu">c</span>(<span class="st">"free"</span>), <span class="at">ncol =</span> <span class="dv">1</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-62-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-62-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Shrinkage on display: posterior means and compatible intervals (purple) are more stable and accurate than unpooled estimates and asymptotic compatible intervals (grey) when compared to true simulated effects (violet rings). The dashed line shows the true simulation mean effect.</figcaption><p></p>
 </figure>
 </div>
@@ -4041,16 +4040,16 @@ m_{6}
 <span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
 <span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data =</span> dplt <span class="sc">|&gt;</span> <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"truncated"</span>), </span>
-<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">group =</span> .draw, <span class="at">fill =</span> <span class="st">"Truncated posterior draws"</span>), <span class="at">colour =</span> <span class="fu">alpha</span>(clrs<span class="sc">$</span>red, .<span class="dv">5</span>)) <span class="sc">+</span></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">group =</span> .draw, <span class="at">colour =</span> <span class="st">"Truncated posterior draws"</span>)) <span class="sc">+</span></span>
 <span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data =</span> dplt <span class="sc">|&gt;</span> <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"non-truncated"</span>), </span>
-<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">group =</span> .draw, <span class="at">fill =</span> <span class="st">"Non-truncated posterior draws"</span>), <span class="at">colour =</span> <span class="fu">alpha</span>(clrs<span class="sc">$</span>blue, .<span class="dv">5</span>)) <span class="sc">+</span> </span>
+<span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> .value, <span class="at">group =</span> .draw, <span class="at">colour =</span> <span class="st">"Non-truncated posterior draws"</span>)) <span class="sc">+</span> </span>
 <span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data =</span> fake_dat <span class="sc">|&gt;</span> <span class="fu">filter</span>(censored <span class="sc">==</span> <span class="dv">0</span>), </span>
-<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">fill =</span> <span class="st">"Data"</span>), <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
-<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> time), <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(</span>
 <span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">name=</span><span class="st">''</span>,</span>
 <span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks=</span><span class="fu">c</span>(<span class="st">'Non-truncated posterior draws'</span>, <span class="st">'Truncated posterior draws'</span>, <span class="st">'Data'</span>),</span>
-<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">values=</span><span class="fu">c</span>(<span class="st">'Non-truncated posterior draws'</span> <span class="ot">=</span> <span class="fu">alpha</span>(clrs<span class="sc">$</span>blue, <span class="dv">0</span>), </span>
-<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>             <span class="st">'Truncated posterior draws'</span> <span class="ot">=</span> <span class="fu">alpha</span>(clrs<span class="sc">$</span>red, <span class="dv">0</span>), </span>
+<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">values=</span><span class="fu">c</span>(<span class="st">'Non-truncated posterior draws'</span> <span class="ot">=</span> <span class="fu">alpha</span>(clrs<span class="sc">$</span>blue, .<span class="dv">5</span>), </span>
+<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>             <span class="st">'Truncated posterior draws'</span> <span class="ot">=</span> <span class="fu">alpha</span>(clrs<span class="sc">$</span>red, .<span class="dv">5</span>), </span>
 <span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>             <span class="st">'Data'</span> <span class="ot">=</span> <span class="fu">alpha</span>(<span class="st">'black'</span>, <span class="dv">0</span>))</span>
 <span id="cb70-16"><a href="#cb70-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb70-17"><a href="#cb70-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">365</span>), <span class="at">expand =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>)) <span class="sc">+</span></span>
@@ -4063,7 +4062,7 @@ m_{6}
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="bayesian-cfa_files/figure-html/unnamed-chunk-67-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regression-with-latent-predictors_files/figure-html/unnamed-chunk-67-1.png" class="img-fluid figure-img" width="672"></p>
 <p></p><figcaption class="figure-caption">Densities of 20 draws from the posterior predictive distribution (blue) against the distribution of the data (black). The model expects slower times-to-employment overall than the distribution in the data.</figcaption><p></p>
 </figure>
 </div>
@@ -4100,6 +4099,7 @@ McElreath, Richard; 2020. <em>Statistical Rethinking: A Bayesian Course with Exa
 Singer, Judith D., and John B. Willett. 2003. <em>Applied Longitudinal Data Analysis - Modeling Change and Event Occurrence</em>. Oxford University Press.
 </div>
 </div>
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -4203,8 +4203,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./simulating-cfa-data.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Simulating CFA data</span></span>
+      <a href="./measurement-invariance-testing.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">MTMM and Error Structure Modelling</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

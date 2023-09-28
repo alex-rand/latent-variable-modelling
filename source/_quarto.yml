@@ -14,21 +14,14 @@ book:
         - modification-indexes.qmd
         - mtmm-and-error-structure-modelling.qmd
         - measurement-invariance-testing.qmd
-        - simulating-cfa-data.qmd
-        - bayesian-cfa.qmd
+        - regression-with-latent-predictors.qmd
     - part: sem-intro.qmd
-      chapters:
-        - latent-variable-regression.qmd
     
 bibliography: references.bib
 
 format:
   html:
-    theme: cosmo
+    theme: pulse
     code-fold: true
     code-summary: "Code"
-  pdf:
     documentclass: scrreprt
-
-
-

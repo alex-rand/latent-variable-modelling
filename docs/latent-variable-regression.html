@@ -214,7 +214,7 @@ div.csl-indent {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./bayesian-cfa.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian CFA</span></a>
+  <a href="./regression-with-latent-predictors.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bayesian Multilevel Survival Analysis with Latent Predictors</span></a>
   </div>
 </li>
       </ul>
@@ -281,9 +281,12 @@ div.csl-indent {
 <section id="background-and-data-simulation" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="background-and-data-simulation"><span class="header-section-number">7.1</span> Background and Data Simulation</h2>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ordinal)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>For this example we’ll simulate some data related to the subject matter of <span class="citation" data-cites="Kankaraš-et-all-2019">Kankaraš, Feron, and Renbarger (<a href="#ref-Kankaraš-et-all-2019" role="doc-biblioref">2019</a>)</span>. Specifically, we’ll simulate some data in which latent social and emotional skills predict time-to-employment to varying degrees. More specifically, here is what the dataset should contain:</p>
 <ol type="1">
@@ -298,6 +301,8 @@ div.csl-indent {
 <p>One improvement we can make on the traitional factor analyses we looked at in previous sections is that we can specify our measurement model with ordinal relationships between the factor and its measurements. This makes sense given that the measurements are likert, andd it doesn’t make sense to assume likert variables move linearly.</p>
 <p>It would be most efficient to just define a function that creates the dataset we need based on various parameters. But I’ll instead go step-by-step and explain each choice as we go. First we can define the dataframe and do the easy work of adding the variables that don’t depend on any of the others:</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">=</span> <span class="dv">60000</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -313,10 +318,13 @@ div.csl-indent {
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication =</span> <span class="fu">runif</span>(n, <span class="dv">0</span>, <span class="dv">100</span>)</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Now we’ll simulate the likert-scale ‘measurements’ of the latent variables we defined above. The first step will be to define the threshold coefficients, or what <span class="citation" data-cites="McElreath2020">McElreath (<a href="#ref-McElreath2020" role="doc-biblioref">2020</a>)</span> calls ‘cutpoints’. These are just the intercepts of the linear models that define each of the cumulative probabilities via a logit link. Another way of thinking about these is that they are the logit of each cumulative probability when the substantive predictors in the model are all equal to 0.</p>
 <p>So how shall we choose these for our example? We can do whatever we want. Let’s imagine a situation where the people grading these participants have a tendency to give out lots of 3s and 5s, and relatively very few of the other options. Since we’ve defined our latent variables on an arbitrary scale from 1-100, we can define the threshold coefficients to slice up that scale to give us the pattern we want. We can also define some ‘true’ factor loadings that determine the degree to which the measurements are actually influenced by the underlying latent variable. Usually in a real-world context we find that some measurements are tighter than others.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the threshold coefficients</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dv">5</span>,  <span class="co"># You get a 1 if your true 'latent' score is &lt;5 and all predictors are 0. </span></span>
@@ -334,9 +342,12 @@ div.csl-indent {
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span>,</span>
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span></span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Now we can use those cutpoints to generate some data. Here I use a slightly modified version of the simulation approach for ordinal outcomes given in <a href="https://discourse.mc-stan.org/t/how-to-simulate-monotonic-effects-with-an-ordinal-outcome/28705/2">this STAN forum thread</a> by <a href="https://scholar.google.com/citations?user=09SyjLoAAAAJ&amp;hl=en">Conor Goold</a>.</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a function to generate a single ordinal data point</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># @K number of ordinal categories</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># @theta vector of latent cutpoints</span></span>
@@ -380,9 +391,12 @@ div.csl-indent {
 <span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">communication_m5 =</span> <span class="fu">gen_ordinal_measurements</span>(<span class="dv">5</span>, theta, communication, loadings[<span class="dv">5</span>])</span>
 <span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>We can do some quick visualization to make sure the data have that ‘mostly 2s and 5s’ pattern we were going for, but that it varies slightly such that measured variables with higher loadings tend to have more 3s and 4s than variables with lower loadings (I think?)</p>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">|&gt;</span> </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">'^communication'</span>)) <span class="sc">|&gt;</span></span>
@@ -392,9 +406,12 @@ div.csl-indent {
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> communication, <span class="at">y =</span> measurement)) <span class="sc">+</span> </span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">facet_wrap</span>(<span class="sc">~</span>var)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <p><img src="latent-variable-regression_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model<span class="ot">=</span><span class="st">'communication ~ communication_m1+communication_m2+communication_m3+communication_m4+communication_m5'</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># lavaan test</span></span>
@@ -406,6 +423,7 @@ div.csl-indent {
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"communication_m5"</span></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    )   </span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in lav_data_full(data = data, group = group, cluster = cluster, : lavaan
 WARNING: exogenous variable(s) declared as ordered in data: communication_m1
@@ -420,9 +438,12 @@ Warning in lav_partable_check(lavpartable, categorical =
 lavoptions$.categorical, : lavaan WARNING: parameter table does not contain
 thresholds</code></pre>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model.ord <span class="sc">|&gt;</span> <span class="fu">summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
-<pre><code>lavaan 0.6.16 ended normally after 13 iterations
+<pre><code>lavaan 0.6.16 ended normally after 17 iterations
 
   Estimator                                       DWLS
   Optimization method                           NLMINB
@@ -444,19 +465,19 @@ Parameter Estimates:
 Regressions:
                    Estimate  Std.Err  z-value  P(&gt;|z|)
   communication ~                                     
-    communicatn_m1    4.030    0.199   20.274    0.000
-    communicatn_m2    3.437    0.200   17.201    0.000
-    communicatn_m3    3.934    0.199   19.733    0.000
-    communicatn_m4    4.081    0.198   20.635    0.000
-    communicatn_m5    3.395    0.198   17.161    0.000
+    communicatn_m1    3.734    0.196   19.061    0.000
+    communicatn_m2    3.673    0.196   18.752    0.000
+    communicatn_m3    3.509    0.198   17.687    0.000
+    communicatn_m4    3.795    0.197   19.255    0.000
+    communicatn_m5    4.052    0.197   20.562    0.000
 
 Intercepts:
                    Estimate  Std.Err  z-value  P(&gt;|z|)
-   .communication   -10.446    0.112  -93.221    0.000
+   .communication   -10.051    0.113  -89.220    0.000
 
 Variances:
                    Estimate  Std.Err  z-value  P(&gt;|z|)
-   .communication   114.061    0.436  261.324    0.000</code></pre>
+   .communication   113.310    0.433  261.880    0.000</code></pre>
 </div>
 </div>
 <p>Lastly, we’ll simulate the outcome variables for survival analysis. We’ll use a Weibull likelihood. This is a popular choice for parametric survival analysis because it can fit a pretty flexible monotonic baseline hazard function, and can be interpretted as both a proportional hazards and an acceleration failure time model, which gives us flexibility in how we communicate results and frees us from the burden of needing to check the proportional hazards assumption.</p>
@@ -465,22 +486,27 @@ Variances:
 
 </div>
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">clm</span>(<span class="fu">factor</span>(communication_m1) <span class="sc">~</span> communication, <span class="at">data =</span> dat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>formula: factor(communication_m1) ~ communication
 data:    dat
 
  link  threshold nobs  logLik   AIC      niter max.grad cond.H 
- logit flexible  60000 -7820.11 15650.23 12(0) 1.54e-10 8.0e+06
+ logit flexible  60000 -7823.86 15657.73 12(0) 5.56e-10 8.2e+06
 
 Coefficients:
 communication 
-        1.001 
+        1.004 
 
 Threshold coefficients:
-  1|2   2|3   3|4   4|5 
- 5.10 50.05 60.04 65.04 </code></pre>
+   1|2    2|3    3|4    4|5 
+ 5.001 50.185 60.303 65.290 </code></pre>
 </div>
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">|&gt;</span> </span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a> <span class="co">#   filter(adaptability_m1 %in% c(1, 2, 3)) |&gt;</span></span>
@@ -488,15 +514,16 @@ Threshold coefficients:
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(communication_m1) <span class="sc">|&gt;</span></span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 3
   communication_m1     n      p
              &lt;dbl&gt; &lt;int&gt;  &lt;dbl&gt;
-1                1  3134 0.0522
-2                2 26966 0.449 
-3                3  5983 0.0997
-4                4  2991 0.0498
-5                5 20926 0.349 </code></pre>
+1                1  2999 0.0500
+2                2 26795 0.447 
+3                3  5979 0.0996
+4                4  3080 0.0513
+5                5 21147 0.352 </code></pre>
 </div>
 </div>
 <p>The idea is that if the latent variables predict time-to-employment then that is consistent with them being well-measured, etc.</p>
