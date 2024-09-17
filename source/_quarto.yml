@@ -16,6 +16,7 @@ book:
         - measurement-invariance-testing.qmd
         - regression-with-latent-predictors.qmd
     - part: sem-intro.qmd
+    - part: hmm-worked-example.qmd
     
 bibliography: references.bib
 
