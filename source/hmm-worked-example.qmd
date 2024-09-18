@@ -79,7 +79,7 @@ He includes 3 possible emission states:
 
 We'll want the model to be such that the probability of transition between each pair of these states is modelled using heterogeneity and duration dependence, not just the probability of transitioning out of unemployment, as some previous models have apparently done. This is smart because yeah maybe your most recent duration of unemployment predicts your probability of _losing_ your next job, not just your probability of _getting_ it in the first place. Same goes for transitioning to-and-from nonparticipation. 
 
-### Dumb 'canonical' model
+### Dumb 'canonical' 'homogenous' model
 He starts by discussing the basic 'canonical' model of labour force transitions that doesn't invoke latent states. Basically the 'canonical' thing is to just make a table of the cumulative empirical transitions (like basically a discrete cumulative incidence curve) relative to the first timepoint of the observed person, for everyone in each of the 3 possible emission states at their t=0. Actually, do this separately for each new cohort that enters the survey, then take the average across all cohorts. The 'canonical' model just uses these as your transition probabilities. But yeah obviously this assumes everyone is the same. We can present this in matrix notation where, in survival-analysis fashion, the 'hazard' of transitioning from one state to another just accumulates as you move thru time:
 
 $$
@@ -92,12 +92,33 @@ $$
 \lambda_{E_t, E_{t+\tau}} & \lambda_{E_t, U_{t+\tau}} & \lambda_{E_t, O_{t+\tau}} \\
 \lambda_{U_t, E_{t+\tau}} & \lambda_{U_t, U_{t+\tau}} & \lambda_{U_t, O_{t+\tau}} \\
 \lambda_{O_t, E_{t+\tau}} & \lambda_{O_t, U_{t+\tau}} & \lambda_{O_t, O_{t+\tau}}
-\end{array}
+\end{array} = C^\tau
 $$
 
-Apparently this model does a really bad job capturing what we see in the data, which makes a lot of sense to me because it is really dumb. At the very least we would want to model transition probabilities as a function of peoples' _observed_ demographic charachteristics. And also we would like to model them as a function of _unobserved_ characteristics like 'human capital' etc.
+Apparently this model does a really bad job capturing what we see in the data. Specifically, it seems to way overestimate the probabilities of _all_ transitions. Like empirically, the model thinks you're super unlikely to stay in the state you're in for more than a few periodds. It makes a lot of sense to me this model fails to replicate actual data because this model is really dumb. At the very least we would want to model transition probabilities as a function of peoples' _observed_ demographic charachteristics. And also we would like to model them as a function of _unobserved_ characteristics like 'human capital' etc.
 
-### Slightly better but still dumb model
+### Slightly better 'using observable covariates' model 
+
+A basic way to make the model less dumb is to model the transition probabilities using some measured covariates. The U.S. LFS includes some detailed info about the person's current status:
+
+- For employed people: 3 typs of person, being 'full time', 'part time for economic reasons', and 'full time for non-economic reasons'.
+- For unemployed people: 6 different levels of why you are unemployed right now, including 'laid-off', 'fired', 'quit', 'temp job ended', 'have only just reentered the labour market', and 'am new to the labour market'. And also 4 categorical buckets for how long you've been unemployed for. So we end up with 6*4 = 24 unique types of unemployed person.
+- For out-of-market people: two types of person, being 'marginally attached' if you've looked for a job at least once in the last four weeks. Otherwise just plain-old 'non-market'.
+
+So we end up with a total of 3 + 24 + 2 = 29 possible types of person in the dataset, and so 29*29 = 841 transition probabilities. That's a lot! But also notice a bunch of them are literally impossible, like you can't go from any of the 3 'employed' statuses to any of the 'unemployed since' buckets other than the shortest possible one. That sort of thing. Also, we get one parameter per row for free, because of the simplex constraint. So he ends up with not 841 but only 212 transition probabilities to estimate. This model is a bit better than the previous one, but still does a bad job replicating the empirical transition probabilities. 
+
+### 'Actually Good' Hidden Markov Model
+
+- Discrete time;
+- 3 possible emissions, which are labour market statuses: `E = employed`, `U = unemployed`, `O = out-of-market`.
+- Some latent 'attachment styles'. How many? He fit the model a bunch of times and AIC said to use 10 latent states. But then he played around and found that 'Monte Carlo Simulations of the model show that parameters are not stable in the case of 10 unobserved states'. So he took away one of the states, which seemed more 'stable' and which ihho represent _"economically meaningful unobserved labor market attachment"_
+
+Interestingly, he _doesn't_ use observed predictors to model the latent transition probabilities, nor the state-conditioned emission probabilities (nor the initial state distribution). But it seems like this would be better?? He defensively justifies: _"This allows me to estimate the model parameters with a dataset that has a relatively short time period and a large cross section, such as the Current Population Survey."_
+
+
+
+
+
 
 
 
