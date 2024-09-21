@@ -51,33 +51,16 @@ Most labour market transition models assume:
 But these models fail to generate sequences that look like the data we actualy have. Here are a few pieces of simple background knowledge the model is ignoring:
 
 1. A person's transition probabilities obviously depend on who that person is/what's going on in their life;
-2. Perhaps most importantly, a person's transition probabilities obviously depend on their labour force history: _"Long-term unemployed workers have a significantly lower chance of holding a full-time job one year later than do their short-term counterparts. An unemployment spell begets future unemployment, and returning to employment does not fully reset the clock for unemployed workers... Most prominently, the
-probability of finding a job declines with the duration of unemployment because of human capital depreciation, employer discrimination in the hiring process, and lower search effort due to discouragement."_
+2. Perhaps most importantly, a person's transition probabilities obviously depend on their labour force history: _"Long-term unemployed workers have a significantly lower chance of holding a full-time job one year later than do their short-term counterparts. An unemployment spell begets future unemployment, and returning to employment does not fully reset the clock for unemployed workers. Most prominently, the probability of finding a job declines with the duration of unemployment because of human capital depreciation, employer discrimination in the hiring process, and lower search effort due to discouragement"_
 
 ## The solution
 
 Let's do a model that includes **a latent concept of 'time-varying labour market attachement'**. We can imagine that a person's latent 'labour market attachment' captures all the unobserved things that influence a person's timepoint-specific transition probabilities. Why do this?
 
-1. **Heterogeneity between people.** We know empirically that even people with the same measured labour force status are not homogenous in their transition probabilities, and this 'latent variable' approach is one way of capturing this heterogeneity, and capturing it in a way that is consistent with our background knowledge [although still seems pretty parsimonious from a background-knowledge perspective imho].
+1. **Heterogeneity between people.** We know empirically that even people with the same measured labour force status are not homogenous in their probabilities of moving between observed states, and this 'latent variable' approach is one way of capturing this heterogeneity, and capturing it in a way that is consistent with our background knowledge that yes, people are different along unmeasured variables. 
 2. **Duration dependence**. We know empiricaly that peoples' transition probabilities are dependent on their employment histories, i.e. how long they've been unemployed for. The latent variable approach will give us a way of capturing that [I'm not sure how yet].
 
 ## Other things people have tried
-
-Some people did [a cool HMM model to corect for classification error](https://www.aeaweb.org/articles?id=10.1257/aer.103.2.1054), where people misreport their actually labour force status. I'd like to learn more about that. Apparently the present model nests that model -- we would just need to allow for exactly one latent state per possible emission. 
-
-## The data
-
-He uses the "full panel of the Current Population Survey". I think the LFS is the closest Canadian equivalent. 
-
-## The model
-
-He includes 3 possible emission states: 
-
-1. Employed;
-2. Unemployed;
-3. Nonparticipating.
-
-We'll want the model to be such that the probability of transition between each pair of these states is modelled using heterogeneity and duration dependence, not just the probability of transitioning out of unemployment, as some previous models have apparently done. This is smart because yeah maybe your most recent duration of unemployment predicts your probability of _losing_ your next job, not just your probability of _getting_ it in the first place. Same goes for transitioning to-and-from nonparticipation. 
 
 ### Dumb 'canonical' 'homogenous' model
 He starts by discussing the basic 'canonical' model of labour force transitions that doesn't invoke latent states. Basically the 'canonical' thing is to just make a table of the cumulative empirical transitions (like basically a discrete cumulative incidence curve) relative to the first timepoint of the observed person, for everyone in each of the 3 possible emission states at their t=0. Actually, do this separately for each new cohort that enters the survey, then take the average across all cohorts. The 'canonical' model just uses these as your transition probabilities. But yeah obviously this assumes everyone is the same. We can present this in matrix notation where, in survival-analysis fashion, the 'hazard' of transitioning from one state to another just accumulates as you move thru time:
@@ -97,6 +80,501 @@ $$
 
 Apparently this model does a really bad job capturing what we see in the data. Specifically, it seems to way overestimate the probabilities of _all_ transitions. Like empirically, the model thinks you're super unlikely to stay in the state you're in for more than a few periodds. It makes a lot of sense to me this model fails to replicate actual data because this model is really dumb. At the very least we would want to model transition probabilities as a function of peoples' _observed_ demographic charachteristics. And also we would like to model them as a function of _unobserved_ characteristics like 'human capital' etc.
 
+### Fitting with the LFS
+
+```{r}
+
+# Function to recode the dataset based on the codebook
+recode_lfs <- function(dat) {
+
+  res <- dat |>
+    mutate(
+      # survmnth
+      survmnth = case_when(
+        survmnth == "01" ~ "January",
+        survmnth == "02" ~ "February",
+        survmnth == "03" ~ "March",
+        survmnth == "04" ~ "April",
+        survmnth == "05" ~ "May",
+        survmnth == "06" ~ "June",
+        survmnth == "07" ~ "July",
+        survmnth == "08" ~ "August",
+        survmnth == "09" ~ "September",
+        survmnth == "10" ~ "October",
+        survmnth == "11" ~ "November",
+        survmnth == "12" ~ "December"
+      ),
+      
+      # lfsstat
+      lfsstat = case_when(
+        lfsstat == 1 ~ "Employed, at work",
+        lfsstat == 2 ~ "Employed, absent from work",
+        lfsstat == 3 ~ "Unemployed",
+        lfsstat == 4 ~ "Not in labour force"
+      ),
+      
+      # prov
+      prov = case_when(
+        prov == 10 ~ "Newfoundland and Labrador",
+        prov == 11 ~ "Prince Edward Island",
+        prov == 12 ~ "Nova Scotia",
+        prov == 13 ~ "New Brunswick",
+        prov == 24 ~ "Quebec",
+        prov == 35 ~ "Ontario",
+        prov == 46 ~ "Manitoba",
+        prov == 47 ~ "Saskatchewan",
+        prov == 48 ~ "Alberta",
+        prov == 59 ~ "British Columbia"
+      ),
+      
+      # cma
+      cma = case_when(
+        cma == 1 ~ "Québec",
+        cma == 2 ~ "Montréal",
+        cma == 3 ~ "Ottawa–Gatineau (Ontario part)",
+        cma == 4 ~ "Toronto",
+        cma == 5 ~ "Hamilton",
+        cma == 6 ~ "Winnipeg",
+        cma == 7 ~ "Calgary",
+        cma == 8 ~ "Edmonton",
+        cma == 9 ~ "Vancouver",
+        cma == 0 ~ "Other CMA or non-CMA"
+      ),
+      
+      # age_12
+      age_12 = case_when(
+        age_12 == 1 ~ "15 to 19 years",
+        age_12 == 2 ~ "20 to 24 years",
+        age_12 == 3 ~ "25 to 29 years",
+        age_12 == 4 ~ "30 to 34 years",
+        age_12 == 5 ~ "35 to 39 years",
+        age_12 == 6 ~ "40 to 44 years",
+        age_12 == 7 ~ "45 to 49 years",
+        age_12 == 8 ~ "50 to 54 years",
+        age_12 == 9 ~ "55 to 59 years",
+        age_12 == 10 ~ "60 to 64 years",
+        age_12 == 11 ~ "65 to 69 years",
+        age_12 == 12 ~ "70 and over"
+      ),
+      
+      # age_6
+      age_6 = case_when(
+        age_6 == 1 ~ "15 to 16 years",
+        age_6 == 2 ~ "17 to 19 years",
+        age_6 == 3 ~ "20 to 21 years",
+        age_6 == 4 ~ "22 to 24 years",
+        age_6 == 5 ~ "25 to 26 years",
+        age_6 == 6 ~ "27 to 29 years"
+      ),
+      
+      # sex
+      sex = case_when(
+        sex == 1 ~ "Male",
+        sex == 2 ~ "Female"
+      ),
+      
+      # marstat
+      marstat = case_when(
+        marstat == 1 ~ "Married",
+        marstat == 2 ~ "Living in common-law",
+        marstat == 3 ~ "Widowed",
+        marstat == 4 ~ "Separated",
+        marstat == 5 ~ "Divorced",
+        marstat == 6 ~ "Single, never married"
+      ),
+      
+      # educ
+      educ = case_when(
+        educ == 0 ~ "0 to 8 years",
+        educ == 1 ~ "Some high school",
+        educ == 2 ~ "High school graduate",
+        educ == 3 ~ "Some postsecondary",
+        educ == 4 ~ "Postsecondary certificate or diploma",
+        educ == 5 ~ "Bachelor's degree",
+        educ == 6 ~ "Above bachelor's degree"
+      ),
+      
+      # mjh
+      mjh = case_when(
+        mjh == 1 ~ "Single jobholder, including job changers",
+        mjh == 2 ~ "Multiple jobholder"
+      ),
+      
+      # everwork
+      everwork = case_when(
+        everwork == 1 ~ "Yes, within last year",
+        everwork == 2 ~ "Yes, more than 1 year ago",
+        everwork == 3 ~ "No, never worked"
+      ),
+      
+      # ftptlast
+      ftptlast = case_when(
+        ftptlast == 1 ~ "Full-time (30 hours or more)",
+        ftptlast == 2 ~ "Part-time (1 to 29 hours)"
+      ),
+      
+      # cowmain
+      cowmain = case_when(
+        cowmain == 1 ~ "Public sector employees",
+        cowmain == 2 ~ "Private sector employees",
+        cowmain == 3 ~ "Self-employed incorporated, with paid help",
+        cowmain == 4 ~ "Self-employed incorporated, no paid help",
+        cowmain == 5 ~ "Self-employed unincorporated, with paid help",
+        cowmain == 6 ~ "Self-employed unincorporated, no paid help",
+        cowmain == 7 ~ "Unpaid family worker"
+      ),
+      
+      # immig
+      immig = case_when(
+        immig == 1 ~ "Immigrant, landed 10 or less years earlier",
+        immig == 2 ~ "Immigrant, landed more than 10 years earlier",
+        immig == 3 ~ "Non-immigrant"
+      ),
+      
+      # naics_21
+      naics_21 = case_when(
+        naics_21 == 1 ~ "Agriculture",
+        naics_21 == 2 ~ "Forestry and logging and support activities for forestry",
+        naics_21 == 3 ~ "Fishing, hunting and trapping",
+        naics_21 == 4 ~ "Mining, quarrying, and oil and gas extraction",
+        naics_21 == 5 ~ "Utilities",
+        naics_21 == 6 ~ "Construction",
+        naics_21 == 7 ~ "Manufacturing - durable goods",
+        naics_21 == 8 ~ "Manufacturing - non-durable goods",
+        naics_21 == 9 ~ "Wholesale trade",
+        naics_21 == 10 ~ "Retail trade",
+        naics_21 == 11 ~ "Transportation and warehousing",
+        naics_21 == 12 ~ "Finance and insurance",
+        naics_21 == 13 ~ "Real estate and rental and leasing",
+        naics_21 == 14 ~ "Professional, scientific and technical services",
+        naics_21 == 15 ~ "Business, building and other support services",
+        naics_21 == 16 ~ "Educational services",
+        naics_21 == 17 ~ "Health care and social assistance",
+        naics_21 == 18 ~ "Information, culture and recreation",
+        naics_21 == 19 ~ "Accommodation and food services",
+        naics_21 == 20 ~ "Other services (except public administration)",
+        naics_21 == 21 ~ "Public administration"
+      ),
+      
+      # noc_10
+      noc_10 = case_when(
+        noc_10 == 1 ~ "Management occupations",
+        noc_10 == 2 ~ "Business, finance and administration occupations, except management",
+        noc_10 == 3 ~ "Natural and applied sciences and related occupations, except management",
+        noc_10 == 4 ~ "Health occupations, except management",
+        noc_10 == 5 ~ "Occupations in education, law and social, community and government services, except management",
+        noc_10 == 6 ~ "Occupations in art, culture, recreation and sport, except management",
+        noc_10 == 7 ~ "Sales and service occupations, except management",
+        noc_10 == 8 ~ "Trades, transport and equipment operators and related occupations, except management",
+        noc_10 == 9 ~ "Natural resources, agriculture and related production occupations, except management",
+        noc_10 == 10 ~ "Occupations in manufacturing and utilities, except management"
+      ),
+
+      # noc_43
+      noc_43 = case_when(
+        noc_43 == 1 ~ "Legislative and senior management occupations",
+        noc_43 == 2 ~ "Specialized middle management occupations",
+        noc_43 == 3 ~ "Middle management occupations in retail and wholesale trade and customer services",
+        noc_43 == 4 ~ "Middle management occupations in trades, transportation, production and utilities",
+        noc_43 == 5 ~ "Professional occupations in finance",
+        noc_43 == 6 ~ "Professional occupations in business",
+        noc_43 == 7 ~ "Administrative and financial supervisors and specialized administrative occupations",
+        noc_43 == 8 ~ "Administrative occupations and transportation logistics occupations",
+        noc_43 == 9 ~ "Administrative and financial support and supply chain logistics occupations",
+        noc_43 == 10 ~ "Professional occupations in natural sciences",
+        noc_43 == 11 ~ "Professional occupations in applied sciences (except engineering)",
+        noc_43 == 12 ~ "Professional occupations in engineering",
+        noc_43 == 13 ~ "Technical occupations related to natural and applied sciences",
+        noc_43 == 14 ~ "Health treating and consultation services professionals",
+        noc_43 == 15 ~ "Therapy and assessment professionals",
+        noc_43 == 16 ~ "Nursing and allied health professionals",
+        noc_43 == 17 ~ "Technical occupations in health",
+        noc_43 == 18 ~ "Assisting occupations in support of health services",
+        noc_43 == 19 ~ "Professional occupations in law",
+        noc_43 == 20 ~ "Professional occupations in education services",
+        noc_43 == 21 ~ "Professional occupations in social and community services",
+        noc_43 == 22 ~ "Professional occupations in government services",
+        noc_43 == 23 ~ "Occupations in front-line public protection services",
+        noc_43 == 24 ~ "Paraprofessional occupations in legal, social, community and education services",
+        noc_43 == 25 ~ "Assisting occupations in education and in legal and public protection",
+        noc_43 == 26 ~ "Care providers and public protection support occupations and student monitors, crossing guards and related occupations",
+        noc_43 == 27 ~ "Professional occupations in art and culture",
+        noc_43 == 28 ~ "Technical occupations in art, culture and sport",
+        noc_43 == 29 ~ "Occupations in art, culture and sport",
+        noc_43 == 30 ~ "Support occupations in art, culture and sport",
+        noc_43 == 31 ~ "Retail sales and service supervisors and specialized occupations in sales and services",
+        noc_43 == 32 ~ "Occupations in sales and services",
+        noc_43 == 33 ~ "Sales and service representatives and other customer and personal services occupations",
+        noc_43 == 34 ~ "Sales and service support occupations",
+        noc_43 == 35 ~ "Technical trades and transportation officers and controllers",
+        noc_43 == 36 ~ "General trades",
+        noc_43 == 37 ~ "Mail and message distribution, other transport equipment operators and related maintenance workers",
+        noc_43 == 38 ~ "Helpers and labourers and other transport drivers, operators and labourers",
+        noc_43 == 39 ~ "Supervisors and occupations in natural resources, agriculture and related production",
+        noc_43 == 40 ~ "Workers and labourers in natural resources, agriculture and related production",
+        noc_43 == 41 ~ "Supervisors, central control and process operators in processing, manufacturing and utilities and aircraft assemblers and inspectors",
+        noc_43 == 42 ~ "Machine operators, assemblers and inspectors in processing, manufacturing and printing",
+        noc_43 == 43 ~ "Labourers in processing, manufacturing and utilities"
+      ),
+      
+      # yabsent
+      yabsent = case_when(
+        yabsent == 0 ~ "Other reasons",
+        yabsent == 1 ~ "Own illness or disability",
+        yabsent == 2 ~ "Personal or family responsibilities",
+        yabsent == 3 ~ "Vacation"
+      ),
+      
+      # payaway
+      payaway = case_when(
+        payaway == 1 ~ "Yes",
+        payaway == 2 ~ "No"
+      ),
+      
+      # ftptmain
+      ftptmain = case_when(
+        ftptmain == 1 ~ "Full-time",
+        ftptmain == 2 ~ "Part-time"
+      ),
+      
+      # yaway
+      yaway = case_when(
+        yaway == 0 ~ "Other reasons",
+        yaway == 1 ~ "Own illness or disability",
+        yaway == 2 ~ "Personal or family responsibilities",
+        yaway == 3 ~ "Vacation or civic holiday",
+        yaway == 4 ~ "Working short-time"
+      ),
+      
+      # whypt
+      whypt = case_when(
+        whypt == 0 ~ "Other reasons",
+        whypt == 1 ~ "Own illness or disability",
+        whypt == 2 ~ "Caring for children",
+        whypt == 3 ~ "Other personal or family responsibilities",
+        whypt == 4 ~ "Going to school",
+        whypt == 5 ~ "Personal preference",
+        whypt == 6 ~ "Business conditions or could not find full-time work, looked for full-time work in last month",
+        whypt == 7 ~ "Business conditions or could not find full-time work, did not look for full-time work in last month"
+      ),
+      
+      # union
+      union = case_when(
+        union == 1 ~ "Union member",
+        union == 2 ~ "Not a member but covered by a union contract or collective agreement",
+        union == 3 ~ "Non-unionized"
+      ),
+      
+      # permtemp
+      permtemp = case_when(
+        permtemp == 1 ~ "Permanent",
+        permtemp == 2 ~ "Temporary, seasonal job",
+        permtemp == 3 ~ "Temporary, term or contract job",
+        permtemp == 4 ~ "Temporary, casual or other temporary jobs"
+      ),
+      
+      # estsize
+      estsize = case_when(
+        estsize == 1 ~ "Less than 20 employees",
+        estsize == 2 ~ "20 to 99 employees",
+        estsize == 3 ~ "100 to 500 employees",
+        estsize == 4 ~ "More than 500 employees"
+      ),
+      
+      # firmsize
+      firmsize = case_when(
+        firmsize == 1 ~ "Less than 20 employees",
+        firmsize == 2 ~ "20 to 99 employees",
+        firmsize == 3 ~ "100 to 500 employees",
+        firmsize == 4 ~ "More than 500 employees"
+      ),
+      
+      # flowunem
+      flowunem = case_when(
+        flowunem == 1 ~ "Job losers, temporary layoff",
+        flowunem == 2 ~ "Job losers, permanent layoff",
+        flowunem == 3 ~ "Job leavers",
+        flowunem == 4 ~ "Job leavers/losers (status unknown), worked more than 1 year ago",
+        flowunem == 5 ~ "New entrants",
+        flowunem == 6 ~ "Re-entrants, worked 1 year ago or less",
+        flowunem == 7 ~ "Re-entrants, worked more than 1 year ago",
+        flowunem == 8 ~ "Future starts"
+      ),
+      
+      # unemftpt
+      unemftpt = case_when(
+        unemftpt == 1 ~ "Full-time",
+        unemftpt == 2 ~ "Part-time",
+        unemftpt == 3 ~ "Future starts"
+      ),
+      
+      # whylefto
+      whylefto = case_when(
+        whylefto == 0 ~ "Job leavers, other reasons",
+        whylefto == 1 ~ "Job leavers, own illness or disability",
+        whylefto == 2 ~ "Job leavers, personal or family responsibilities",
+        whylefto == 3 ~ "Job leavers, going to school",
+        whylefto == 4 ~ "Job losers, laid off",
+        whylefto == 5 ~ "Job leavers, retired"
+      ),
+      
+      # whyleftn
+      whyleftn = case_when(
+        whyleftn == 0 ~ "Job leavers, other reasons",
+        whyleftn == 1 ~ "Job leavers, own illness or disability",
+        whyleftn == 2 ~ "Job leavers, caring for children",
+        whyleftn == 3 ~ "Job leavers, pregnancy",
+        whyleftn == 4 ~ "Job leavers, personal or family responsibilities",
+        whyleftn == 5 ~ "Job leavers, going to school",
+        whyleftn == 6 ~ "Job leavers, dissatisfied",
+        whyleftn == 7 ~ "Job leavers, retired",
+        whyleftn == 8 ~ "Job leavers, business sold or closed down (self-employed)",
+        whyleftn == 9 ~ "Job losers, end of seasonal job (employee)",
+        whyleftn == 10 ~ "Job losers, end of temporary or casual (employee)",
+        whyleftn == 11 ~ "Job losers, company moved or out of business (employee)",
+        whyleftn == 12 ~ "Job losers, business conditions (employee)",
+        whyleftn == 13 ~ "Job losers, dismissal or other reasons"
+      ),
+      
+      # availabl
+      availabl = case_when(
+        availabl == 1 ~ "Not available",
+        availabl == 2 ~ "Yes, available"
+      ),
+      
+      # lkpubag
+      lkpubag = if_else(lkpubag == 1, "Yes", NA_character_),
+      
+      # lkemploy
+      lkemploy = if_else(lkemploy == 1, "Yes", NA_character_),
+      
+      # lkrels
+      lkrels = if_else(lkrels == 1, "Yes", NA_character_),
+      
+      # lkatads
+      lkatads = if_else(lkatads == 1, "Yes", NA_character_),
+      
+      # lkansads
+      lkansads = if_else(lkansads == 1, "Yes", NA_character_),
+      
+      # lkothern
+      lkothern = if_else(lkothern == 1, "Yes", NA_character_),
+      
+      # prioract
+      prioract = case_when(
+        prioract == 0 ~ "Other",
+        prioract == 1 ~ "Working",
+        prioract == 2 ~ "Managing a home",
+        prioract == 3 ~ "Going to school"
+      ),
+      
+      # ynolook
+      ynolook = case_when(
+        ynolook == 0 ~ "Wanted work, reason - other",
+        ynolook == 1 ~ "Wanted work, reason - own illness or disability",
+        ynolook == 2 ~ "Wanted work, reason - caring for children",
+        ynolook == 3 ~ "Wanted work, reason - other personal or family responsibilities",
+        ynolook == 4 ~ "Wanted work, reason - school",
+        ynolook == 5 ~ "Wanted work, reason - awaiting recall or reply",
+        ynolook == 6 ~ "Wanted work, reason - discouraged"
+      ),
+      
+      # tlolook
+      tlolook = case_when(
+        tlolook == 1 ~ "Yes",
+        tlolook == 2 ~ "No"
+      ),
+      
+      # schooln
+      schooln = case_when(
+        schooln == 1 ~ "Non-student",
+        schooln == 2 ~ "Full-time student",
+        schooln == 3 ~ "Part-time student"
+      ),
+      
+      # efamtype
+      efamtype = case_when(
+        efamtype == 1 ~ "Person not in an economic family",
+        efamtype == 2 ~ "Dual-earner couple, no children or none under 25",
+        efamtype == 3 ~ "Dual-earner couple, youngest child 0 to 17",
+        efamtype == 4 ~ "Dual-earner couple, youngest child 18 to 24",
+        efamtype == 5 ~ "Single-earner couple, male employed, no children or none under 25",
+        efamtype == 6 ~ "Single-earner couple, male employed, youngest child 0 to 17",
+        efamtype == 7 ~ "Single-earner couple, male employed, youngest child 18 to 24",
+        efamtype == 8 ~ "Single-earner couple, female employed, no children or none under 25",
+        efamtype == 9 ~ "Single-earner couple, female employed, youngest child 0 to 17",
+        efamtype == 10 ~ "Single-earner couple, female employed, youngest child 18 to 24",
+        efamtype == 11 ~ "Non-earner couple, no children or none under 25",
+        efamtype == 12 ~ "Non-earner couple, youngest child 0 to 17",
+        efamtype == 13 ~ "Non-earner couple, youngest child 18 to 24",
+        efamtype == 14 ~ "Lone-parent family, parent employed, youngest child 0 to 17",
+        efamtype == 15 ~ "Lone-parent family, parent employed, youngest child 18 to 24",
+        efamtype == 16 ~ "Lone-parent family, parent not employed, youngest child 0 to 17",
+        efamtype == 17 ~ "Lone-parent family, parent not employed, youngest child 18 to 24",
+        efamtype == 18 ~ "Other families"
+      ),
+      
+      # agyownk
+      agyownk = case_when(
+        agyownk == 1 ~ "Youngest child less than 6 years",
+        agyownk == 2 ~ "Youngest child 6 to 12 years",
+        agyownk == 3 ~ "Youngest child 13 to 17 years",
+        agyownk == 4 ~ "Youngest child 18 to 24 years"
+      )
+    )
+
+  return(res)
+}
+
+
+comparison <- read_csv('data/lfs/pub0824.csv') |>
+  janitor::clean_names() |>
+  recode_lfs() |>
+  miss_var_summary() |>
+  mutate(table = 'cleaned') |>
+
+  bind_rows(
+
+    read_csv('data/lfs/pub0824.csv') |>
+      janitor::clean_names() |>
+      miss_var_summary() |>
+      mutate(table = 'raw')
+  
+  ) |>
+
+  pivot_wider(
+    names_from = "table",
+    values_from = pct_miss
+  ) 
+
+comparison |>
+  filter(is.na(cleaned) | is.na(raw))
+  filter(cleaned == raw)
+
+lfs_0824 |> 
+  head(200) |>
+  write_csv("cleaned-delete.csv")
+  visdat::vis_miss()
+
+lfs_0824_unclean <- read_csv('data/lfs/pub0824.csv') |>
+  janitor::clean_names()  |>
+  head(200) |>
+  write_csv('raw-delete.csv')
+
+lfs_0824_unclean |>
+  head(1000) |>
+  visdat::vis_miss()
+lfs_codebook <- read_csv('data/lfs/lfs_codebook.csv') |>
+  janitor::clean_names() |> 
+  select(position_position, variable_variable, english_label_etiquette_anglais) |>
+  write_csv('codebook-test.csv')
+lfs_codebook |> view()
+recoded_dataset <- recode_(lfs_0824, lfs_codebook)
+
+recoded_dataset |> head(1000) |> view()
+
+```
+
 ### Slightly better 'using observable covariates' model 
 
 A basic way to make the model less dumb is to model the transition probabilities using some measured covariates. The U.S. LFS includes some detailed info about the person's current status:
@@ -107,7 +585,31 @@ A basic way to make the model less dumb is to model the transition probabilities
 
 So we end up with a total of 3 + 24 + 2 = 29 possible types of person in the dataset, and so 29*29 = 841 transition probabilities. That's a lot! But also notice a bunch of them are literally impossible, like you can't go from any of the 3 'employed' statuses to any of the 'unemployed since' buckets other than the shortest possible one. That sort of thing. Also, we get one parameter per row for free, because of the simplex constraint. So he ends up with not 841 but only 212 transition probabilities to estimate. This model is a bit better than the previous one, but still does a bad job replicating the empirical transition probabilities. 
 
-### 'Actually Good' Hidden Markov Model
+### 'Fixed unobserved heterogeneity' 
+
+He doesn't actually talk about [this](https://www.sciencedirect.com/science/article/abs/pii/S0304407613002352), he just mentions it as a reference. No latent states, seems like you model each transition probability between observed states as a linear model of the previous state and some observed covariates, but you do the linear model as random effects clustering on individuals. Sure. Our author criticizes this approach because while it does capture heterogeneity, it assumes each person's unobserved features are fixed. Our author wants a model where your unobserved 'attachment style' can change over time.
+
+### HMM but for classification error
+
+Some people did [a cool HMM model to corect for classification error](https://www.aeaweb.org/articles?id=10.1257/aer.103.2.1054), where people misreport their actually labour force status. I'd like to learn more about that. Apparently the present model nests that model -- we would just need to allow for exactly one latent state per possible emission. 
+
+## The model
+
+Having reviewed what other people have done, he now turns to his actual analysis.
+
+### Data
+
+He uses the "full panel of the Current Population Survey". I think the LFS is the closest Canadian equivalent. 
+
+He includes 3 possible emission states: 
+
+1. Employed;
+2. Unemployed;
+3. Nonparticipating.
+
+We'll want the model to be such that the probability of transition between each pair of these states is modelled using heterogeneity and duration dependence, not just the probability of transitioning out of unemployment, as some previous models have apparently done. This is smart because yeah maybe your most recent duration of unemployment predicts your probability of _losing_ your next job, not just your probability of _getting_ it in the first place. Same goes for transitioning to-and-from nonparticipation. 
+
+### Model structure
 
 - Discrete time;
 - 3 possible emissions, which are labour market statuses: `E = employed`, `U = unemployed`, `O = out-of-market`.
@@ -115,7 +617,55 @@ So we end up with a total of 3 + 24 + 2 = 29 possible types of person in the dat
 
 Interestingly, he _doesn't_ use observed predictors to model the latent transition probabilities, nor the state-conditioned emission probabilities (nor the initial state distribution). But it seems like this would be better?? He defensively justifies: _"This allows me to estimate the model parameters with a dataset that has a relatively short time period and a large cross section, such as the Current Population Survey."_
 
+### Interpretation 
 
+He fits the model and discusses the results in four stages:
+
+#### 1) Goodness-of-fit
+
+He basically takes the the empirical frequencies transitions between observed states and compares them to the fitted HMM-generated transition probabilities over time. I'm actually confused about how you get the probabilities of transitions between observable states this out of an HMM, because I think of us as mainly being interested in the probabilities of transitions between _latent_ states, and the probabilities of _emissions_ conditional on latent states, not conditional on previous emissions. Is he just generating a model-predicted timeseries for each person based on their observed first emission?
+
+#### 2) First pass at parameter interpretation
+
+He focuses first and foremost on the emission probabilities $p(Y = y_t | C = c_t)$. So, since we have 3 possible emissions and 9 unobserved states, this gives us a 3x9 matrix of emission probabilities. And this is the first place he actually gives an _interpretation_ of the latent states. They strongly cluster by emission type, which is sort of interesting and suspicious?? Like literally look like rotated factor loadings -- why did it work out so cleanly? There are 3 states each per emission, where those states have emission probabilities that see you way more likely to stay in those states. And he numbers them from 1-3 depending on the prob of ending up in a thing.
+
+Then he does another nice thing where he shows, for each of the latent states, your probability of having each given emission at t=6, conditional on having initialized in that latent state.
+
+He gets more into parameter interpretation later. 
+
+#### 3) Discussion of unobserved heterogeneity
+
+He gives a really nice short interpretive paragraph here about how to think about what the latent states are doing for us at a common-sense level. 
+
+Then he does some weird stuff with 'hazard functions' and talks about what seem to just be the state-now-conditional-on-emission-sequence filtering distribution thing to get the probability of being in each state conditional on your emission sequence. This is something we can back out of the fwd algo, or can get from the fwd-backwards if we want it smoothed, right? i think another fun way to explore this aspect of what the model thinks, would be to use Viterbi to get the 'most probable paths' for contrived, representative sequences of emissions. Anyway, he seems to use this filtered-or-smoothed sequence of marginally 'most probable' states to then make a nice plot showing, for the 3 groups of people in each of the 3 emission states at t=0, the probability of them _still_ being in that emission state, grouped by their initial latent state (I think?).
+
+#### 4) Analyzing the evolution of latent attachment style
+
+In this section he tries to flesh out the interpretation of the different latent states by just using Baum-Welch to compute the margi-max state for each person at each time, then look at how the different margi-max state groups differ along observable variables. 
+
+For example, he does a separate regression of like `income ~ 1 + gender + educ + work_exp` for each margi-max group separately, then take the average of the model-predicted incomes for each group, and compare them (he also does some dubious-seeming 'residual rescaling' on the model-predicted incomes before analysis). This is his attempt to say something like "people with different labour market attachments have different expected income even after conditioning on observed covariates, so the latent states are indeed picking up on unmeasured differences", and also things like "yes, the latent profile E1 is associated with lower probability of transitioning out of employment _and_ higher salary, which seems consistent with our background knowledge of what would be true for a maximally-attached employed person, which is what we're imagining an E1 person to be." He does similar analysis based on observed variables like 'do you work full time' for employed people, and 'why are you unemployed' for unemployed people. And he breaks it down by industry too, which is fun.
+
+_"This section has shown that my model’s labor market attachment states are associated with observable characteristics and the patterns of association are in line with the findings of previous studies. However, there still exists unobserved heterogeneity among the workers with the same observed labor force status and other characteristics. This finding also suggests that this model’s labor market attachment states provide more accurate measures than the FOM for understanding the conditions of individual workers, as well as the aggregate labor market."_
+
+But idk, why not just include these observed covariates as predictors in a regression for the transition probabilities and/or the emission probabilities? Also, it's unclear to me whether he uses all observations pooling over timepoints in this analysis, or whether he computes it separately for each timepoint in isolation. It seems like given the clustering within individuals of the data, you'd want your mincer regression to at least have varying intercepts clustering on individuals, right?
+
+## More analysis
+
+### What are the long-term consequences of being unemployed?
+
+Previous models have famously underestimated the loss in earnings and the reduction in future employment probabilities associated with being out of a job for a long time. The HMM does way better.
+
+### Trends in employment _stability_ 
+
+His claim is that having an HMM lets us analyze employment 'stability' as opposed to merely employment 'rates'. 
+
+### Historical trends in labour market attachment
+
+I think he's just gonna use the fitted model to get margi-max estimates for historical datasets.
+
+### Illustrative hypothetical
+
+Shows via simulated data that the model thinks that different intial distributions(?) of latent attachemtn styles have a big influence on observed emission sequences for 
 
 
 
